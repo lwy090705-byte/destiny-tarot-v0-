@@ -16,7 +16,7 @@ export function CategoryTabs({ activeCategory, onCategoryChange }: CategoryTabsP
     id: Category
     labelKey: string
     icon: React.ReactNode
-    description: string
+    descriptionKey: string
     // 비활성 상태 스타일
     idleBg: string
     idleBorder: string
@@ -32,7 +32,7 @@ export function CategoryTabs({ activeCategory, onCategoryChange }: CategoryTabsP
       id: 'myungli',
       labelKey: 'category.myungli',
       icon: <Coins className="h-6 w-6" />,
-      description: '동양의 고전 지혜',
+      descriptionKey: 'category.desc.myungli',
       idleBg: 'bg-[#fdf6e3]',
       idleBorder: 'border border-[#e8d48b]',
       idleIcon: 'bg-[#f5e6a3] text-[#8a6c00]',
@@ -46,7 +46,7 @@ export function CategoryTabs({ activeCategory, onCategoryChange }: CategoryTabsP
       id: 'daily',
       labelKey: 'category.daily',
       icon: <Sun className="h-6 w-6" />,
-      description: '오늘의 희망',
+      descriptionKey: 'category.desc.daily',
       idleBg: 'bg-[#f3eeff]',
       idleBorder: 'border border-[#c9aaf0]',
       idleIcon: 'bg-[#e4d4f8] text-[#5a22b8]',
@@ -60,7 +60,7 @@ export function CategoryTabs({ activeCategory, onCategoryChange }: CategoryTabsP
       id: 'compatibility',
       labelKey: 'category.compatibility',
       icon: <Sparkle className="h-6 w-6" />,
-      description: '두 마음의 연결',
+      descriptionKey: 'category.desc.compatibility',
       idleBg: 'bg-rose-50',
       idleBorder: 'border border-rose-200',
       idleIcon: 'bg-rose-100 text-rose-600',
@@ -74,7 +74,7 @@ export function CategoryTabs({ activeCategory, onCategoryChange }: CategoryTabsP
       id: 'tarot',
       labelKey: 'category.tarot',
       icon: <Wand2 className="h-6 w-6" />,
-      description: '신비의 깊이',
+      descriptionKey: 'category.desc.tarot',
       idleBg: 'bg-[#f3eeff]',
       idleBorder: 'border border-[#c9aaf0]',
       idleIcon: 'bg-[#e4d4f8] text-[#5a22b8]',
@@ -132,7 +132,7 @@ export function CategoryTabs({ activeCategory, onCategoryChange }: CategoryTabsP
                   <p className={`text-xs mt-1 transition-colors ${
                     isActive ? 'text-white/80' : 'text-gray-500'
                   }`}>
-                    {cat.description}
+                    {t(cat.descriptionKey)}
                   </p>
                 </div>
               </div>
@@ -183,7 +183,7 @@ export function CategoryTabs({ activeCategory, onCategoryChange }: CategoryTabsP
             <p className={`text-sm transition-colors ${
               mbtiActive ? 'text-white/80' : 'text-gray-500'
             }`}>
-              나를 알아가는 성격 유형 테스트
+              {t('mbti.subtitle')}
             </p>
           </div>
           <div className={`ml-auto text-xs font-bold px-3 py-1.5 rounded-full shrink-0 transition-all ${

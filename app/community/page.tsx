@@ -40,7 +40,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   '기타': 'bg-gray-100 text-gray-600',
 }
 
-function PostCard({ post, onLike, onSelect, currentUserId, isUserLiked }: { post: Post; onLike: (id: number) => void; onSelect: (post: Post) => void; currentUserId: number; isUserLiked: boolean }) {
+function PostCard({ post, onLike, onSelect, currentUserId, isUserLiked, t }: { post: Post; onLike: (id: number) => void; onSelect: (post: Post) => void; currentUserId: number; isUserLiked: boolean; t: (k: string) => string }) {
   return (
     <div onClick={() => onSelect(post)} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer">
       <div className="flex items-start justify-between gap-2 mb-2">
@@ -52,7 +52,7 @@ function PostCard({ post, onLike, onSelect, currentUserId, isUserLiked }: { post
             {post.isRecommended && (
               <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 flex items-center gap-1">
                 <Star className="h-2.5 w-2.5" />
-                추천
+                {t('community.recommendedBadge')}
               </span>
             )}
           </div>
@@ -147,7 +147,7 @@ export default function CommunityPage() {
       const newPost: Post = {
         id: Math.max(...posts.map(p => p.id), 0) + 1,
         title: newPostTitle,
-        author: '익명사용자',
+        author: t('community.anonymous'),
         date: new Date().toISOString().split('T')[0],
         likes: 0,
         comments: 0,
@@ -167,7 +167,7 @@ export default function CommunityPage() {
     if (commentText.trim() && selectedPost) {
       const newComment = {
         id: comments.length + 1,
-        author: '익명사용자',
+        author: t('community.anonymous'),
         date: new Date().toISOString().split('T')[0],
         text: commentText,
       }
@@ -253,7 +253,7 @@ export default function CommunityPage() {
         {activeTab === 'recommended' && (
           <div className="flex items-center gap-2 text-amber-600 font-semibold text-sm px-1">
             <Star className="h-4 w-4" />
-            {t('community.recommended')} ({recommendedPosts.length}개)
+            {t('community.recommendedWithCount').replace('{count}', String(recommendedPosts.length))}
           </div>
         )}
 
@@ -261,7 +261,7 @@ export default function CommunityPage() {
         <div className="space-y-3">
           {displayPosts.length > 0 ? (
             displayPosts.map(post => (
-              <PostCard key={post.id} post={post} onLike={handleLike} onSelect={setSelectedPost} currentUserId={currentUserId} isUserLiked={isPostLikedByUser(post.id)} />
+              <PostCard key={post.id} post={post} onLike={handleLike} onSelect={setSelectedPost} currentUserId={currentUserId} isUserLiked={isPostLikedByUser(post.id)} t={t} />
             ))
           ) : (
             <div className="text-center py-12 text-gray-400">
@@ -277,22 +277,22 @@ export default function CommunityPage() {
         <div className="fixed inset-0 bg-black/50 flex items-end z-50">
           <div className="bg-white w-full rounded-t-3xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-800">새 글 작성</h2>
+              <h2 className="text-lg font-bold text-gray-800">{t('community.modalNewPost')}</h2>
               <button onClick={() => setShowWriteModal(false)} className="text-gray-400 hover:text-gray-600">
                 <X className="h-6 w-6" />
               </button>
             </div>
             <div className="space-y-3">
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1">제목</label>
-                <input type="text" value={newPostTitle} onChange={(e) => setNewPostTitle(e.target.value)} placeholder="제목을 입력하세요" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400" />
+                <label className="text-sm font-medium text-gray-700 block mb-1">{t('community.labelTitle')}</label>
+                <input type="text" value={newPostTitle} onChange={(e) => setNewPostTitle(e.target.value)} placeholder={t('community.placeholderTitle')} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400" />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-1">내용</label>
-                <textarea value={newPostContent} onChange={(e) => setNewPostContent(e.target.value)} placeholder="내용을 입력하세요" rows={6} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 resize-none" />
+                <label className="text-sm font-medium text-gray-700 block mb-1">{t('community.labelContent')}</label>
+                <textarea value={newPostContent} onChange={(e) => setNewPostContent(e.target.value)} placeholder={t('community.placeholderContent')} rows={6} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 resize-none" />
               </div>
               <Button onClick={handleWritePost} className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold">
-                게시하기
+                {t('community.publish')}
               </Button>
             </div>
           </div>
@@ -338,11 +338,11 @@ export default function CommunityPage() {
 
             {/* 댓글 입력 */}
             <div className="space-y-2 border-t pt-4">
-              <label className="text-sm font-medium text-gray-700 block">댓글 달기</label>
+              <label className="text-sm font-medium text-gray-700 block">{t('community.labelComment')}</label>
               <div className="flex gap-2">
-                <input type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="댓글을 입력하세요" className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400" />
+                <input type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder={t('community.placeholderComment')} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400" />
                 <Button onClick={handleAddComment} className="bg-purple-600 hover:bg-purple-700 text-white px-4">
-                  전송
+                  {t('community.send')}
                 </Button>
               </div>
             </div>

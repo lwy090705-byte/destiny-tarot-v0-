@@ -250,8 +250,8 @@ export function DailyFortuneSection({
                 </div>
                 <p className="text-[#6c5a33] leading-relaxed text-sm mb-3 font-medium">{result.description}</p>
                 <div className="flex flex-col gap-1.5 text-xs border-t border-[#d4af37]/20 pt-2">
-                  <span className="text-[#8a6c00]"><strong>🎨 색상:</strong> {result.luckyColor}</span>
-                  <span className="text-[#8a6c00]"><strong>🔢 숫자:</strong> {result.luckyNumber}</span>
+                  <span className="text-[#8a6c00]"><strong>{t('fortune.dailyColorStrong')}</strong> {result.luckyColor}</span>
+                  <span className="text-[#8a6c00]"><strong>{t('fortune.dailyNumberStrong')}</strong> {result.luckyNumber}</span>
                 </div>
               </div>
             ))}

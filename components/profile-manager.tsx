@@ -157,7 +157,7 @@ export function ProfileManager({
       {/* Card title with sparkle */}
       <div className="flex items-center gap-2 mb-6">
         <span className="text-purple-400">✧</span>
-        <h2 className="text-lg font-bold text-[#5b21b6]">기본정보</h2>
+        <h2 className="text-lg font-bold text-[#5b21b6]">{t('profile.basicInfoTitle')}</h2>
       </div>
       
       {/* 이름 입력 */}
@@ -384,12 +384,12 @@ export function ProfileManager({
       {/* 저장된 프로필 목록 */}
       <div className="flex items-center gap-2 mb-4 mt-2">
         <span className="text-purple-400">✧</span>
-        <h3 className="text-base font-bold text-[#5b21b6]">저장된 생년월일 목록</h3>
+        <h3 className="text-base font-bold text-[#5b21b6]">{t('profile.title')}</h3>
       </div>
       <div className="space-y-2" suppressHydrationWarning>
         {!isHydrated ? (
           <p className="text-center text-gray-400 py-4 text-sm" suppressHydrationWarning>
-            로딩 중...
+            {t('profile.loading')}
           </p>
         ) : profiles.length > 0 ? (
           profiles.map((profile) => (
@@ -408,7 +408,7 @@ export function ProfileManager({
                   {profile.birthYear}-{String(profile.birthMonth).padStart(2, '0')}-{String(profile.birthDay).padStart(2, '0')}
                   {profile.birthHour !== undefined
                     ? ` · ${hourOptions.find(h => h.value === profile.birthHour)?.label ?? ''}(${hourOptions.find(h => h.value === profile.birthHour)?.time ?? ''})`
-                    : ' · 시간 미입력'}
+                    : ` · ${t('profile.hourNotEntered')}`}
                   {' '}({profile.calendarType === 'lunar' ? t('profile.lunar') : t('profile.solar')})
                 </p>
               </div>
@@ -427,7 +427,7 @@ export function ProfileManager({
           ))
         ) : (
           <p className="text-center text-gray-400 py-4 text-sm" suppressHydrationWarning>
-            저장된 프로필이 없습니다
+            {t('profile.emptyList')}
           </p>
         )}
       </div>

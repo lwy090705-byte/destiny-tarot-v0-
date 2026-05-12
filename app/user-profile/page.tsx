@@ -105,7 +105,7 @@ export default function UserProfilePage() {
       completed: false,
       reward: '150P',
     },
-  ], [language])
+  ], [t])
 
   // Sync stats.points with context points
   useEffect(() => {
@@ -392,8 +392,8 @@ export default function UserProfilePage() {
 
         {/* 출석체크 · 보너스 받기 섹션 라벨 */}
         <div className="text-center px-4 mb-4">
-          <h3 className="text-sm font-bold text-white mb-1">출석체크 · 보너스 받기</h3>
-          <p className="text-xs text-white/80">매일 포인트를 적립해보세요</p>
+          <h3 className="text-sm font-bold text-white mb-1">{t('userProfile.checkInBonusHeading')}</h3>
+          <p className="text-xs text-white/80">{t('userProfile.checkInBonusSub')}</p>
         </div>
 
         {/* 출석체크 */}
@@ -434,7 +434,7 @@ export default function UserProfilePage() {
               </div>
               <div className="text-left min-w-0">
                 <div className="text-sm font-bold">{t('userProfile.bonus')}</div>
-                <div className="text-xs opacity-80">광고보고 보너스 받기</div>
+                <div className="text-xs opacity-80">{t('userProfile.bonusWatchAdLine')}</div>
               </div>
             </div>
             <ChevronRight className="h-5 w-5 opacity-70 flex-shrink-0" />
@@ -443,7 +443,11 @@ export default function UserProfilePage() {
           {/* 내부 일일 보상 진행도 */}
           <div className="mt-3 pt-3 border-t border-white/20">
             <div className="flex items-center justify-between mb-1.5 px-1">
-              <span className="text-xs font-bold">일일 보상 ({dailyRewardCount}/5)</span>
+              <span className="text-xs font-bold">
+                {t('userProfile.dailyRewardWithMax')
+                  .replace('{current}', String(dailyRewardCount))
+                  .replace('{max}', '5')}
+              </span>
             </div>
             <div className="w-full bg-white/30 rounded-full h-2 overflow-hidden">
               <div 
@@ -561,20 +565,20 @@ export default function UserProfilePage() {
               <X className="h-6 w-6" />
             </button>
 
-            <h3 className="text-2xl font-bold text-center text-emerald-300 mb-2">뽑기</h3>
-            <p className="text-center text-green-200 text-sm mb-6">5개의 선물 상자 중 하나를 선택하세요!</p>
+            <h3 className="text-2xl font-bold text-center text-emerald-300 mb-2">{t('userProfile.pickDrawTitle')}</h3>
+            <p className="text-center text-green-200 text-sm mb-6">{t('userProfile.pickDrawSubtitle')}</p>
 
             {drawResult ? (
               <div className="text-center">
                 <div className="mb-4 text-6xl animate-bounce">🎁</div>
-                <p className="text-green-200 mb-1 text-sm">축하합니다!</p>
+                <p className="text-green-200 mb-1 text-sm">{t('common.congrats')}</p>
                 <p className="text-3xl font-bold text-emerald-300">{drawResult}P</p>
-                <p className="text-green-200 text-xs mt-2">보상을 획득했습니다!</p>
+                <p className="text-green-200 text-xs mt-2">{t('userProfile.rewardReceived')}</p>
                 <Button
                   onClick={() => { setShowPickDraw(false); setDrawResult(null); }}
                   className="mt-4 bg-emerald-500 hover:bg-emerald-600 text-white font-bold"
                 >
-                  닫기
+                  {t('common.close')}
                 </Button>
               </div>
             ) : (
@@ -591,7 +595,7 @@ export default function UserProfilePage() {
                       <div className="text-6xl transform hover:scale-125 transition-transform">
                         {isDrawing ? '📦' : '🎁'}
                       </div>
-                      <div className="text-xs text-green-200 mt-2">선물상자 {i + 1}</div>
+                      <div className="text-xs text-green-200 mt-2">{t('userProfile.giftBoxNumber').replace('{n}', String(i + 1))}</div>
                     </button>
                   ))}
                 </div>
@@ -608,7 +612,7 @@ export default function UserProfilePage() {
                       <div className="text-6xl transform hover:scale-125 transition-transform">
                         {isDrawing ? '📦' : '🎁'}
                       </div>
-                      <div className="text-xs text-green-200 mt-2">선물상자 {i + 1}</div>
+                      <div className="text-xs text-green-200 mt-2">{t('userProfile.giftBoxNumber').replace('{n}', String(i + 1))}</div>
                     </button>
                   ))}
                 </div>
@@ -695,14 +699,14 @@ export default function UserProfilePage() {
             {rouletteResult ? (
               <div className="text-center">
                 <div className="mb-4 text-4xl animate-bounce">🎉</div>
-                <p className="text-purple-200 mb-1 text-sm">축하합니다!</p>
+                <p className="text-purple-200 mb-1 text-sm">{t('common.congrats')}</p>
                 <p className="text-2xl font-bold text-amber-400">{rouletteResult}</p>
-                <p className="text-purple-300 text-xs mt-1">보상을 획득했습니다!</p>
+                <p className="text-purple-300 text-xs mt-1">{t('userProfile.rewardReceived')}</p>
                 <Button
                   onClick={() => { setShowRoulette(false); setRouletteResult(null); setSpinDeg(0); }}
                   className="mt-4 bg-amber-500 hover:bg-amber-600 text-white font-bold"
                 >
-                  닫기
+                  {t('common.close')}
                 </Button>
               </div>
             ) : (

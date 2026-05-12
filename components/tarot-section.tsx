@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { tarotCards, generateTarotReading, getTarotMessage } from "@/lib/tarot"
@@ -12,6 +12,56 @@ import type { Language } from "@/lib/i18n"
 
 type TarotType = 'love' | 'wealth' | 'career' | 'health'
 type TarotMode = 'category' | 'mode' | 'cards'
+
+const TAROT_CATEGORY_STYLES: Record<
+  TarotType,
+  {
+    idleBg: string
+    idleBorder: string
+    idleText: string
+    activeBg: string
+    activeBorder: string
+    activeText: string
+    activeShadow: string
+  }
+> = {
+  love: {
+    idleBg: '#fdf2f8',
+    idleBorder: '#f9a8d4',
+    idleText: '#be185d',
+    activeBg: '#fce7f3',
+    activeBorder: '#ec4899',
+    activeText: '#9d174d',
+    activeShadow: 'rgba(236, 72, 153, 0.25)',
+  },
+  wealth: {
+    idleBg: '#fefce8',
+    idleBorder: '#fcd34d',
+    idleText: '#92400e',
+    activeBg: '#fef3c7',
+    activeBorder: '#d4af37',
+    activeText: '#78350f',
+    activeShadow: 'rgba(212, 175, 55, 0.3)',
+  },
+  career: {
+    idleBg: '#eff6ff',
+    idleBorder: '#93c5fd',
+    idleText: '#1e40af',
+    activeBg: '#dbeafe',
+    activeBorder: '#3b82f6',
+    activeText: '#1e3a8a',
+    activeShadow: 'rgba(59, 130, 246, 0.25)',
+  },
+  health: {
+    idleBg: '#f0fdf4',
+    idleBorder: '#86efac',
+    idleText: '#15803d',
+    activeBg: '#dcfce7',
+    activeBorder: '#22c55e',
+    activeText: '#14532d',
+    activeShadow: 'rgba(34, 197, 94, 0.25)',
+  },
+}
 
 // v10-rebuild-trigger
 export function TarotSection() {
@@ -37,6 +87,18 @@ export function TarotSection() {
   const requiredCount = tarotMode === 'one' ? 1 : tarotMode === 'three' ? 3 : 0
 
   const cards = [...tarotCards].sort(() => Math.random() - 0.5)
+
+  const tarotCategoryButtons = useMemo(() => {
+    const ids: TarotType[] = ['love', 'wealth', 'career', 'health']
+    return ids.map((type) => ({
+      type,
+      label: t(`tarot.cat.${type}`),
+      ...TAROT_CATEGORY_STYLES[type],
+    }))
+  }, [t])
+
+  const cardSelectHint =
+    tarotMode === 'one' ? t('tarot.hintSelectOneCard') : t('tarot.hintSelectThreeOrdered')
 
   const getCardImagePath = (cardId: number): string => {
     // 실제 존재하는 이미지 파일에 직접 매핑
@@ -248,32 +310,7 @@ export function TarotSection() {
     <div className="space-y-4 bg-gradient-to-br from-slate-700/10 via-white to-purple-900/10 rounded-3xl p-6">
       {/* 카테고리 선택 버튼 - 2x2 그리드 */}
       <div className="grid grid-cols-2 gap-3">
-        {([
-          {
-            type: 'love' as TarotType, label: '연애',
-            idleBg: '#fdf2f8', idleBorder: '#f9a8d4', idleText: '#be185d',
-            activeBg: '#fce7f3', activeBorder: '#ec4899', activeText: '#9d174d',
-            activeShadow: 'rgba(236, 72, 153, 0.25)',
-          },
-          {
-            type: 'wealth' as TarotType, label: '재물',
-            idleBg: '#fefce8', idleBorder: '#fcd34d', idleText: '#92400e',
-            activeBg: '#fef3c7', activeBorder: '#d4af37', activeText: '#78350f',
-            activeShadow: 'rgba(212, 175, 55, 0.3)',
-          },
-          {
-            type: 'career' as TarotType, label: '진로',
-            idleBg: '#eff6ff', idleBorder: '#93c5fd', idleText: '#1e40af',
-            activeBg: '#dbeafe', activeBorder: '#3b82f6', activeText: '#1e3a8a',
-            activeShadow: 'rgba(59, 130, 246, 0.25)',
-          },
-          {
-            type: 'health' as TarotType, label: '건강',
-            idleBg: '#f0fdf4', idleBorder: '#86efac', idleText: '#15803d',
-            activeBg: '#dcfce7', activeBorder: '#22c55e', activeText: '#14532d',
-            activeShadow: 'rgba(34, 197, 94, 0.25)',
-          },
-        ]).map(({ type, label, idleBg, idleBorder, idleText, activeBg, activeBorder, activeText, activeShadow }) => (
+        {tarotCategoryButtons.map(({ type, label, idleBg, idleBorder, idleText, activeBg, activeBorder, activeText, activeShadow }) => (
           <button
             key={type}
             onClick={() => { setTarotType(type); setTarotMode(null); setSelectedCards([]) }}
@@ -301,7 +338,7 @@ export function TarotSection() {
               boxShadow: '0 2px 10px rgba(139, 92, 246, 0.25)'
             }}
           >
-            한 장 뽑기
+            {t('tarot.pickOne')}
           </button>
           <button
             onClick={() => setTarotMode('three')}
@@ -311,7 +348,7 @@ export function TarotSection() {
               boxShadow: '0 2px 10px rgba(124, 58, 237, 0.25)'
             }}
           >
-            세 장 뽑기
+            {t('tarot.pickThree')}
           </button>
         </div>
       )}
@@ -322,7 +359,7 @@ export function TarotSection() {
           <div className="bg-white rounded-2xl p-4 shadow-sm border-l-4 border-gray-900">
             <div className="flex items-center justify-between mb-3">
               <p className="text-sm text-gray-600">
-                {tarotMode === 'one' ? '카드 1장을 선택하세요' : '카드 3장을 순서대로 선택하세요'}
+                {cardSelectHint}
               </p>
               <span className="text-xs font-semibold text-gray-500 bg-gray-100 rounded-full px-2 py-0.5">
                 {selectedCards.length} / {requiredCount}

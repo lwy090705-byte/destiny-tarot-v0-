@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { SajuResult } from "./saju-result"
-import { calculateSaju, elementNames, elementColors, getElementInfo } from "@/lib/saju"
+import { calculateSaju, elementColors, getElementInfo } from "@/lib/saju"
 import { 
   generateFortune, 
   generateMonthlyFortunes, 
@@ -41,7 +41,7 @@ export function MyungliSection({
   initialMonth = 1,
   initialDay = 1,
   initialHour,
-  initialName = '사용자',
+  initialName,
   initialGender = 'male',
   calendarType,
   onCalendarTypeChange,
@@ -79,20 +79,20 @@ export function MyungliSection({
   const year = initialYear
   const month = initialMonth
   const day = initialDay
-  const name = initialName
+  const name = initialName?.trim() ? initialName : t('profile.defaultDisplayName')
   const gender = initialGender
   const currentYear = new Date().getFullYear()
   
   // Create profile context for personalized fortune generation - memoized to prevent recreations
   const profileContext: FortuneProfileContext = useMemo(() => ({
-    name: name || '사용자',
+    name,
     birthYear: year || 2000,
     birthMonth: month || 1,
     birthDay: day || 1,
     birthHour: hour,
     gender: gender || 'male',
     isLunar: calendarType === 'lunar',
-  }), [name, year, month, day, hour, gender, calendarType])
+  }), [name, year, month, day, hour, gender, calendarType, t])
   
   const [fortuneType, setFortuneType] = useState<FortuneType>('yearly')
   const [fortuneCategory, setFortuneCategory] = useState<FortuneCategory>('total')
@@ -145,13 +145,13 @@ export function MyungliSection({
           type: fortuneType,
           category: fortuneCategory,
           score: 7,
-          description: '운세를 생성할 수 없습니다. 잠시 후 다시 시도해주세요.',
+          description: t('fortune.generateError'),
           luckyColor: '#9C27B0',
           luckyNumber: 7,
         }],
       }
     }
-  }, [showResult, sajuResult, fortuneType, fortuneCategory, profileContext, language])
+  }, [showResult, sajuResult, fortuneType, fortuneCategory, profileContext, language, t])
 
   // Apply cached fortune to state only when it changes
   useEffect(() => {
@@ -364,11 +364,13 @@ export function MyungliSection({
                            sajuResult.fiveElements.water
               const percentage = total > 0 ? Math.round((value as number / total) * 100) : 0
               const hanjaMap: Record<string, string> = { wood: '木', fire: '火', earth: '土', metal: '金', water: '水' }
-              
+              const elementKey = element as 'wood' | 'fire' | 'earth' | 'metal' | 'water'
+              const elementLabel = t(`elements.${elementKey}`)
+
               return (
                 <div key={element} className="flex items-center gap-2">
                   <div className={`w-2 h-2 rounded-full ${elementColors[element]}`} />
-                  <span className="w-14 text-xs font-medium text-gray-700">{elementNames[element]} <span className="text-gray-400">{hanjaMap[element]}</span></span>
+                  <span className="w-14 text-xs font-medium text-gray-700">{elementLabel} <span className="text-gray-400">{hanjaMap[element]}</span></span>
                   <div className="flex-1 h-2 bg-amber-100 rounded-full overflow-hidden">
                     <div 
                       className={`h-full ${elementColors[element]}`}
@@ -386,10 +388,15 @@ export function MyungliSection({
           <div className="mt-4 bg-amber-50 rounded-xl p-2">
             <div className="flex items-center gap-2 mb-2">
               <div className={`w-8 h-8 rounded-full ${elementColors[sajuResult?.fiveElements?.dominant || 'wood']} flex items-center justify-center flex-shrink-0`}>
-                <span className="text-white font-bold text-xs">{elementNames[sajuResult?.fiveElements?.dominant || 'wood']?.charAt(0) || 'W'}</span>
+                <span className="text-white font-bold text-xs">
+                  {Array.from(t(`elements.${(sajuResult?.fiveElements?.dominant || 'wood') as 'wood'}`))[0] || 'W'}
+                </span>
               </div>
               <div>
-                <h4 className="font-semibold text-gray-700 text-xs">{t('elements.main')}: <span className="text-amber-700">{elementNames[sajuResult?.fiveElements?.dominant || 'wood']}</span></h4>
+                <h4 className="font-semibold text-gray-700 text-xs">
+                  {t('elements.main')}:{' '}
+                  <span className="text-amber-700">{t(`elements.${(sajuResult?.fiveElements?.dominant || 'wood') as 'wood'}`)}</span>
+                </h4>
                 <p className="text-xs text-gray-500 leading-tight">{getElementInfo(sajuResult?.fiveElements?.dominant || 'wood', language).description}</p>
               </div>
             </div>

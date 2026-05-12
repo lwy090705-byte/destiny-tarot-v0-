@@ -1,19 +1,25 @@
 import type { Language } from "./i18n"
 
-export const languageTypography: Record<Language, {
-  fontSize: string
-  lineHeight: string
-  letterSpacing: string
-  wordBreak: string
-  fontFamily: string
-}> = {
-  ko: {
-    fontSize: "clamp(13px, 0.95vw, 16px)",
-    lineHeight: "1.4",
-    letterSpacing: "-0.3px",
-    wordBreak: "keep-all",
-    fontFamily: "'Noto Sans KR', 'Noto Sans', sans-serif",
-  },
+const koTypography = {
+  fontSize: "clamp(13px, 0.95vw, 16px)",
+  lineHeight: "1.4",
+  letterSpacing: "-0.3px",
+  wordBreak: "keep-all",
+  fontFamily: "'Noto Sans KR', 'Noto Sans', sans-serif",
+} as const
+
+export const languageTypography: Record<Language, typeof koTypography> = {
+  ko: koTypography,
+  en: koTypography,
+  ja: koTypography,
+  zh: koTypography,
+  es: koTypography,
+  fr: koTypography,
+  de: koTypography,
+  pt: koTypography,
+  hi: koTypography,
+  vi: koTypography,
+  th: koTypography,
 }
 
 export function getLanguageTypographyClass(language: Language): string {

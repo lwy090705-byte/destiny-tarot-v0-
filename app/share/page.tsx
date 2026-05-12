@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Copy, Check, Gift, UserCircle2, Coins, Ticket, ChevronRight } from "lucide-react"
 import Link from "next/link"
@@ -13,7 +13,7 @@ const REFEREE_REWARD = 10    // 추천받은 사람에게 지급
 
 export default function SharePage() {
   const { t } = useLanguage()
-  const { user, isHydrated, applyReferralCode, incrementReferralCount } = useUser()
+  const { user, isHydrated, applyReferralCode } = useUser()
   const { addPoints } = usePoints()
 
   const [copied, setCopied] = useState(false)
@@ -25,6 +25,83 @@ export default function SharePage() {
 
   const referralCode = user?.referralCode ?? '------'
   const shareUrl = `https://fortune-tarot.vercel.app/invite/${referralCode}`
+
+  const socialPlatforms = useMemo(
+    () => [
+      {
+        id: 'kakao',
+        name: '카카오톡',
+        color: 'bg-yellow-400 hover:bg-yellow-500',
+        textColor: 'text-gray-900',
+        fallbackIcon: '💬',
+        shareUrl: `https://sharer.kakao.com/talk/friends/picker/link?app_key=YOUR_KAKAO_KEY&url=${encodeURIComponent(shareUrl)}`,
+      },
+      {
+        id: 'twitter',
+        name: 'X (Twitter)',
+        color: 'bg-black hover:bg-gray-800',
+        textColor: 'text-white',
+        fallbackIcon: '𝕏',
+        shareUrl: `https://twitter.com/intent/tweet?text=${encodeURIComponent(t('share.socialTweet'))}&url=${encodeURIComponent(shareUrl)}`,
+      },
+      {
+        id: 'telegram',
+        name: '텔레그램',
+        color: 'bg-blue-500 hover:bg-blue-600',
+        textColor: 'text-white',
+        fallbackIcon: '✈',
+        shareUrl: `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(t('share.socialTweet'))}`,
+      },
+      {
+        id: 'facebook',
+        name: '페이스북',
+        color: 'bg-blue-600 hover:bg-blue-700',
+        textColor: 'text-white',
+        fallbackIcon: 'f',
+        shareUrl: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+      },
+      {
+        id: 'line',
+        name: '라인',
+        color: 'bg-green-500 hover:bg-green-600',
+        textColor: 'text-white',
+        fallbackIcon: '📱',
+        shareUrl: `https://line.me/R/msg/text/?${encodeURIComponent(t('share.socialRecommend') + shareUrl)}`,
+      },
+      {
+        id: 'whatsapp',
+        name: '왓츠앱',
+        color: 'bg-green-600 hover:bg-green-700',
+        textColor: 'text-white',
+        fallbackIcon: '📞',
+        shareUrl: `https://wa.me/?text=${encodeURIComponent(t('share.socialRecommend') + shareUrl)}`,
+      },
+    ],
+    [shareUrl, t]
+  )
+
+  const codeResultMessages = useMemo(
+    () => ({
+      success: {
+        text: t('share.referralCodeApplied').replace('{points}', String(REFEREE_REWARD)),
+        color: 'text-green-600',
+      },
+      already_used: { text: t('share.referralCodeUsed'), color: 'text-amber-600' },
+      self: { text: t('share.referralCodeSelf'), color: 'text-red-500' },
+      invalid: { text: t('share.referralCodeInvalid'), color: 'text-red-500' },
+    }),
+    [t]
+  )
+
+  const rewards = useMemo(
+    () => [
+      { label: t('share.tier1Label'), required: 1, reward: `${REFERRER_REWARD}P` },
+      { label: t('share.tier5Label'), required: 5, reward: `${REFERRER_REWARD * 5}P` },
+      { label: t('share.tier10Label'), required: 10, reward: `${REFERRER_REWARD * 10}P` },
+      { label: t('share.tier50Label'), required: 50, reward: `${REFERRER_REWARD * 50}P` },
+    ],
+    [t]
+  )
 
   // (포인트 지급은 handleApplyCode의 onSuccess 콜백에서 처리)
 
@@ -51,61 +128,8 @@ export default function SharePage() {
     }
   }
 
-  const socialPlatforms = [
-    {
-      id: 'kakao', name: '카카오톡',
-      color: 'bg-yellow-400 hover:bg-yellow-500', textColor: 'text-gray-900',
-      fallbackIcon: '💬',
-      shareUrl: `https://sharer.kakao.com/talk/friends/picker/link?app_key=YOUR_KAKAO_KEY&url=${encodeURIComponent(shareUrl)}`,
-    },
-    {
-      id: 'twitter', name: 'X (Twitter)',
-      color: 'bg-black hover:bg-gray-800', textColor: 'text-white',
-      fallbackIcon: '𝕏',
-      shareUrl: `https://twitter.com/intent/tweet?text=${encodeURIComponent('운세와 타로를 무료로 확인해보세요!')}&url=${encodeURIComponent(shareUrl)}`,
-    },
-    {
-      id: 'telegram', name: '텔레그램',
-      color: 'bg-blue-500 hover:bg-blue-600', textColor: 'text-white',
-      fallbackIcon: '✈',
-      shareUrl: `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent('운세와 타로를 무료로 확인해보세요!')}`,
-    },
-    {
-      id: 'facebook', name: '페이스북',
-      color: 'bg-blue-600 hover:bg-blue-700', textColor: 'text-white',
-      fallbackIcon: 'f',
-      shareUrl: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
-    },
-    {
-      id: 'line', name: '라인',
-      color: 'bg-green-500 hover:bg-green-600', textColor: 'text-white',
-      fallbackIcon: '📱',
-      shareUrl: `https://line.me/R/msg/text/?${encodeURIComponent('운세와 타로 앱을 추천합니다! ' + shareUrl)}`,
-    },
-    {
-      id: 'whatsapp', name: '왓츠앱',
-      color: 'bg-green-600 hover:bg-green-700', textColor: 'text-white',
-      fallbackIcon: '📞',
-      shareUrl: `https://wa.me/?text=${encodeURIComponent('운세와 타로 앱을 추천합니다! ' + shareUrl)}`,
-    },
-  ]
-
-  const codeResultMessages: Record<string, { text: string; color: string }> = {
-    success: { text: `추천코드가 적용되었습니다! +${REFEREE_REWARD}P 지급`, color: 'text-green-600' },
-    already_used: { text: '이미 추천코드를 사용하셨습니다.', color: 'text-amber-600' },
-    self: { text: '자신의 추천코드는 사용할 수 없습니다.', color: 'text-red-500' },
-    invalid: { text: '유효하지 않은 추천코드입니다.', color: 'text-red-500' },
-  }
-
   const currentReferrals = user?.referralCount ?? 0
   const earnedPoints = currentReferrals * REFERRER_REWARD
-
-  const rewards = [
-    { label: '1명 추천', required: 1, reward: `${REFERRER_REWARD}P` },
-    { label: '5명 추천', required: 5, reward: `${REFERRER_REWARD * 5}P` },
-    { label: '10명 추천', required: 10, reward: `${REFERRER_REWARD * 10}P` },
-    { label: '50명 추천', required: 50, reward: `${REFERRER_REWARD * 50}P` },
-  ]
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-900 to-purple-800 pb-24">
@@ -130,12 +154,12 @@ export default function SharePage() {
               <span className="font-bold text-lg">{t('share.inviteFriends')}</span>
             </div>
             <p className="text-amber-100 text-sm mb-4">
-              친구에게 앱을 추천하고 포인트로 혜택을 받을 수 있어요!
+              {t('share.inviteDescription')}
             </p>
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-1">
                 <UserCircle2 className="h-4 w-4" />
-                <span className="text-sm">{t('share.myInvites')}: {currentReferrals}명</span>
+                <span className="text-sm">{t('share.myInvitesCount').replace('{count}', String(currentReferrals))}</span>
               </div>
               <div className="flex items-center gap-1">
                 <Coins className="h-4 w-4" />
@@ -179,7 +203,7 @@ export default function SharePage() {
           </button>
 
           <p className="text-xs text-gray-400 text-center">
-            코드를 복사하거나 아래 SNS로 공유하세요 &bull; 추천 시 +{REFERRER_REWARD}P 지급
+            {t('share.footerCopy').replace('{referrer}', String(REFERRER_REWARD))}
           </p>
         </div>
 
@@ -204,10 +228,10 @@ export default function SharePage() {
         <div className="bg-white rounded-2xl p-6 shadow-lg space-y-3">
           <div className="flex items-center gap-2 mb-1">
             <Ticket className="h-5 w-5 text-violet-500" />
-            <h3 className="font-bold text-gray-800">추천코드 입력</h3>
+            <h3 className="font-bold text-gray-800">{t('share.enterReferralCodeTitle')}</h3>
           </div>
           <p className="text-xs text-gray-500">
-            친구에게 받은 추천코드를 입력하면 +{REFEREE_REWARD}P를 드려요. 최초 1회만 적용됩니다.
+            {t('share.enterReferralHint').replace('{referee}', String(REFEREE_REWARD))}
           </p>
 
           <div className="flex gap-2">
@@ -219,7 +243,11 @@ export default function SharePage() {
                 setCodeResult(null)
               }}
               disabled={!!user?.referredBy}
-              placeholder={user?.referredBy ? `적용됨: ${user.referredBy}` : '6자리 코드 입력'}
+              placeholder={
+                user?.referredBy
+                  ? t('share.appliedCodeShow').replace('{code}', user.referredBy)
+                  : t('share.sixDigitPlaceholder')
+              }
               maxLength={6}
               className="flex-1 px-4 py-3 rounded-xl border-2 border-violet-200 focus:border-violet-500 focus:outline-none font-mono text-center tracking-widest text-gray-800 placeholder-gray-400 disabled:bg-gray-50 disabled:text-gray-400 transition-colors"
             />
@@ -258,13 +286,17 @@ export default function SharePage() {
                   <div className="flex items-center justify-between mb-1">
                     <span className="font-medium text-gray-700">{item.label}</span>
                     <span className={`font-bold ${isCompleted ? 'text-green-600' : 'text-violet-600'}`}>
-                      {isCompleted ? '완료!' : item.reward}
+                      {isCompleted ? t('share.completed') : item.reward}
                     </span>
                   </div>
                   {!isCompleted && (
                     <div className="mt-2">
                       <div className="flex justify-between text-xs text-gray-400 mb-1">
-                        <span>{currentReferrals}명 / {item.required}명</span>
+                        <span>
+                          {t('share.progressRatio')
+                            .replace('{current}', String(currentReferrals))
+                            .replace('{required}', String(item.required))}
+                        </span>
                         <span>{Math.round(progress)}%</span>
                       </div>
                       <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">

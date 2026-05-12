@@ -1,4 +1,6 @@
 import type { SajuResult, FiveElementsAnalysis } from './types'
+import type { Language } from './i18n'
+import { getFortuneContentLanguage } from './fortune-generator'
 
 // 천간 (Heavenly Stems)
 const heavenlyStems = ['갑', '을', '병', '정', '무', '기', '경', '신', '임', '계']
@@ -107,6 +109,7 @@ export function calculateSaju(year: number, month: number, day: number, hour?: n
 }
 
 export function getElementInfo(element: string, language: string = 'ko'): { color: string; numbers: string; direction: string; description: string } {
+  const contentLang = getFortuneContentLanguage(language as Language)
   const infoByLanguage: Record<string, Record<string, { color: string; numbers: string; direction: string; description: string }>> = {
     ko: {
       wood: { color: '녹색, 청색', numbers: '3, 8', direction: '동쪽', description: '성장, 창조, 인내심' },
@@ -138,7 +141,7 @@ export function getElementInfo(element: string, language: string = 'ko'): { colo
     }
   }
   
-  const langInfo = infoByLanguage[language] || infoByLanguage.ko
+  const langInfo = infoByLanguage[contentLang] ?? infoByLanguage.en ?? infoByLanguage.ko
   return langInfo[element] || langInfo.water
 }
 

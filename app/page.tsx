@@ -136,7 +136,7 @@ export default function Home() {
           }}
         >
           <h2 className="text-xl font-bold text-[#5b21b6] mb-4 text-center" suppressHydrationWarning>
-            {isHydrated ? t('category.title') : '카테고리 선택'}
+            {t('category.title')}
           </h2>
 
           <div className="mb-6">

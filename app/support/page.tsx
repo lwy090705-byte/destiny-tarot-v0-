@@ -88,13 +88,13 @@ export default function SupportPage() {
       }
 
       // 성공 메시지 표시
-      setSuccessMessage(`${amount} Pi 후원해 주셔서 감사합니다!`)
+      setSuccessMessage(t('support.piThankAmount').replace('{amount}', String(amount)))
       setShowSuccess(true)
       setTimeout(() => setShowSuccess(false), 3000)
     } catch (error) {
       console.log("[v0] Error processing payment:", error)
     }
-  }, [recentSupporters])
+  }, [recentSupporters, t])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-900 via-purple-900 to-indigo-900 pb-24">
@@ -135,10 +135,8 @@ export default function SupportPage() {
 
           {/* 안내 문구 */}
           <div className="mt-4 p-3 bg-gray-50 rounded-xl">
-            <p className="text-xs text-gray-500 leading-relaxed">
-              작은 응원이 큰 힘이 됩니다<br />
-              후원은 자발적이며<br />
-              후원도 포인트로 전환됩니다
+            <p className="text-xs text-gray-500 leading-relaxed whitespace-pre-line">
+              {t('support.helperLines')}
             </p>
           </div>
         </div>
@@ -225,7 +223,7 @@ export default function SupportPage() {
         isOpen={showPiModal}
         onClose={() => setShowPiModal(false)}
         onPayment={handlePiPayment}
-        title="Pi 결제로 후원하기"
+        title={t('support.piPaymentTitle')}
       />
     </div>
   )

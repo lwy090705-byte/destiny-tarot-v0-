@@ -3,6 +3,17 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/lib/language-context"
+import {
+  mbtiCareerLeadership,
+  mbtiCareerWorkStyle,
+  mbtiCompatResultParagraph,
+  mbtiCompatTabScoreLabel,
+  mbtiCompatTier,
+  mbtiCompatUnlockedDetail,
+  mbtiLoveExpressStyle,
+  mbtiPersonalityCommStyle,
+  mbtiResultCompatScoreLine,
+} from "@/components/mbti/mbti-inline-labels"
 import { usePoints } from "@/lib/points-context"
 import { PointsInsufficientModal } from "./points-insufficient-modal"
 import { Brain, Heart, Briefcase, Users, Lock, Sparkles, ChevronRight, Check } from "lucide-react"
@@ -73,7 +84,7 @@ const mbtiData: Record<MBTIType, {
     title: "통솔자",
     emoji: "👔",
     color: "from-rose-500 to-red-600",
-    description: "타고난 리더십을 가진 지휘관. 효율성을 추구하고, 목표 달성을 위해 조직을 이����어 나갑니다.",
+    description: "타고난 리더십을 가진 지휘관. 효율성을 추구하고, 목표 달성을 위해 조직을 이끌어 나갑니다.",
     strengths: ["리더십", "자신감", "결단력", "효율성", "전략적 사고"],
     weaknesses: ["지배적", "참을성 부족", "감정 무시", "완고함"],
     loveStyle: "관계에서도 성장을 추구하며, 야망 있는 파트너를 좋아합니다. 솔직하고 직접적인 소통을 선호해요.",
@@ -113,7 +124,7 @@ const mbtiData: Record<MBTIType, {
     strengths: ["공감능력", "창의성", "이상주의", "열정", "적응력"],
     weaknesses: ["비현실적", "자기비판", "회피적", "지나친 감수성"],
     loveStyle: "로맨틱하고 이상적인 사랑을 꿈꿉니다. 깊은 감정적 연결과 이해를 원해요.",
-    career: ["작가", "예술가", "상담사", "��악가", "사회복지사"],
+    career: ["작가", "예술가", "상담사", "음악가", "사회복지사"],
     bestMatch: ["ENFJ", "ENTJ"],
     goodMatch: ["INFP", "INFJ", "INTP"]
   },
@@ -169,8 +180,8 @@ const mbtiData: Record<MBTIType, {
     title: "경영자",
     emoji: "📊",
     color: "from-blue-600 to-indigo-700",
-    description: "효율적인 관리자. 질����� 규칙을 중시하며, 조���을 체계적으로 이끕니다.",
-    strengths: ["조직력", "���더십", "���실함", "결단력", "책임감"],
+    description: "효율적인 관리자. 질서와 규칙을 중시하며, 조직을 체계적으로 이끕니다.",
+    strengths: ["조직력", "리더십", "성실함", "결단력", "책임감"],
     weaknesses: ["융통성 부족", "고집", "감정 무시", "지배적"],
     loveStyle: "안정적이고 전통적인 관계를 원합니다. 책임감 있고 믿음직한 파트너예요.",
     career: ["관리자", "경찰관", "판사", "재무 담당자", "군 장교"],
@@ -240,7 +251,7 @@ const mbtiData: Record<MBTIType, {
 }
 
 export function MbtiSection() {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const { deductPoints, hasEnoughPoints, points, isHydrated } = usePoints()
   const ANALYSIS_COST = 10
   const [step, setStep] = useState<'start' | 'test' | 'result' | 'personality' | 'love' | 'career' | 'compatibility'>('start')
@@ -385,10 +396,10 @@ export function MbtiSection() {
 
           <div className="grid grid-cols-2 gap-3">
             {[
-              { icon: Brain, label: "성격 분석", color: "text-violet-500", action: 'personality' },
-              { icon: Heart, label: "연애 스타일", color: "text-pink-500", action: 'love' },
-              { icon: Briefcase, label: "직업 성향", color: "text-blue-500", action: 'career' },
-              { icon: Users, label: "MBTI 궁합", color: "text-emerald-500", action: 'compatibility' },
+              { icon: Brain, labelKey: 'mbti.featurePersonality', color: "text-violet-500", action: 'personality' },
+              { icon: Heart, labelKey: 'mbti.featureLoveStyle', color: "text-pink-500", action: 'love' },
+              { icon: Briefcase, labelKey: 'mbti.featureCareer', color: "text-blue-500", action: 'career' },
+              { icon: Users, labelKey: 'mbti.featureCompatibilityShort', color: "text-emerald-500", action: 'compatibility' },
             ].map((item, idx) => (
               <button
                 key={idx}
@@ -404,7 +415,7 @@ export function MbtiSection() {
                 className="bg-white rounded-xl p-4 shadow-sm flex flex-col items-center gap-2 hover:shadow-md hover:bg-gray-50 transition-all"
               >
                 <item.icon className={`h-6 w-6 ${item.color}`} />
-                <span className="text-sm font-medium text-gray-700">{item.label}</span>
+                <span className="text-sm font-medium text-gray-700">{t(item.labelKey)}</span>
               </button>
             ))}
           </div>
@@ -621,21 +632,30 @@ export function MbtiSection() {
                 onClick={() => unlockPremium('detailed')}
                 className="mt-3 bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white text-sm"
               >
-                10P로 잠금해제
+                {t('mbti.unlockForPoints')}
               </Button>
             </div>
             <div className="opacity-20">
-              <h4 className="font-bold text-gray-800 mb-2">상세 분석 리포트</h4>
-              <p className="text-sm text-gray-600">성격의 깊은 분석, 숨겨진 특성, 성장 방향...</p>
+              <h4 className="font-bold text-gray-800 mb-2">{t('mbti.detailedTeaserTitle')}</h4>
+              <p className="text-sm text-gray-600">{t('mbti.detailedTeaserDesc')}</p>
             </div>
           </div>
         ) : (
           <div className="bg-gradient-to-br from-violet-50 to-fuchsia-50 rounded-2xl p-5 border border-violet-200">
-            <h4 className="font-bold text-violet-800 mb-3">상세 분석 리포트</h4>
+            <h4 className="font-bold text-violet-800 mb-3">{t('mbti.detailedFullTitle')}</h4>
             <div className="space-y-3 text-sm text-gray-700">
-              <p><strong>숨겨진 특성:</strong> {result}형은 겉으로 보이는 것과 달리 내면에 깊은 감수성을 가지고 있습니다. 혼자만의 시간에 진정한 자아를 발견하며, 창의적인 아이디어가 샘솟습니다.</p>
-              <p><strong>성장 방향:</strong> 자신의 감정을 더 솔직하게 표현하는 연습을 해보세요. 새로운 경험에 열린 마음을 가지면 더 큰 성장을 이룰 수 있습니다.</p>
-              <p><strong>스트레스 관리:</strong> {result}형은 과도한 사회적 상황이나 예측 불가능한 변화에 스트레스를 받을 수 있습니다. 규칙적인 휴식과 취미 활동으로 균형을 유지하세요.</p>
+              <p>
+                <strong>{t('mbti.detailedHidden')}</strong>{' '}
+                {t('mbti.detailedHiddenBody').replace('{type}', result)}
+              </p>
+              <p>
+                <strong>{t('mbti.detailedGrowth')}</strong>{' '}
+                {t('mbti.detailedGrowthBody')}
+              </p>
+              <p>
+                <strong>{t('mbti.detailedStress')}</strong>{' '}
+                {t('mbti.detailedStressBody').replace('{type}', result)}
+              </p>
             </div>
           </div>
         )}
@@ -673,26 +693,35 @@ export function MbtiSection() {
               
               {!unlockedSections.includes(`compat-${partnerType}`) ? (
                 <div className="text-center">
-                  <p className="text-gray-500 text-sm mb-3">궁합 상세 분석은 프리미엄 콘텐츠입니다</p>
+                  <p className="text-gray-500 text-sm mb-3">{t('mbti.compatPremiumTeaser')}</p>
                   <Button 
                     onClick={() => unlockPremium(`compat-${partnerType}`)}
                     className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm"
                   >
-                    10P로 잠금해제
+                    {t('mbti.unlockForPoints')}
                   </Button>
                 </div>
               ) : (
                 <div className="space-y-2 text-sm">
                   <p className="text-emerald-700">
-                    <strong>궁합 점수:</strong> {data.bestMatch.includes(partnerType) ? '95점 (최고의 궁합!)' : data.goodMatch.includes(partnerType) ? '80점 (���은 궁합)' : '65점 (노력이 필요한 궁합)'}
+                    <strong>{t('mbti.compatScoreStrong')}</strong>{' '}
+                    {mbtiResultCompatScoreLine(
+                      language,
+                      mbtiCompatTier(
+                        data.bestMatch.includes(partnerType),
+                        data.goodMatch.includes(partnerType)
+                      )
+                    )}
                   </p>
                   <p className="text-gray-600">
-                    {result}와 {partnerType}의 조합은 {data.bestMatch.includes(partnerType) 
-                      ? '서로를 완벽하게 보완하는 환상의 궁합입니다! 깊은 이해와 존중을 바탕으로 오래도록 행복한 관계를 유지할 수 있습니다.'
-                      : data.goodMatch.includes(partnerType)
-                      ? '서로의 차이점이 오히려 매력이 되는 좋은 궁합입니다. 소통을 통해 더욱 깊��� 관계로 발전할 수 있습니다.'
-                      : '서로 다른 점이 많지만, 그만큼 배울 점도 많습니다. 인내심을 가지고 상대방을 이해하려 노력하면 성장하는 관���가 될 수 있습니다.'
-                    }
+                    {t('mbti.compatPairPrefix').replace('{a}', result).replace('{b}', partnerType)}{' '}
+                    {mbtiCompatResultParagraph(
+                      language,
+                      mbtiCompatTier(
+                        data.bestMatch.includes(partnerType),
+                        data.goodMatch.includes(partnerType)
+                      )
+                    )}
                   </p>
                 </div>
               )}
@@ -739,7 +768,7 @@ export function MbtiSection() {
           onClick={() => setStep(result ? 'result' : 'start')}
           className="text-violet-600"
         >
-          {'← 돌아가기'}
+          {`← ${t('button.back')}`}
         </Button>
 
         <div className={`bg-gradient-to-br ${data.color} rounded-2xl p-6 text-white text-center`}>
@@ -750,13 +779,13 @@ export function MbtiSection() {
 
         <div className="space-y-4">
           <div className="bg-white rounded-2xl p-5 shadow-sm">
-            <h4 className="font-bold text-gray-800 mb-3">핵심 성격 특성</h4>
+            <h4 className="font-bold text-gray-800 mb-3">{t('mbti.personalityCoreTitle')}</h4>
             <p className="text-gray-600 text-sm leading-relaxed">{data.description}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-emerald-50 rounded-2xl p-4 border border-emerald-200">
-              <h4 className="font-bold text-emerald-700 mb-3">강점</h4>
+              <h4 className="font-bold text-emerald-700 mb-3">{t('mbti.strengths')}</h4>
               <ul className="space-y-2">
                 {data.strengths.map((s, i) => (
                   <li key={i} className="text-sm text-emerald-600 flex items-center gap-2">
@@ -766,7 +795,7 @@ export function MbtiSection() {
               </ul>
             </div>
             <div className="bg-rose-50 rounded-2xl p-4 border border-rose-200">
-              <h4 className="font-bold text-rose-700 mb-3">약점</h4>
+              <h4 className="font-bold text-rose-700 mb-3">{t('mbti.weaknesses')}</h4>
               <ul className="space-y-2">
                 {data.weaknesses.map((w, i) => (
                   <li key={i} className="text-sm text-rose-600 flex items-center gap-2">
@@ -778,13 +807,15 @@ export function MbtiSection() {
           </div>
 
           <div className="bg-white rounded-2xl p-5 shadow-sm">
-            <h4 className="font-bold text-gray-800 mb-3">소통 스타일</h4>
-            <p className="text-gray-600 text-sm">{savedResult.startsWith('E') ? 'E형: 외향적이고 적극적인 소통을 선호합니다. 말을 통해 생각을 정리하고 관계를 형성합니다.' : 'I형: 내향적이고 신중한 소통을 선호합니다. 깊이 있는 대화와 일대일 상호작용을 좋아합니다.'}</p>
+            <h4 className="font-bold text-gray-800 mb-3">{t('mbti.commStyleTitle')}</h4>
+            <p className="text-gray-600 text-sm">
+              {mbtiPersonalityCommStyle(language, savedResult.startsWith('E'))}
+            </p>
           </div>
 
           <div className="bg-white rounded-2xl p-5 shadow-sm">
-            <h4 className="font-bold text-gray-800 mb-3">성장 방향</h4>
-            <p className="text-gray-600 text-sm">자신의 약점을 인식하고 그것을 개선하려는 노력이 중요합니다. 강점을 더욱 발전시키면서 동시에 약점을 보완하는 전략을 세우세요. 주변 사람들의 피드백을 열린 마음으로 받아들이고 계속 배우고 성장하세요.</p>
+            <h4 className="font-bold text-gray-800 mb-3">{t('mbti.growthDirectionTitle')}</h4>
+            <p className="text-gray-600 text-sm">{t('mbti.growthDirectionBody')}</p>
           </div>
         </div>
         </div>
@@ -818,35 +849,42 @@ export function MbtiSection() {
           onClick={() => setStep(result ? 'result' : 'start')}
           className="text-pink-600"
         >
-          {'← 돌아가기'}
+          {`← ${t('button.back')}`}
         </Button>
 
         <div className="bg-gradient-to-br from-pink-500 to-rose-600 rounded-2xl p-6 text-white text-center">
           <div className="text-4xl mb-2">💕</div>
-          <div className="text-3xl font-bold">{savedResult}의 연애 스타일</div>
+          <div className="text-3xl font-bold">{t('mbti.lovePageTitle').replace('{type}', savedResult)}</div>
         </div>
 
         <div className="space-y-4">
           <div className="bg-white rounded-2xl p-5 shadow-sm">
             <h4 className="font-bold text-rose-700 mb-2 flex items-center gap-2">
-              <Heart className="h-5 w-5" />연애 성향
+              <Heart className="h-5 w-5" />
+              {t('mbti.loveTendencyTitle')}
             </h4>
             <p className="text-gray-600 text-sm">{data.loveStyle}</p>
           </div>
 
           <div className="bg-rose-50 rounded-2xl p-5 border border-rose-200">
-            <h4 className="font-bold text-rose-700 mb-3">감정 표현 방식</h4>
-            <p className="text-gray-600 text-sm">{savedResult.includes('F') ? 'F형: 감정을 솔직하게 표현하고 상대방의 감정을 중시합니다. 깊은 감정적 연결을 원합니다.' : 'T형: 논리적이고 차분한 표현을 선호합니다. 행동으로 사랑을 표현하는 경향이 있습니다.'}</p>
+            <h4 className="font-bold text-rose-700 mb-3">{t('mbti.emotionExpressTitle')}</h4>
+            <p className="text-gray-600 text-sm">
+              {mbtiLoveExpressStyle(language, savedResult.includes('F'))}
+            </p>
           </div>
 
           <div className="bg-pink-50 rounded-2xl p-5 border border-pink-200">
-            <h4 className="font-bold text-pink-700 mb-3">관계 강점</h4>
-            <p className="text-gray-600 text-sm">당신의 {savedResult} 성향은 {data.bestMatch.slice(0, 1).map(t => t).join(', ')}과 특히 잘 맞습니다. 공통점을 찾아 깊은 유대감을 형성하세요.</p>
+            <h4 className="font-bold text-pink-700 mb-3">{t('mbti.relationshipStrengthTitle')}</h4>
+            <p className="text-gray-600 text-sm">
+              {t('mbti.relationshipStrengthBody')
+                .replace('{type}', savedResult)
+                .replace('{match}', data.bestMatch[0])}
+            </p>
           </div>
 
           <div className="bg-amber-50 rounded-2xl p-5 border border-amber-200">
-            <h4 className="font-bold text-amber-700 mb-3">주의할 점</h4>
-            <p className="text-gray-600 text-sm">상대방의 감정과 필요를 이해하려고 노력하세요. 항상 상대방의 입장에서 생각하고, 작은 것들에 감사하며 자주 표현하는 것이 좋습니다.</p>
+            <h4 className="font-bold text-amber-700 mb-3">{t('mbti.cautionTitle')}</h4>
+            <p className="text-gray-600 text-sm">{t('mbti.cautionBody')}</p>
           </div>
         </div>
         </div>
@@ -880,19 +918,19 @@ export function MbtiSection() {
           onClick={() => setStep(result ? 'result' : 'start')}
           className="text-blue-600"
         >
-          {'← 돌아가기'}
+          {`← ${t('button.back')}`}
         </Button>
 
         <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-6 text-white text-center">
           <div className="text-4xl mb-2">💼</div>
-          <div className="text-3xl font-bold">{savedResult}의 직업 성향</div>
+          <div className="text-3xl font-bold">{t('mbti.careerPageTitle').replace('{type}', savedResult)}</div>
         </div>
 
         <div className="space-y-4">
           <div className="bg-white rounded-2xl p-5 shadow-sm">
             <h4 className="font-bold text-blue-700 mb-3 flex items-center gap-2">
               <Briefcase className="h-5 w-5" />
-              추천 직업
+              {t('mbti.recommendedJobsTitle')}
             </h4>
             <div className="flex flex-wrap gap-2">
               {data.career.map((c, i) => (
@@ -904,18 +942,22 @@ export function MbtiSection() {
           </div>
 
           <div className="bg-blue-50 rounded-2xl p-5 border border-blue-200">
-            <h4 className="font-bold text-blue-700 mb-3">업무 스타일</h4>
-            <p className="text-gray-600 text-sm">{savedResult.includes('J') ? 'J형: 체계적이고 계획적인 업무 방식을 선호합니다. 마감일을 중시하�� 체계적으로 일을 진행합니다.' : 'P형: 유연하고 적응적인 업무 방식을 선호합���다. 상황에 맞춰 빠르게 대응하고 변화를 잘 받아들입니다.'}</p>
+            <h4 className="font-bold text-blue-700 mb-3">{t('mbti.workStyleTitle')}</h4>
+            <p className="text-gray-600 text-sm">
+              {mbtiCareerWorkStyle(language, savedResult.includes('J'))}
+            </p>
           </div>
 
           <div className="bg-indigo-50 rounded-2xl p-5 border border-indigo-200">
-            <h4 className="font-bold text-indigo-700 mb-3">리더십 성향</h4>
-            <p className="text-gray-600 text-sm">{savedResult.startsWith('E') ? 'E형: 적극적이고 주도적인 리더십을 보입니다. 팀을 이끌고 영감을 주는 역할에 적합합니다.' : 'I형: 신중하고 신뢰할 수 있는 리더십을 보입니다. 깊이 있는 생각과 전략으로 팀을 이끕니다.'}</p>
+            <h4 className="font-bold text-indigo-700 mb-3">{t('mbti.leadershipStyleTitle')}</h4>
+            <p className="text-gray-600 text-sm">
+              {mbtiCareerLeadership(language, savedResult.startsWith('E'))}
+            </p>
           </div>
 
           <div className="bg-amber-50 rounded-2xl p-5 border border-amber-200">
-            <h4 className="font-bold text-amber-700 mb-3">경력 조언</h4>
-            <p className="text-gray-600 text-sm">당신의 강점을 활용할 수 있는 역할을 찾으세요. 약점을 보완하기 위해 지속적인 자기 개발을 하고, 멘토나 동료로부터 배우는 것을 게을리하지 마세요.</p>
+            <h4 className="font-bold text-amber-700 mb-3">{t('mbti.careerAdviceTitle')}</h4>
+            <p className="text-gray-600 text-sm">{t('mbti.careerAdviceBody')}</p>
           </div>
         </div>
         </div>
@@ -955,17 +997,17 @@ export function MbtiSection() {
           onClick={() => setStep(result ? 'result' : 'start')}
           className="text-emerald-600"
         >
-          {'← 돌아가기'}
+          {`← ${t('button.back')}`}
         </Button>
 
         <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 text-white text-center">
           <div className="text-4xl mb-2">💞</div>
-          <div className="text-3xl font-bold">MBTI 궁합 분석</div>
+          <div className="text-3xl font-bold">{t('mbti.compatPageTitle')}</div>
         </div>
 
         <div className="space-y-4">
           <div className="bg-white rounded-2xl p-5 shadow-sm">
-            <h4 className="font-bold text-gray-800 mb-4">상대 MBTI 선택</h4>
+            <h4 className="font-bold text-gray-800 mb-4">{t('mbti.selectPartnerTitle')}</h4>
             <div className="grid grid-cols-4 gap-2">
               {(Object.keys(mbtiData) as MBTIType[]).map(type => (
                 <button
@@ -993,9 +1035,18 @@ export function MbtiSection() {
                 </div>
                 
                 <div className="text-center">
-                  <div className="text-4xl font-black text-emerald-600">{compatibilityScore()}점</div>
+                  <div className="text-4xl font-black text-emerald-600">
+                    {compatibilityScore()}
+                    {t('mbti.scoreUnit')}
+                  </div>
                   <p className="text-emerald-700 font-bold mt-1">
-                    {compatibilityScore() === 95 ? '최고의 궁합!' : compatibilityScore() === 80 ? '좋은 궁합' : '도전적인 궁합'}
+                    {mbtiCompatTabScoreLabel(
+                      language,
+                      mbtiCompatTier(
+                        compatibilityScore() === 95,
+                        compatibilityScore() === 80
+                      )
+                    )}
                   </p>
                 </div>
               </div>
@@ -1003,29 +1054,38 @@ export function MbtiSection() {
               {!unlockedSections.includes(`compat-${partnerType}`) ? (
                 <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-5 border border-amber-200 text-center">
                   <Lock className="h-8 w-8 text-amber-500 mx-auto mb-2" />
-                  <p className="text-amber-700 font-semibold mb-3">상세 분석은 프리미엄 콘텐츠입니다</p>
+                  <p className="text-amber-700 font-semibold mb-3">{t('mbti.compatPremiumLockedTitle')}</p>
                   <Button 
                     onClick={() => unlockPremium(`compat-${partnerType}`)}
                     className="bg-gradient-to-r from-amber-500 to-orange-500 text-white w-full"
                   >
-                    10P로 잠금해제
+                    {t('mbti.unlockForPoints')}
                   </Button>
                 </div>
               ) : (
                 <div className="space-y-4">
                   <div className="bg-emerald-50 rounded-2xl p-5 border border-emerald-200">
-                    <h4 className="font-bold text-emerald-700 mb-2">함께했을 때 강점</h4>
-                    <p className="text-gray-600 text-sm">서로의 다른 점을 보완하며 함께 성장할 수 있습니다. {data.bestMatch.includes(partnerType as MBTIType) ? '완벽한 균형을 이루는 조합으로 깊은 유대감을 형성할 수 있습니다.' : data.goodMatch.includes(partnerType as MBTIType) ? '잘 맞는 조합으로 서로를 이해하고 지지할 수 있습니다.' : '차이를 이해하고 존중하려는 노력이 필요하지만 성장의 기회가 있습니다.'}</p>
+                    <h4 className="font-bold text-emerald-700 mb-2">{t('mbti.strengthsTogetherTitle')}</h4>
+                    <p className="text-gray-600 text-sm">
+                      서로의 다른 점을 보완하며 함께 성장할 수 있습니다.{' '}
+                      {mbtiCompatUnlockedDetail(
+                        language,
+                        mbtiCompatTier(
+                          data.bestMatch.includes(partnerType as MBTIType),
+                          data.goodMatch.includes(partnerType as MBTIType)
+                        )
+                      )}
+                    </p>
                   </div>
 
                   <div className="bg-rose-50 rounded-2xl p-5 border border-rose-200">
-                    <h4 className="font-bold text-rose-700 mb-2">갈등 위험 요소</h4>
-                    <p className="text-gray-600 text-sm">서로 다른 가치관이 충돌할 수 있습니다. 상대방의 관점을 이해하려 노력하고, 충돌 시 차분하게 대화하는 것이 중요합니다.</p>
+                    <h4 className="font-bold text-rose-700 mb-2">{t('mbti.conflictRiskTitle')}</h4>
+                    <p className="text-gray-600 text-sm">{t('mbti.conflictRiskBody')}</p>
                   </div>
 
                   <div className="bg-blue-50 rounded-2xl p-5 border border-blue-200">
-                    <h4 className="font-bold text-blue-700 mb-2">소통 팁</h4>
-                    <p className="text-gray-600 text-sm">명확하고 정직한 소통을 유지하세요. 상대방의 말을 경청하고, 자신의 감정과 생각을 분명히 표현하는 것이 관계를 발전시킵니다.</p>
+                    <h4 className="font-bold text-blue-700 mb-2">{t('mbti.communicationTipsTitle')}</h4>
+                    <p className="text-gray-600 text-sm">{t('mbti.communicationTipsBody')}</p>
                   </div>
                 </div>
               )}

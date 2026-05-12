@@ -13,8 +13,9 @@ interface PiPaymentModalProps {
   title?: string
 }
 
-export function PiPaymentModal({ isOpen, onClose, onPayment, title = "Pi 결제" }: PiPaymentModalProps) {
+export function PiPaymentModal({ isOpen, onClose, onPayment, title }: PiPaymentModalProps) {
   const { t } = useLanguage()
+  const headerTitle = title ?? t('support.piPaymentTitle')
   const [selectedAmount, setSelectedAmount] = useState<number | null>(1)
   const [customAmount, setCustomAmount] = useState<string>("")
   const [isProcessing, setIsProcessing] = useState(false)
@@ -91,12 +92,12 @@ export function PiPaymentModal({ isOpen, onClose, onPayment, title = "Pi 결제"
           <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-full flex items-center justify-center">
             <Zap className="h-5 w-5 text-white" />
           </div>
-          <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+          <h2 className="text-xl font-bold text-gray-900">{headerTitle}</h2>
         </div>
 
         {/* 설명 문구 */}
         <p className="text-sm text-gray-600 mb-5">
-          원하는 금액을 선택하거나 직접 입력하세요
+          {t('support.piModalIntro')}
         </p>
 
         {/* 빠른 선택 버튼 */}
@@ -120,12 +121,12 @@ export function PiPaymentModal({ isOpen, onClose, onPayment, title = "Pi 결제"
         {/* 직접 입력 */}
         <div className="mb-5">
           <label className="text-sm font-medium text-gray-700 block mb-2">
-            또는 직접 입력
+            {t('support.piModalCustomLabel')}
           </label>
           <div className="flex gap-2">
             <Input
               type="text"
-              placeholder="예: 3.14"
+              placeholder={t('support.piModalPlaceholder')}
               value={customAmount}
               onChange={(e) => handleCustomInput(e.target.value)}
               className="flex-1"
@@ -134,20 +135,20 @@ export function PiPaymentModal({ isOpen, onClose, onPayment, title = "Pi 결제"
             <span className="flex items-center text-gray-600 font-bold">π</span>
           </div>
           <p className="text-xs text-gray-500 mt-2">
-            소수점 입력 가능 (예: 3.14 Pi)
+            {t('support.piModalDecimalHint')}
           </p>
         </div>
 
         {/* 금액 표시 */}
         <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-4 mb-5 border border-amber-200">
           <div className="mb-3">
-            <p className="text-xs text-gray-600 mb-1">선택한 금액</p>
+            <p className="text-xs text-gray-600 mb-1">{t('support.piModalSelectedLabel')}</p>
             <p className="text-2xl font-bold text-amber-700">
               {finalAmount ? `${finalAmount} Pi` : "0 Pi"}
             </p>
           </div>
           <div className="border-t border-amber-200 pt-3">
-            <p className="text-xs text-gray-600 mb-1">결제 예정 금액</p>
+            <p className="text-xs text-gray-600 mb-1">{t('support.piModalDueLabel')}</p>
             <p className="text-lg font-bold text-amber-700">
               {finalAmount ? `${finalAmount} Pi` : "0 Pi"}
             </p>
@@ -160,14 +161,17 @@ export function PiPaymentModal({ isOpen, onClose, onPayment, title = "Pi 결제"
           disabled={!finalAmount || isProcessing}
           className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl transition-all"
         >
-          {isProcessing ? "처리 중..." : `${finalAmount ? finalAmount + " Pi" : "Pi"} 결제하기`}
+          {(() => {
+            if (isProcessing) return t('support.piModalProcessing')
+            if (finalAmount) return t('support.piModalPayCta').replace('{amount}', String(finalAmount))
+            return t('support.piModalPayCtaGeneric')
+          })()}
         </Button>
 
         {/* 안내 문구 */}
         <div className="mt-4 p-3 bg-blue-50 rounded-xl border border-blue-200">
-          <p className="text-xs text-blue-700 leading-relaxed">
-            💡 0 이하의 금액은 입력할 수 없습니다.<br />
-            결제 후 즉시 계정에 반영됩니다.
+          <p className="text-xs text-blue-700 leading-relaxed whitespace-pre-line">
+            💡 {t('support.piModalFooterHint')}
           </p>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import type { FortuneResult, FortuneType, FortuneCategory, LifetimeFortune } from './types'
 import type { Language } from './i18n'
+import { getFortuneContentLanguage } from './fortune-generator'
 import { getPersonalizationVariant, createPersonalization, type FortunePersonalization } from './myeongrihak'
 import { getMonthlyFortune } from './monthly-fortunes'
 import { 
@@ -14,9 +15,12 @@ import {
   yearlyDetailedTemplates,
   yearlyComprehensiveTemplates,
   monthlyDetailedTemplates,
-  fallbackTemplates,
+  getFallbackTemplate,
+  getMonthlyDetailedLine,
   getTemplateByIndex,
   getTemplateCount,
+  getYearlyComprehensivePool,
+  getYearlyDetailedPool,
 } from './fortune-templates'
 
 // ─── Safety Utils ─────────────────────────────────────────────────────────────
@@ -27,14 +31,14 @@ const MAX_RESULTS_COUNT = 12
 /**
  * 운세 텍스트를 안전한 길이로 정규화
  */
-function sanitizeDescription(text: unknown): string {
+function sanitizeDescription(text: unknown, language: Language = 'ko'): string {
   if (typeof text !== 'string') {
-    return fallbackTemplates.general
+    return getFallbackTemplate('general', language)
   }
   
   const trimmed = text.trim()
   if (!trimmed || trimmed.length === 0) {
-    return fallbackTemplates.general
+    return getFallbackTemplate('general', language)
   }
   
   if (trimmed.length > MAX_DESCRIPTION_LENGTH) {
@@ -56,13 +60,13 @@ function normalizScore(score: unknown): number {
 /**
  * FortuneResult를 안전하게 정규화
  */
-function sanitizeFortuneResult(result: unknown, type: FortuneType, category: FortuneCategory): FortuneResult {
+function sanitizeFortuneResult(result: unknown, type: FortuneType, category: FortuneCategory, language: Language = 'ko'): FortuneResult {
   if (!result || typeof result !== 'object') {
     return {
       type,
       category,
       score: 7,
-      description: fallbackTemplates.general,
+      description: getFallbackTemplate('general', language),
       luckyColor: '#9C27B0',
       luckyNumber: 7,
     }
@@ -74,7 +78,7 @@ function sanitizeFortuneResult(result: unknown, type: FortuneType, category: For
     category: obj.category || category,
     month: typeof obj.month === 'number' ? obj.month : undefined,
     score: normalizScore(obj.score),
-    description: sanitizeDescription(obj.description),
+    description: sanitizeDescription(obj.description, language),
     luckyColor: typeof obj.luckyColor === 'string' ? obj.luckyColor : '#9C27B0',
     luckyNumber: typeof obj.luckyNumber === 'number' ? obj.luckyNumber : 7,
   }
@@ -552,7 +556,8 @@ const fortuneSentencePools = {
 function generateCustomFortune(
   seed: number,
   pools: Record<string, string[]>,
-  sentenceCount: number = 5
+  sentenceCount: number = 5,
+  language: Language = 'ko'
 ): string {
   try {
     const rng = new SeededRandom(seed)
@@ -597,10 +602,10 @@ function generateCustomFortune(
     // 자연스러운 문단 형태로 조합
     return sentences.length > 0 
       ? sentences.join(' ')
-      : fallbackTemplates.general
+      : getFallbackTemplate('general', language)
   } catch (error) {
     console.log('[v0] Error in generateCustomFortune:', error)
-    return fallbackTemplates.general
+    return getFallbackTemplate('general', language)
   }
 }
 
@@ -623,12 +628,8 @@ export interface FortuneProfileContext {
 type SupportedFortuneLanguage = 'ko' | 'en' | 'ja' | 'zh'
 type LangMap = Record<SupportedFortuneLanguage, string[]>
 
-// 언어 fallback 함수 - 지원하지 않는 언어는 영어로
 function getFortuneLanguage(lang: Language): SupportedFortuneLanguage {
-  if (lang === 'ko' || lang === 'en' || lang === 'ja' || lang === 'zh') {
-    return lang
-  }
-  return 'en' // 기본 fallback
+  return getFortuneContentLanguage(lang)
 }
 
 const fortuneDescriptions: Record<FortuneCategory, LangMap> = {
@@ -644,7 +645,7 @@ const fortuneDescriptions: Record<FortuneCategory, LangMap> = {
       '정리와 마무리의 시기입니다. 새로운 시작을 준비하세요.',
       '창의력이 빛나는 시기입니다. 새로운 아이디어를 실행해보세요.',
       '인내와 끈기가 필요한 시기입니다. 조급해하지 마세요.',
-      '행운이 가까이 다가오는 시기입니다. 기회를 ��치지 마세요.',
+      '행운이 가까이 다가오는 시기입니다. 기회를 놓치지 마세요.',
       '자기 발전에 집중하는 시기입니다. 배움의 기회를 찾으세요.',
       '직관을 믿어야 할 시기입니다. 내면의 목소리에 귀 기울이세요.',
       '협력과 팀워크가 중요한 시기입니다. 혼자보다 함께가 좋습니다.',
@@ -663,7 +664,7 @@ const fortuneDescriptions: Record<FortuneCategory, LangMap> = {
     ],
     ja: [
       '新しい始まりの時期です。目標を設定して行動に移しましょう。',
-      '計画������備が重要な時期です。内省の時間を持ちましょう。',
+      '計画と準備が重要な時期です。内省の時間を持ちましょう。',
       '成長の時期です。新しいことに挑戦しましょう。',
       '行動の時期です。計画を実行に移しましょう。積極的な姿勢が必要です。',
       '安定と調和の時期です。周囲の人との関係を深めましょう。',
@@ -692,7 +693,7 @@ const fortuneDescriptions: Record<FortuneCategory, LangMap> = {
       '재물운이 평탄합니다. 현재의 상태를 유지하세요.',
       '큰 지출보다는 소소한 행복에 투자하세요. 만족감이 높아집니다.',
       '금전적인 행운이 따르는 시기입니다. 복권이나 경품에 도전해보세요.',
-      '장기 투자를 고려�� 시기입니다. 미래를 위한 준비를 하세요.',
+      '장기 투자를 고려할 시기입니다. 미래를 위한 준비를 하세요.',
       '재정 계획을 재검토할 시기입니다. 불필요한 지출을 줄이세요.',
       '귀인의 도움으로 재물운이 상승합니다. 인맥을 소중히 하세요.',
       '안정적인 수입이 예상됩니다. 꾸준함이 성공의 비결입니다.',
@@ -707,7 +708,7 @@ const fortuneDescriptions: Record<FortuneCategory, LangMap> = {
     ],
     ja: [
       '金運が上昇する時期です。投資に良いチャンスが来るかもしれません。',
-      '���出を減らし、貯蓄に集中しましょう。安定した財政管理が必要です。',
+      '支出を減らし、貯蓄に集中しましょう。安定した財政管理が必要です。',
       '予想外の収入があるかもしれません。感謝の気持ちを持ちましょう。',
       '財政的な決断は慎重に。専門家のアドバイスを求めるのも良いでしょう。',
       '副業や新しい収入源を検討してみましょう。チャンスがあります。',
@@ -776,9 +777,9 @@ const fortuneDescriptions: Record<FortuneCategory, LangMap> = {
     ja: [
       '恋愛運が上昇する時期です。新しい出会いが期待できます。',
       '現在の関係をより深く発展させることができる時期です。',
-      'コミュニケーションに集中しましょう。相手の話に耳��傾けてください。',
-      'ロマンティックな時間を過ごせ�����す。デートを計画しましょう。',
-      '小さな誤解が生まれるかもしれません。理解と妥���が必要です。',
+      'コミュニケーションに集中しましょう。相手の話に耳を傾けてください。',
+      'ロマンティックな時間を過ごせます。デートを計画しましょう。',
+      '小さな誤解が生まれるかもしれません。理解と妥協が必要です。',
       'シングルなら積極的に人と会ってみましょう。',
     ],
     zh: [
@@ -793,7 +794,7 @@ const fortuneDescriptions: Record<FortuneCategory, LangMap> = {
   relationships: {
     ko: [
       '대인관계가 원만한 시기입니다. 새로운 인연을 만날 수 있습니다.',
-      '가족과의 시간을 소중히 하세요. 화목한 분위기가 예상됩���다.',
+      '가족과의 시간을 소중히 하세요. 화목한 분위기가 예상됩니다.',
       '친구들과의 관계를 돈독히 하세요. 좋은 조언을 얻을 수 있습니다.',
       '직장 동료들과의 협력이 중요합니다. 팀워크를 발휘하세요.',
       '오해가 생길 수 있으니 소통에 주의하세요.',
@@ -843,7 +844,7 @@ const fortuneDescriptions: Record<FortuneCategory, LangMap> = {
     ],
     ja: [
       '健康運が良いです。しかし過労は避けましょう。',
-      '規則的な運動を���めるのに良い時期です。',
+      '規則的な運動を始めるのに良い時期です。',
       'ストレス管理に注意しましょう。休息が必要です。',
       '食習慣の改善を検討しましょう。健康的な食事が重要です。',
       '定期検診を受けましょう。予防が最善です。',
@@ -865,7 +866,7 @@ const fortuneDescriptions: Record<FortuneCategory, LangMap> = {
 const yearlyDescriptions: Record<FortuneCategory, LangMap> = {
   total: {
     ko: [
-      '올해는 새로운 시작의 해입니다. 상반기에는 준비와 계획에 집중하고, 하반기에는 실행에 옮기세요. 귀인의 도움으로 뜻밖의 기회가 ���아올 수 있으니 인연을 소중히 여기세요. 특히 3월, 7월, 11월에 좋은 일이 생길 수 있습니다.',
+      '올해는 새로운 시작의 해입니다. 상반기에는 준비와 계획에 집중하고, 하반기에는 실행에 옮기세요. 귀인의 도움으로 뜻밖의 기회가 다가올 수 있으니 인연을 소중히 여기세요. 특히 3월, 7월, 11월에 좋은 일이 생길 수 있습니다.',
       '올해는 성장과 발전의 해입니다. 커리어에서 한 단계 도약할 기회가 있으며, 봄에 시작한 일이 가을에 결실을 맺으니 인내심을 가지세요. 5월과 9월에 특별한 기회가 옵니다.',
       '올해는 안정과 성숙의 해입니다. 큰 변화보다는 현재의 것을 다지는 데 집중하세요. 하반기로 갈수록 운이 상승하여 12월에 좋은 소식이 있을 수 있습니다.',
     ],
@@ -887,7 +888,7 @@ const yearlyDescriptions: Record<FortuneCategory, LangMap> = {
   },
   wealth: {
     ko: [
-      '올해 재물운은 상승세입니다. 상반기에는 수입이 증가하고, 하반기에는 투자에서 좋은 결과를 얻을 수 있습니다. 부동산 거래는 6월 이�����가 좋습니다.',
+      '올해 재물운은 상승세입니다. 상반기에는 수입이 증가하고, 하반기에는 투자에서 좋은 결과를 얻을 수 있습니다. 부동산 거래는 6월 이후가 좋습니다.',
       '올해는 재정 관리가 중요한 해입니다. 수입은 안정적이나 지출 관리를 잘해야 합니다. 10월 이후 재물운이 상승하니 연말에 좋은 기회가 올 수 있습니다.',
     ],
     en: [
@@ -896,7 +897,7 @@ const yearlyDescriptions: Record<FortuneCategory, LangMap> = {
     ],
     ja: [
       '今年の金運は上昇傾向にあります。上半期は収入が増加し、下半期は投資で良い結果が得られます。不動産取引は6月以降が良いでしょう。',
-      '今年は財政管理が重要な年です。収入は安定していますが、支出管理をしっかりしましょう。10月以降に金運が上昇し、���末に良い機会が来るかもしれません。',
+      '今年は財政管理が重要な年です。収入は安定していますが、支出管理をしっかりしましょう。10月以降に金運が上昇し、年末に良い機会が来るかもしれません。',
     ],
     zh: [
       '今年财运呈上升趋势。上半年收入增加，下半年投资可获好结果。房产交易6月后为宜。',
@@ -906,7 +907,7 @@ const yearlyDescriptions: Record<FortuneCategory, LangMap> = {
   business: {
     ko: [
       '올해 사업운은 긍정적입니다. 새로운 프로젝트 시작이나 사업 확장에 좋은 시기입니다. 6월과 10월에 중요한 계약이나 거래가 성사될 수 있습니다.',
-      '올해 사업에서 중요한 전환점이 있습니다. 기존 방식에서 벗어나 새로운 시도를 해보세요. 3분기부터 성과가 나타���니다.',
+      '올해 사업에서 중요한 전환점이 있습니다. 기존 방식에서 벗어나 새로운 시도를 해보세요. 3분기부터 성과가 나타납니다.',
     ],
     en: [
       'Business luck is positive this year. A good time to start new projects or expand your business. Important contracts or deals may close in June and October.',
@@ -967,7 +968,7 @@ const yearlyDescriptions: Record<FortuneCategory, LangMap> = {
       'This year is time to check your health. Get that overdue check-up and improve your lifestyle. Minor health issues may arise in April and August, but early treatment prevents problems.',
     ],
     ja: [
-      '今年の健康はおおむね良好ですが、上半期は体力管理が必要です。3月と6月にコンディションが低下す���かもしれません。下半期は健康が回復し、活力があふれます。',
+      '今年の健康はおおむね良好ですが、上半期は体力管理が必要です。3月と6月にコンディションが低下するかもしれません。下半期は健康が回復し、活力があふれます。',
       '今年は健康をチェックする年です。先延ばしにしていた健康診断を受け、生活習慣を改善しましょう。4月と8月に軽微な体調不良があるかもしれませんが、早期対処で問題ありません。',
     ],
     zh: [
@@ -984,17 +985,17 @@ const lifetimeDescriptions: Record<FortuneCategory, Record<'early' | 'mid' | 'la
     early: {
       ko: ['어린 시절부터 총명하고 재능이 뛰어나 주위의 기대를 한 몸에 받습니다. 학업에서 두각을 나타내며, 20대에는 자신만의 길을 개척하려는 의지가 강합니다. 다만 급한 성격으로 인해 실수할 수 있으니 신중함을 기르세요. 이 시기에 쌓은 경험이 평생의 자산이 됩니다.'],
       en: ['Bright and talented from childhood, you carry the hopes of those around you. You excel academically and have a strong drive to carve your own path in your twenties. However, be careful of hasty decisions. The experience you build now becomes a lifelong asset.'],
-      ja: ['幼い頃から聡明で才能にあふれ、周囲の期待を一身に受けます。学業で頭角を現し、20代では��分��けの道を切り開こうとする意志が強いです。ただし、急いでミスをすることがあるので慎重さを養ってください。この時期に積んだ経験が生涯の財産となります。'],
+      ja: ['幼い頃から聡明で才能にあふれ、周囲の期待を一身に受けます。学業で頭角を現し、20代では自分の道を切り開こうとする意志が強いです。ただし、急いでミスをすることがあるので慎重さを養ってください。この時期に積んだ経験が生涯の財産となります。'],
       zh: ['从小聪明有才华，备受周围期待。学业出众，20多岁时有强烈的开拓自己道路的意志。但性子急可能犯错，培养谨慎是关键。这一时期积累的经验将成为一生的财富。'],
     },
     mid: {
-      ko: ['30대부터 본격적인 성장기���� 접어듭니다. 커리어에서 중요한 위치에 오르며, 경제적으로도 안정을 찾습니다. 40대에는 그동안의 노력이 결실을 맺어 사회적 인정을 받게 됩니다. 다만 건강 관리에 소홀하지 않도록 ���의하세요.'],
+      ko: ['30대부터 본격적인 성장기에 접어듭니다. 커리어에서 중요한 위치에 오르며, 경제적으로도 안정을 찾습니다. 40대에는 그동안의 노력이 결실을 맺어 사회적 인정을 받게 됩니다. 다만 건강 관리에 소홀하지 않도록 유의하세요.'],
       en: ['Your 30s mark the beginning of real growth. You rise to important positions in your career and achieve financial stability. In your 40s, your hard work pays off with social recognition. Just be sure not to neglect your health.'],
       ja: ['30代から本格的な成長期に入ります。キャリアで重要な地位に就き、経済的にも安定します。40代にはこれまでの努力が実を結び、社会的な認知を得ます。ただし、健康管理を怠らないよう注意しましょう。'],
-      zh: ['30多岁进入正式的成长期，在职场��据重要位置，经济上也趋于稳定。40多岁时努力结出果实，获得社会认可。但请注意不要忽视健康管理。'],
+      zh: ['30多岁进入正式的成长期，在职场占据重要位置，经济上也趋于稳定。40多岁时努力结出果实，获得社会认可。但请注意不要忽视健康管理。'],
     },
     late: {
-      ko: ['말년은 풍요롭고 평화로운 시기입니다. 자녀들이 성장하여 효도하며, 손자녀의 재롱을 즐깁니다. 건강�� 비교적 양호하여 취미 활동이나 여행을 즐길 수 있습니다. 사회에서 쌓은 명예로 존경받으며, 후배들에게 멘토 역할을 합니다.'],
+      ko: ['말년은 풍요롭고 평화로운 시기입니다. 자녀들이 성장하여 효도하며, 손자녀의 재롱을 즐깁니다. 건강은 비교적 양호하여 취미 활동이나 여행을 즐길 수 있습니다. 사회에서 쌓은 명예로 존경받으며, 후배들에게 멘토 역할을 합니다.'],
       en: ['Your later years are abundant and peaceful. Your children are grown and filial; you enjoy your grandchildren. Health is relatively good, allowing hobbies and travel. Respected for the reputation you built, you serve as a mentor to those who come after you.'],
       ja: ['晩年は豊かで平和な時期です。子供たちが成長して孝行し、孫の可愛らしさを楽しみます。健康も比較的良好で趣味や旅行を楽しめます。社会で積んだ名誉で尊敬され、後輩のメンター役を担います。'],
       zh: ['晚年是富足而平静的时期，子女孝顺，享受孙辈的天真。健康状况相对良好，可以享受兴趣爱好或旅行。因社会积累的名誉受到尊敬，为后辈担任导师角色。'],
@@ -1005,16 +1006,16 @@ const lifetimeDescriptions: Record<FortuneCategory, Record<'early' | 'mid' | 'la
       ko: ['초년에는 재물운이 평탄합니다. 자수성가의 운이 강하므로 일찍부터 경제 관념을 기르세요. 20대 후반부터 서서히 재물이 모이기 시작하며, 저축과 투자의 습관을 들이면 좋습니다.'],
       en: ['Wealth luck is stable in early life. A strong self-made destiny means you should cultivate financial sense early. Wealth begins to accumulate from your late 20s; habits of saving and investing will serve you well.'],
       ja: ['初年は金運が平坦です。自力で成功する運が強いので、早くから経済観念を養いましょう。20代後半から徐々に財が集まり始め、貯蓄と投資の習慣をつけると良いでしょう。'],
-      zh: ['初年财运平稳，白手起家运势强，应早早培养经济观念。20多岁��半段开始积累财富，养成储蓄和投资的习惯为宜。'],
+      zh: ['初年财运平稳，白手起家运势强，应早早培养经济观念。20多岁后半段开始积累财富，养成储蓄和投资的习惯为宜。'],
     },
     mid: {
-      ko: ['중년기는 재물운의 전성기입니다. 30대 후반부터 수입이 크게 증가하며, 40대에는 부동산이나 투자로 큰 수익을 얻을 수 있습니다. 다만 과욕은 금물이며, 본업에 충실하��� 것이 최선입니다.'],
+      ko: ['중년기는 재물운의 전성기입니다. 30대 후반부터 수입이 크게 증가하며, 40대에는 부동산이나 투자로 큰 수익을 얻을 수 있습니다. 다만 과욕은 금물이며, 본업에 충실하는 것이 최선입니다.'],
       en: ['Middle age is the peak of financial luck. Income grows significantly from your late 30s; in your 40s, big gains from real estate or investments are possible. However, greed is dangerous. Staying faithful to your core work is best.'],
-      ja: ['中年期は金運の最盛期です。30代後半から収入が大幅に増加し、40代には不動産や���資で大���な利益を得られます。ただし、過欲は禁物で、本業に忠実でいることが最善です。'],
-      zh: ['������期是财运的鼎盛时期，30多岁后半段收入大幅增加，40多岁可通过房产或投资获得丰厚收益。但切忌贪心，���于本职工作是��策。'],
+      ja: ['中年期は金運の最盛期です。30代後半から収入が大幅に増加し、40代には不動産や投資で大きな利益を得られます。ただし、過欲は禁物で、本業に忠実でいることが最善です。'],
+      zh: ['中年期是财运的鼎盛时期，30多岁后半段收入大幅增加，40多岁可通过房产或投资获得丰厚收益。但切忌贪心，忠于本职工作是良策。'],
     },
     late: {
-      ko: ['말년의 재물운은 안정적입니다. 중년에 쌓은 자산으로 여유로운 노후를 보냅니다. 큰 투자보다는 안전한 예금이나 연금에 집중��세요.'],
+      ko: ['말년의 재물운은 안정적입니다. 중년에 쌓은 자산으로 여유로운 노후를 보냅니다. 큰 투자보다는 안전한 예금이나 연금에 집중하세요.'],
       en: ['Financial luck is stable in later life. Assets built in middle age support a comfortable retirement. Focus on safe deposits or pensions rather than large investments.'],
       ja: ['晩年の金運は安定しています。中年に積んだ資産で余裕のある老後を過ごします。大きな投資より安全な預金や年金に集中しましょう。'],
       zh: ['晚年财运稳定，凭借中年积累的财富安享晚年。专注于安全的存款或养老金，而非大规模投资。'],
@@ -1042,10 +1043,10 @@ const lifetimeDescriptions: Record<FortuneCategory, Record<'early' | 'mid' | 'la
   },
   love: {
     early: {
-      ko: ['초년에는 여러 인연을 만나��만, 진정한 인연은 20대 중후반에 나타납니다. 결혼은 28세 이후가 좋습니다. 외모보다 ���품을 보는 눈을 기르세요.'],
+      ko: ['초년에는 여러 인연을 만나지만, 진정한 인연은 20대 중후반에 나타납니다. 결혼은 28세 이후가 좋습니다. 외모보다 인품을 보는 눈을 기르세요.'],
       en: ['You meet many people early in life, but your true match appears in your mid-to-late 20s. After 28 is a good time for marriage. Train yourself to value character over appearance.'],
-      ja: ['初年は様々な縁に出会い��すが、真の縁は20代の中後半に現れます。結婚は28歳以降が良いでしょう。外見より人柄を見る��を養��ましょう。'],
-      zh: ['初年会遇到各���缘分���但真正的缘分出现在20多岁中后期。婚姻28岁后为宜，培养看重品格而非外貌的眼光。'],
+      ja: ['初年は様々な縁に出会いますが、真の縁は20代の中後半に現れます。結婚は28歳以降が良いでしょう。外見より人柄を見る目を養いましょう。'],
+      zh: ['初年会遇到各种缘分，但真正的缘分出现在20多岁中后期。婚姻28岁后为宜，培养看重品格而非外貌的眼光。'],
     },
     mid: {
       ko: ['중년기 애정운은 안정적입니다. 결혼 생활이 원만하며, 배우자와의 깊은 유대감을 형성합니다. 다만 35세 전후로 작은 위기가 올 수 있으니 소통을 게을리하지 마세요.'],
@@ -1054,9 +1055,9 @@ const lifetimeDescriptions: Record<FortuneCategory, Record<'early' | 'mid' | 'la
       zh: ['中年期爱情运稳定，婚姻生活和睦，与伴侣建立深厚感情纽带。但35岁前后可能有小危机，不要忽视沟通。'],
     },
     late: {
-      ko: ['말년의 애정운은 평화롭습니다. 오랜 세월 함께한 배우자와 깊은 정을 나누며, 손자녀들에��� 사랑을 베풉니다. 여행이나 취미 활동을 함께하면 좋습니다.'],
+      ko: ['말년의 애정운은 평화롭습니다. 오랜 세월 함께한 배우자와 깊은 정을 나누며, 손자녀들에게 사랑을 베풉니다. 여행이나 취미 활동을 함께하면 좋습니다.'],
       en: ['Love luck is peaceful in later life. You share a deep bond with your long-time partner, and you shower your grandchildren with love. Traveling and enjoying hobbies together is recommended.'],
-      ja: ['晩年の恋愛運は平和です。長年連れ添った配偶者と深い情を分かち合い、孫た��に愛情��注ぎます。旅行や趣味活動を一緒にすると良いでしょう。'],
+      ja: ['晩年の恋愛運は平和です。長年連れ添った配偶者と深い情を分かち合い、孫たちに愛情を注ぎます。旅行や趣味活動を一緒にすると良いでしょう。'],
       zh: ['晚年爱情运平静，与相伴多年的伴侣共享深厚感情，将爱倾注于孙辈。一同旅行或享受兴趣爱好为佳。'],
     },
   },
@@ -1070,8 +1071,8 @@ const lifetimeDescriptions: Record<FortuneCategory, Record<'early' | 'mid' | 'la
     mid: {
       ko: ['중년기 대인관계는 사업과 직결됩니다. 넓은 인맥이 성공의 밑거름이 되며, 30대에 맺은 인연이 40대에 큰 도움이 됩니다. 배신을 당할 수도 있으나 대부분의 관계는 긍정적입니다.'],
       en: ['Interpersonal relationships in middle age are directly linked to business success. A broad network becomes the foundation of success; connections made in your 30s will greatly help in your 40s. Betrayal is possible, but most relationships are positive.'],
-      ja: ['中年期の対人関係はビジネスと直結しています。広い人脈が成功の土台となり、30代に築いた縁が40代に大きな助けとなります。裏切られる���ともありますが、ほとんどの関係はポジティブです。'],
-      zh: ['��年期人际关系与事业直接相关，广泛的人脉成为成功的基础，30多岁建立的关系在40多岁大有裨益。虽可能遭遇背叛，但大多数关系是积极的。'],
+      ja: ['中年期の対人関係はビジネスと直結しています。広い人脈が成功の土台となり、30代に築いた縁が40代に大きな助けとなります。裏切られることもありますが、ほとんどの関係はポジティブです。'],
+      zh: ['中年期人际关系与事业直接相关，广泛的人脉成为成功的基础，30多岁建立的关系在40多岁大有裨益。虽可能遭遇背叛，但大多数关系是积极的。'],
     },
     late: {
       ko: ['말년에는 가족 관계가 가장 중요합니다. 자녀, 손자녀와의 관계가 원만하여 행복한 노년을 보냅니다. 오랜 친구들과 교류하며 즐거운 시간을 보내세요.'],
@@ -1084,11 +1085,11 @@ const lifetimeDescriptions: Record<FortuneCategory, Record<'early' | 'mid' | 'la
     early: {
       ko: ['초년에는 대체로 건강하나, 20대 후반부터 체력 관리가 필요합니다. 규칙적인 운동 습관을 들이고, 과로를 피하세요. 이 시기에 건강 습관을 잘 들이면 평생 건강합니다.'],
       en: ['Generally healthy in early life, but physical management becomes necessary from your late 20s. Build a habit of regular exercise and avoid overworking. Good health habits formed now last a lifetime.'],
-      ja: ['初年はおおむね健康ですが、20代後半から体力管理が必要になります。規則的な運動習慣をつけ、過労を���けましょう。この時期に健康習慣をきちんとつければ、生涯健康でいられます。'],
+      ja: ['初年はおおむね健康ですが、20代後半から体力管理が必要になります。規則的な運動習慣をつけ、過労を避けましょう。この時期に健康習慣をきちんとつければ、生涯健康でいられます。'],
       zh: ['初年总体健康，但20多岁后半段需要体力管理。养成规律运动习惯，避免过劳。这一时期养成好的健康习惯，将受益终身。'],
     },
     mid: {
-      ko: ['중년기 건강에 가장 주의가 필요합니다. 35세부터 체력이 떨어지기 시작하니 운동을 게을리하지 마세요. 40대에는 ��인병에 주의하고, 정기적인 건강 검진을 받으세요.'],
+      ko: ['중년기 건강에 가장 주의가 필요합니다. 35세부터 체력이 떨어지기 시작하니 운동을 게을리하지 마세요. 40대에는 성인병에 주의하고, 정기적인 건강 검진을 받으세요.'],
       en: ['Middle age requires the most attention to health. Physical strength begins to decline from 35; do not neglect exercise. In your 40s, watch for lifestyle diseases and get regular check-ups.'],
       ja: ['中年期の健康に最も注意が必要です。35歳から体力が落ち始めるので、運動を怠らないようにしましょう。40代は生活習慣病に注意し、定期的な健康診断を受けましょう。'],
       zh: ['中年期健康需要最多关注，35岁起体力开始下降，不要懈怠运动。40多岁注意慢性病，定期进行健康体检。'],
@@ -1106,18 +1107,40 @@ const lifetimeDescriptions: Record<FortuneCategory, Record<'early' | 'mid' | 'la
 
 const luckyColorsByLang: Record<Language, string[]> = {
   ko: ['빨간색', '파란색', '노란색', '녹색', '보라색', '주황색', '분홍색', '하늘색', '검은색', '흰색', '금색', '은색'],
+  en: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange', 'Pink', 'Sky blue', 'Black', 'White', 'Gold', 'Silver'],
+  ja: ['赤', '青', '黄', '緑', '紫', 'オレンジ', 'ピンク', '水色', '黒', '白', '金', '銀'],
+  zh: ['红色', '蓝色', '黄色', '绿色', '紫色', '橙色', '粉色', '天蓝', '黑色', '白色', '金色', '银色'],
+  es: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange', 'Pink', 'Sky blue', 'Black', 'White', 'Gold', 'Silver'],
+  fr: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange', 'Pink', 'Sky blue', 'Black', 'White', 'Gold', 'Silver'],
+  de: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange', 'Pink', 'Sky blue', 'Black', 'White', 'Gold', 'Silver'],
+  pt: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange', 'Pink', 'Sky blue', 'Black', 'White', 'Gold', 'Silver'],
+  hi: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange', 'Pink', 'Sky blue', 'Black', 'White', 'Gold', 'Silver'],
+  vi: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange', 'Pink', 'Sky blue', 'Black', 'White', 'Gold', 'Silver'],
+  th: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange', 'Pink', 'Sky blue', 'Black', 'White', 'Gold', 'Silver'],
 }
 
 const luckyNumbers = ['1, 7', '2, 8', '3, 9', '4, 5', '6, 0', '1, 3', '2, 6', '4, 8', '5, 9', '3, 7', '1, 6', '2, 4']
 
 // ─── 평생운 제목 다국어 ──────────────────────────────────────────────────
 
+/** Short phase labels for legacy lifetime generator fallbacks */
+const legacyLifetimePhaseTitles: Record<SupportedFortuneLanguage, { early: string; mid: string; late: string }> = {
+  ko: { early: '초기', mid: '중기', late: '말기' },
+  en: { early: 'Early phase', mid: 'Mid phase', late: 'Late phase' },
+  ja: { early: '初期', mid: '中期', late: '晩期' },
+  zh: { early: '初期', mid: '中期', late: '晚期' },
+}
+
+const lifetimeTitlesByContentLang: Record<SupportedFortuneLanguage, { early: string; mid: string; late: string }> = {
+  ko: { early: '초년운 (1세~30세)', mid: '중년운 (31세~50세)', late: '말년운 (51세 이후)' },
+  en: { early: 'Early-life fortune (ages 1–30)', mid: 'Mid-life fortune (ages 31–50)', late: 'Later-life fortune (age 51+)' },
+  ja: { early: '初年運（1〜30歳）', mid: '中年運（31〜50歳）', late: '晩年運（51歳以降）' },
+  zh: { early: '早年运（1–30 岁）', mid: '中年运（31–50 岁）', late: '晚年运（51 岁以后）' },
+}
+
 export function getLifetimeTitles(language: Language) {
-  const titles: Record<Language, { early: string; mid: string; late: string }> = {
-    ko: { early: '초년운 (1세~30세)', mid: '중년운 (31세~50세)', late: '��년운 (51세 이후)' },
-  }
   const langKey = getFortuneLanguage(language)
-  return titles[langKey]
+  return lifetimeTitlesByContentLang[langKey] ?? lifetimeTitlesByContentLang.en
 }
 
 
@@ -1147,7 +1170,7 @@ export function generateFortune(
       const random3 = seededRandom(seedOrMonth + 200 + (personalizationVariant || 0))
       
       const score = Math.floor(random2 * 4) + 7
-      const colorArray = luckyColorsByLang[langKey] || luckyColorsByLang.ko || []
+      const colorArray = luckyColorsByLang[language] || luckyColorsByLang[langKey] || luckyColorsByLang.ko || []
       const colorIdx = colorArray.length > 0 ? Math.floor(random3 * colorArray.length) : 0
       const numberArray = luckyNumbers || []
       
@@ -1156,7 +1179,7 @@ export function generateFortune(
         category,
         month: seedOrMonth,
         score: Math.min(10, Math.max(1, score)),
-        description: typeof monthlyText === 'string' ? monthlyText : '이 달은 새로운 변화가 기대됩니다.',
+        description: typeof monthlyText === 'string' ? monthlyText : getFallbackTemplate('monthly', language),
         luckyColor: colorArray.length > 0 ? colorArray[colorIdx] : '#9C27B0',
         luckyNumber: numberArray.length > 0 ? numberArray[colorIdx % numberArray.length] : 7,
       }
@@ -1169,7 +1192,7 @@ export function generateFortune(
         category,
         month: undefined,
         score: 7,
-        description: fallbackTemplates.general || '좋은 기운이 흐르고 있습니다.',
+        description: getFallbackTemplate('general', language),
         luckyColor: '#9C27B0',
         luckyNumber: 7,
       }
@@ -1182,7 +1205,7 @@ export function generateFortune(
         category,
         month: undefined,
         score: 7,
-        description: fallbackTemplates.general || '긍정적인 에너지가 있습니다.',
+        description: getFallbackTemplate('general', language),
         luckyColor: '#9C27B0',
         luckyNumber: 7,
       }
@@ -1197,18 +1220,18 @@ export function generateFortune(
     const idx = Math.floor(random1 * descs.length)
     const score = Math.floor(random2 * 4) + 7
 
-    const colorArray = luckyColorsByLang[langKey] || luckyColorsByLang.ko || []
+    const colorArray = luckyColorsByLang[language] || luckyColorsByLang[langKey] || luckyColorsByLang.ko || []
     const colorIdx = colorArray.length > 0 ? Math.floor(random3 * colorArray.length) : 0
     const numberArray = luckyNumbers || []
     
-    const desc = descs[idx] || fallbackTemplates.general || '좋은 기운이 있습니다.'
+    const desc = descs[idx] || getFallbackTemplate('general', language)
     
     return {
       type,
       category,
       month: undefined,
       score: Math.min(10, Math.max(1, score)),
-      description: typeof desc === 'string' ? desc : fallbackTemplates.general || '좋은 기운이 있습니다.',
+      description: typeof desc === 'string' ? desc : getFallbackTemplate('general', language),
       luckyColor: colorArray.length > 0 ? colorArray[colorIdx] : '#9C27B0',
       luckyNumber: numberArray.length > 0 ? numberArray[colorIdx % numberArray.length] : 7,
     }
@@ -1219,7 +1242,7 @@ export function generateFortune(
       category,
       month: undefined,
       score: 7,
-      description: fallbackTemplates.general || '좋은 기운이 들어옵니다.',
+      description: getFallbackTemplate('general', language),
       luckyColor: '#9C27B0',
       luckyNumber: 7,
     }
@@ -1230,7 +1253,7 @@ export function generateFortune(
 
 /**
  * 보강된 운세 생성: 프로필 기반 + 다중 카테고리
- * 각 프로필마다 고유한 결과를 ���장함
+ * 각 프로필마다 고유한 결과를 보장함
  */
 export function generateEnhancedFortuneWithProfile(
   type: FortuneType,
@@ -1248,11 +1271,13 @@ export function generateEnhancedFortuneWithProfile(
         category: primaryCategory,
         month,
         score: 7,
-        description: fallbackTemplates.general,
+        description: getFallbackTemplate('general', language),
         luckyColor: '#9C27B0',
         luckyNumber: 7,
       }
     }
+
+    const langKey = getFortuneLanguage(language)
 
     const profileHash = profile.profileHash || generateProfileHash(
       profile.name, profile.birthYear, profile.birthMonth, profile.birthDay,
@@ -1276,32 +1301,34 @@ export function generateEnhancedFortuneWithProfile(
 
     const rng = new SeededRandom(seed)
 
-    let description = fallbackTemplates.general
+    let description = getFallbackTemplate('general', language)
     
     // For yearly type, use comprehensive templates with 4-5+ lines
     if (type === 'yearly') {
-      if (yearlyComprehensiveTemplates?.ko && yearlyComprehensiveTemplates.ko.length > 0) {
-        const templateIndex = Math.abs(seed) % yearlyComprehensiveTemplates.ko.length
-        description = yearlyComprehensiveTemplates.ko[templateIndex] || fallbackTemplates.yearly
+      const yearlyPool = getYearlyComprehensivePool(language)
+      if (yearlyPool.length > 0) {
+        const templateIndex = Math.abs(seed) % yearlyPool.length
+        description = yearlyPool[templateIndex] || getFallbackTemplate('yearly', language)
       }
     } else {
       // For other types, use category-specific templates
-      const categoryTemplateMap: Record<FortuneCategory, string[]> = {
-        love: loveFortuneTemplates.ko || [],
-        wealth: wealthFortuneTemplates.ko || [],
-        career: careerFortuneTemplates.ko || [],
-        health: healthFortuneTemplates.ko || [],
-        opportunity: opportunityFortuneTemplates.ko || [],
-        warning: warningFortuneTemplates.ko || [],
-        relationship: relationshipFortuneTemplates.ko || [],
+      const categoryTemplateMap: Record<FortuneCategory, typeof loveFortuneTemplates> = {
+        love: loveFortuneTemplates,
+        wealth: wealthFortuneTemplates,
+        career: careerFortuneTemplates,
+        health: healthFortuneTemplates,
+        opportunity: opportunityFortuneTemplates,
+        warning: warningFortuneTemplates,
+        relationship: relationshipFortuneTemplates,
       }
 
-      const templates = categoryTemplateMap[primaryCategory] || categoryTemplateMap.love || []
+      const pool = categoryTemplateMap[primaryCategory] || categoryTemplateMap.love
+      const templates = pool[langKey]?.length ? pool[langKey] : pool.en?.length ? pool.en : pool.ko
       if (templates.length > 0) {
         // Enhanced template selection - include type and month for more variety
         const typeBonus = type === 'daily' ? 13 : type === 'yearly' ? 97 : (month || 1) * 47
         const templateIndex = Math.abs((seed + typeBonus) % templates.length)
-        description = templates[templateIndex] || fallbackTemplates.general
+        description = templates[templateIndex] || getFallbackTemplate('general', language)
       }
     }
 
@@ -1328,9 +1355,10 @@ export function generateEnhancedFortuneWithProfile(
       month: type === 'monthly' ? month : undefined,
       score: Math.min(10, Math.max(1, score)),
       description,
-      luckyColor: (luckyColorsByLang.ko && luckyColorsByLang.ko.length > 0) 
-        ? luckyColorsByLang.ko[rng.nextInt(luckyColorsByLang.ko.length)]
-        : '#9C27B0',
+      luckyColor: (() => {
+        const arr = luckyColorsByLang[language] || luckyColorsByLang[langKey] || luckyColorsByLang.ko
+        return arr?.length ? arr[rng.nextInt(arr.length)] : '#9C27B0'
+      })(),
       luckyNumber: (luckyNumbers && luckyNumbers.length > 0)
         ? luckyNumbers[rng.nextInt(luckyNumbers.length)]
         : 7,
@@ -1342,7 +1370,7 @@ export function generateEnhancedFortuneWithProfile(
       category: primaryCategory,
       month,
       score: 7,
-      description: fallbackTemplates.general,
+      description: getFallbackTemplate('general', language),
       luckyColor: '#9C27B0',
       luckyNumber: 7,
     }
@@ -1385,11 +1413,13 @@ export function generateEnhancedMonthlyFortunesWithProfile(
         category: primaryCategory,
         month: i + 1,
         score: 7,
-        description: fallbackTemplates.monthly,
+        description: getFallbackTemplate('monthly', language),
         luckyColor: '#9C27B0',
         luckyNumber: 7,
       }))
     }
+
+    const langKey = getFortuneLanguage(language)
 
     const profileHash = profile.profileHash || generateProfileHash(
       profile.name, profile.birthYear, profile.birthMonth, profile.birthDay,
@@ -1404,7 +1434,7 @@ export function generateEnhancedMonthlyFortunesWithProfile(
         category: primaryCategory,
         month: i + 1,
         score: 7,
-        description: fallbackTemplates.monthly,
+        description: getFallbackTemplate('monthly', language),
         luckyColor: '#9C27B0',
         luckyNumber: 7,
       }))
@@ -1422,13 +1452,21 @@ export function generateEnhancedMonthlyFortunesWithProfile(
         
         // Select different pool combinations for each month for variety
         const poolCombination = month % 3
-        const monthlyDescription = poolCombination === 0
-          ? generateCustomFortune(personalSeed, { ...categoryPools, positive: fortuneSentencePools.monthly.positive }, 3)
-          : poolCombination === 1
-          ? generateCustomFortune(personalSeed, { ...categoryPools, caution: fortuneSentencePools.monthly.caution }, 3)
-          : generateCustomFortune(personalSeed, { ...categoryPools, transform: fortuneSentencePools.monthly.transform }, 3)
+        let monthlyDescription: string
+        if (langKey === 'ko') {
+          if (poolCombination === 0) {
+            monthlyDescription = generateCustomFortune(personalSeed, { ...categoryPools, positive: fortuneSentencePools.monthly.positive }, 3, language)
+          } else if (poolCombination === 1) {
+            monthlyDescription = generateCustomFortune(personalSeed, { ...categoryPools, caution: fortuneSentencePools.monthly.caution }, 3, language)
+          } else {
+            monthlyDescription = generateCustomFortune(personalSeed, { ...categoryPools, transform: fortuneSentencePools.monthly.transform }, 3, language)
+          }
+        } else {
+          monthlyDescription = getMonthlyDetailedLine(month, language)
+        }
         
         const score = Math.min(10, Math.max(1, 6 + rng.nextInt(4)))
+        const colorArr = luckyColorsByLang[language] || luckyColorsByLang[langKey] || luckyColorsByLang.ko || []
         
         return {
           type: 'monthly' as FortuneType,
@@ -1436,7 +1474,7 @@ export function generateEnhancedMonthlyFortunesWithProfile(
           month,
           score,
           description: monthlyDescription,
-          luckyColor: luckyColorsByLang.ko?.[rng.nextInt(luckyColorsByLang.ko?.length || 1)] || '#9C27B0',
+          luckyColor: colorArr.length > 0 ? colorArr[rng.nextInt(colorArr.length)] : '#9C27B0',
           luckyNumber: luckyNumbers?.[rng.nextInt(luckyNumbers?.length || 1)] || 7,
         }
       } catch (e) {
@@ -1446,7 +1484,7 @@ export function generateEnhancedMonthlyFortunesWithProfile(
           category: primaryCategory,
           month: monthIndex + 1,
           score: 7,
-          description: fallbackTemplates.monthly,
+          description: getFallbackTemplate('monthly', language),
           luckyColor: '#9C27B0',
           luckyNumber: 7,
         }
@@ -1459,7 +1497,7 @@ export function generateEnhancedMonthlyFortunesWithProfile(
       category: primaryCategory,
       month: i + 1,
       score: 7,
-      description: fallbackTemplates.monthly,
+      description: getFallbackTemplate('monthly', language),
       luckyColor: '#9C27B0',
       luckyNumber: 7,
     }))
@@ -1480,9 +1518,9 @@ export function generateLifetimeFortuneWithProfile(
       console.log('[v0] Invalid profile data, using fallback')
       return {
         category,
-        early: { title: titles.early, description: fallbackTemplates.lifetime, score: 7 },
-        mid: { title: titles.mid, description: fallbackTemplates.lifetime, score: 7 },
-        late: { title: titles.late, description: fallbackTemplates.lifetime, score: 7 },
+        early: { title: titles.early, description: getFallbackTemplate('lifetime', language), score: 7 },
+        mid: { title: titles.mid, description: getFallbackTemplate('lifetime', language), score: 7 },
+        late: { title: titles.late, description: getFallbackTemplate('lifetime', language), score: 7 },
       }
     }
 
@@ -1497,9 +1535,9 @@ export function generateLifetimeFortuneWithProfile(
       console.log('[v0] Lifetime templates empty, using fallback')
       return {
         category,
-        early: { title: titles.early, description: fallbackTemplates.lifetime, score: 7 },
-        mid: { title: titles.mid, description: fallbackTemplates.lifetime, score: 7 },
-        late: { title: titles.late, description: fallbackTemplates.lifetime, score: 7 },
+        early: { title: titles.early, description: getFallbackTemplate('lifetime', language), score: 7 },
+        mid: { title: titles.mid, description: getFallbackTemplate('lifetime', language), score: 7 },
+        late: { title: titles.late, description: getFallbackTemplate('lifetime', language), score: 7 },
       }
     }
     
@@ -1513,25 +1551,43 @@ export function generateLifetimeFortuneWithProfile(
     // 각 생명 단계마다 카테고리별 전문 pool 사용하여 4-5줄 이상 생성
     const categoryPools = categorySpecificPools[category as keyof typeof categorySpecificPools] || categorySpecificPools.total
     
-    const earlyDescription = generateCustomFortune(earlyPersonalSeed, {
-      flow: lifetimeDetailedPools.flow,
-      personality: lifetimeDetailedPools.personality,
-      ...categoryPools,
-    }, 5)
-    
-    const midDescription = generateCustomFortune(midPersonalSeed, {
-      flow: lifetimeDetailedPools.flow,
-      relationship: lifetimeDetailedPools.relationship,
-      wealth: lifetimeDetailedPools.wealth,
-      ...categoryPools,
-    }, 5)
-    
-    const lateDescription = generateCustomFortune(latePersonalSeed, {
-      care: lifetimeDetailedPools.care,
-      warning: lifetimeDetailedPools.warning,
-      strength: lifetimeDetailedPools.strength,
-      ...categoryPools,
-    }, 5)
+    let localizedLifetimePool = lifetimeDetailedTemplates.ko
+    if (lifetimeDetailedTemplates[langKey]?.length) {
+      localizedLifetimePool = lifetimeDetailedTemplates[langKey]
+    } else if (lifetimeDetailedTemplates.en?.length) {
+      localizedLifetimePool = lifetimeDetailedTemplates.en
+    }
+
+    let earlyDescription: string
+    let midDescription: string
+    let lateDescription: string
+
+    if (langKey === 'ko') {
+      earlyDescription = generateCustomFortune(earlyPersonalSeed, {
+        flow: lifetimeDetailedPools.flow,
+        personality: lifetimeDetailedPools.personality,
+        ...categoryPools,
+      }, 5, language)
+
+      midDescription = generateCustomFortune(midPersonalSeed, {
+        flow: lifetimeDetailedPools.flow,
+        relationship: lifetimeDetailedPools.relationship,
+        wealth: lifetimeDetailedPools.wealth,
+        ...categoryPools,
+      }, 5, language)
+
+      lateDescription = generateCustomFortune(latePersonalSeed, {
+        care: lifetimeDetailedPools.care,
+        warning: lifetimeDetailedPools.warning,
+        strength: lifetimeDetailedPools.strength,
+        ...categoryPools,
+      }, 5, language)
+    } else {
+      const lp = localizedLifetimePool
+      earlyDescription = lp[Math.abs(earlyPersonalSeed) % lp.length] || getFallbackTemplate('lifetime', language)
+      midDescription = lp[Math.abs(midPersonalSeed) % lp.length] || getFallbackTemplate('lifetime', language)
+      lateDescription = lp[Math.abs(latePersonalSeed) % lp.length] || getFallbackTemplate('lifetime', language)
+    }
     
     // Create seeded random for varied scores
     const rng = new SeededRandom(profileHash + 10000)
@@ -1563,9 +1619,9 @@ export function generateLifetimeFortuneWithProfile(
     const titles = getLifetimeTitles(language)
     return {
       category,
-      early: { title: titles.early, description: fallbackTemplates.lifetime, score: 7 },
-      mid: { title: titles.mid, description: fallbackTemplates.lifetime, score: 7 },
-      late: { title: titles.late, description: fallbackTemplates.lifetime, score: 7 },
+      early: { title: titles.early, description: getFallbackTemplate('lifetime', language), score: 7 },
+      mid: { title: titles.mid, description: getFallbackTemplate('lifetime', language), score: 7 },
+      late: { title: titles.late, description: getFallbackTemplate('lifetime', language), score: 7 },
     }
   }
 }
@@ -1586,7 +1642,7 @@ export function generateYearlyFortuneWithProfile(
         type: 'yearly',
         category,
         score: 7,
-        description: fallbackTemplates.yearly,
+        description: getFallbackTemplate('yearly', language),
         luckyColor: '#9C27B0',
         luckyNumber: 7,
       }
@@ -1605,7 +1661,7 @@ export function generateYearlyFortuneWithProfile(
         type: 'yearly',
         category,
         score: 7,
-        description: fallbackTemplates.yearly,
+        description: getFallbackTemplate('yearly', language),
         luckyColor: '#9C27B0',
         luckyNumber: 7,
       }
@@ -1616,10 +1672,17 @@ export function generateYearlyFortuneWithProfile(
     
     // Select category-specific pools for yearly fortune
     const categoryPools = categorySpecificPools[category as keyof typeof categorySpecificPools] || categorySpecificPools.total
-    const yearlyDescription = generateCustomFortune(personalSeed, {
-      intro: fortuneSentencePools.yearly.intro,
-      ...categoryPools,
-    }, 5)
+
+    let yearlyDescription: string
+    if (langKey === 'ko') {
+      yearlyDescription = generateCustomFortune(personalSeed, {
+        intro: fortuneSentencePools.yearly.intro,
+        ...categoryPools,
+      }, 5, language)
+    } else {
+      const yp = getYearlyComprehensivePool(language)
+      yearlyDescription = yp[Math.abs(personalSeed) % yp.length] || getFallbackTemplate('yearly', language)
+    }
     
     // Calculate score with profile variations - include year factor for yearly variation
     const rng = new SeededRandom(personalSeed)
@@ -1628,13 +1691,14 @@ export function generateYearlyFortuneWithProfile(
     const genderFactor = profile.gender === 'male' ? 0 : 1
     const yearFactor = currentYear % 2
     const score = Math.min(10, Math.max(1, 6 + rng.nextInt(4) + birthMonthFactor + genderFactor + yearFactor))
+    const yearlyColors = luckyColorsByLang[language] || luckyColorsByLang[langKey] || luckyColorsByLang.ko || []
 
     return {
       type: 'yearly',
       category,
       score,
       description: yearlyDescription,
-      luckyColor: luckyColorsByLang.ko?.[rng.nextInt(luckyColorsByLang.ko?.length || 1)] || '#9C27B0',
+      luckyColor: yearlyColors.length > 0 ? yearlyColors[rng.nextInt(yearlyColors.length)] : '#9C27B0',
       luckyNumber: luckyNumbers?.[rng.nextInt(luckyNumbers?.length || 1)] || 7,
     }
   } catch (error) {
@@ -1643,7 +1707,7 @@ export function generateYearlyFortuneWithProfile(
       type: 'yearly',
       category,
       score: 7,
-      description: fallbackTemplates.yearly,
+      description: getFallbackTemplate('yearly', language),
       luckyColor: '#9C27B0',
       luckyNumber: 7,
     }
@@ -1665,7 +1729,7 @@ export function generateFortuneWithProfile(
         category,
         month: type === 'monthly' ? month : undefined,
         score: 7,
-        description: fallbackTemplates.general || '오늘은 새로운 기회가 찾아올 수 있습니다. 긍정적인 마음으로 하루를 시작해보세요.',
+        description: getFallbackTemplate('general', language),
         luckyColor: '#9C27B0',
         luckyNumber: 7,
       }
@@ -1700,16 +1764,23 @@ export function generateFortuneWithProfile(
       
       // Generate custom monthly fortune using specialized sentence pools
       const randomPool = rng.nextInt(3)
-      const monthlyDescription = randomPool === 0 
-        ? generateCustomFortune(personalSeed, { positive: fortuneSentencePools.monthly.positive, caution: fortuneSentencePools.monthly.caution }, 2)
-        : randomPool === 1
-        ? generateCustomFortune(personalSeed, { caution: fortuneSentencePools.monthly.caution, transform: fortuneSentencePools.monthly.transform }, 2)
-        : generateCustomFortune(personalSeed, { positive: fortuneSentencePools.monthly.positive, transform: fortuneSentencePools.monthly.transform }, 2)
+      let monthlyDescription: string
+      if (langKey === 'ko') {
+        if (randomPool === 0) {
+          monthlyDescription = generateCustomFortune(personalSeed, { positive: fortuneSentencePools.monthly.positive, caution: fortuneSentencePools.monthly.caution }, 2, language)
+        } else if (randomPool === 1) {
+          monthlyDescription = generateCustomFortune(personalSeed, { caution: fortuneSentencePools.monthly.caution, transform: fortuneSentencePools.monthly.transform }, 2, language)
+        } else {
+          monthlyDescription = generateCustomFortune(personalSeed, { positive: fortuneSentencePools.monthly.positive, transform: fortuneSentencePools.monthly.transform }, 2, language)
+        }
+      } else {
+        monthlyDescription = getMonthlyDetailedLine(month, language)
+      }
       
       const monthlyRng = new SeededRandom(personalSeed)
       const monthlyScore = Math.min(10, Math.max(1, 6 + monthlyRng.nextInt(4)))
       
-      const colorArray = luckyColorsByLang[langKey] || luckyColorsByLang.ko || []
+      const colorArray = luckyColorsByLang[language] || luckyColorsByLang[langKey] || luckyColorsByLang.ko || []
       const numberArray = luckyNumbers || []
       
       return {
@@ -1731,17 +1802,17 @@ export function generateFortuneWithProfile(
         category,
         month: undefined,
         score: 7,
-        description: fallbackTemplates.general || '오늘의 운세입니다. 긍정적인 기운이 흐릅니다.',
+        description: getFallbackTemplate('general', language),
         luckyColor: '#9C27B0',
         luckyNumber: 7,
       }
     }
     
     const idx = rng.nextInt(descs.length)
-    const desc = descs[idx] || fallbackTemplates.general || '새로운 기회가 찾아올 수 있습니다.'
+    const desc = descs[idx] || getFallbackTemplate('general', language)
     const score = Math.min(10, Math.max(1, 7 + rng.nextInt(3) + ((safeDay + safeMonth) % 2)))
 
-    const colorArray = luckyColorsByLang[langKey] || luckyColorsByLang.ko || []
+    const colorArray = luckyColorsByLang[language] || luckyColorsByLang[langKey] || luckyColorsByLang.ko || []
     const numberArray = luckyNumbers || []
 
     return {
@@ -1749,7 +1820,7 @@ export function generateFortuneWithProfile(
       category,
       month: undefined,
       score,
-      description: typeof desc === 'string' ? desc : fallbackTemplates.general || '좋은 운기가 흐릅니다.',
+      description: typeof desc === 'string' ? desc : getFallbackTemplate('general', language),
       luckyColor: colorArray.length > 0 ? colorArray[rng.nextInt(colorArray.length)] : '#9C27B0',
       luckyNumber: numberArray.length > 0 ? numberArray[rng.nextInt(numberArray.length)] : 7,
     }
@@ -1761,7 +1832,7 @@ export function generateFortuneWithProfile(
       category,
       month: type === 'monthly' ? month : undefined,
       score: 7,
-      description: fallbackTemplates.general || '오늘은 차분하게 자신의 흐름을 정리하면 좋은 기운이 들어옵니다.',
+      description: getFallbackTemplate('general', language),
       luckyColor: '#9C27B0',
       luckyNumber: 7,
     }
@@ -1781,7 +1852,7 @@ export function generateMonthlyFortunesWithProfile(
         category,
         month: i + 1,
         score: 7,
-        description: '이 달은 새로운 변화가 기대됩니다.',
+        description: getMonthlyDetailedLine(i + 1, language),
         luckyColor: '#9C27B0',
         luckyNumber: 7,
       }))
@@ -1797,7 +1868,7 @@ export function generateMonthlyFortunesWithProfile(
           category,
           month: i + 1,
           score: 7,
-          description: '이 달은 새로운 변화가 기대됩니다.',
+          description: getMonthlyDetailedLine(i + 1, language),
           luckyColor: '#9C27B0',
           luckyNumber: 7,
         }
@@ -1810,7 +1881,7 @@ export function generateMonthlyFortunesWithProfile(
       category,
       month: i + 1,
       score: 7,
-      description: '이 달��� 새로운 ��화가 기대됩니다.',
+      description: getFallbackTemplate('monthly', language),
       luckyColor: '#9C27B0',
       luckyNumber: 7,
     }))
@@ -1824,46 +1895,49 @@ export function generateLifetimeFortune(category: FortuneCategory, language: Lan
     const langKey = getFortuneLanguage(language)
     const descs = lifetimeDescriptions?.[category]
     const titles = getLifetimeTitles(language)
+    const phaseShort = legacyLifetimePhaseTitles[langKey] ?? legacyLifetimePhaseTitles.en
 
     if (!descs || !titles) {
       return {
         category,
-        early: { title: '���기', description: fallbackTemplates.lifetime, score: 7 },
-        mid: { title: '중기', description: fallbackTemplates.lifetime, score: 7 },
-        late: { title: '말기', description: fallbackTemplates.lifetime, score: 7 },
+        early: { title: phaseShort.early, description: getFallbackTemplate('lifetime', language), score: 7 },
+        mid: { title: phaseShort.mid, description: getFallbackTemplate('lifetime', language), score: 7 },
+        late: { title: phaseShort.late, description: getFallbackTemplate('lifetime', language), score: 7 },
       }
     }
 
     const pickRandom = (arr: string[]): string => {
-      if (!arr || arr.length === 0) return fallbackTemplates.lifetime
+      if (!arr || arr.length === 0) return getFallbackTemplate('lifetime', language)
       return arr[Math.floor(Math.random() * arr.length)]
     }
 
     return {
       category,
       early: {
-        title: titles.early || '초기',
-        description: pickRandom(descs.early?.[langKey] || []) || fallbackTemplates.lifetime,
+        title: titles.early || phaseShort.early,
+        description: pickRandom(descs.early?.[langKey] || []) || getFallbackTemplate('lifetime', language),
         score: Math.min(10, Math.max(1, Math.floor(Math.random() * 3) + 7)),
       },
       mid: {
-        title: titles.mid || '중기',
-        description: pickRandom(descs.mid?.[langKey] || []) || fallbackTemplates.lifetime,
+        title: titles.mid || phaseShort.mid,
+        description: pickRandom(descs.mid?.[langKey] || []) || getFallbackTemplate('lifetime', language),
         score: Math.min(10, Math.max(1, Math.floor(Math.random() * 3) + 7)),
       },
       late: {
-        title: titles.late || '말기',
-        description: pickRandom(descs.late?.[langKey] || []) || fallbackTemplates.lifetime,
+        title: titles.late || phaseShort.late,
+        description: pickRandom(descs.late?.[langKey] || []) || getFallbackTemplate('lifetime', language),
         score: Math.min(10, Math.max(1, Math.floor(Math.random() * 3) + 7)),
       },
     }
   } catch (error) {
     console.log('[v0] Error in generateLifetimeFortune:', error)
+    const langKey = getFortuneLanguage(language)
+    const phaseShort = legacyLifetimePhaseTitles[langKey] ?? legacyLifetimePhaseTitles.en
     return {
       category,
-      early: { title: '초기', description: fallbackTemplates.lifetime, score: 7 },
-      mid: { title: '중기', description: fallbackTemplates.lifetime, score: 7 },
-      late: { title: '말기', description: fallbackTemplates.lifetime, score: 7 },
+      early: { title: phaseShort.early, description: getFallbackTemplate('lifetime', language), score: 7 },
+      mid: { title: phaseShort.mid, description: getFallbackTemplate('lifetime', language), score: 7 },
+      late: { title: phaseShort.late, description: getFallbackTemplate('lifetime', language), score: 7 },
     }
   }
 }
@@ -1872,14 +1946,17 @@ export function generateYearlyFortune(category: FortuneCategory, language: Langu
   try {
     const langKey = getFortuneLanguage(language)
     const descs = yearlyDescriptions?.[category]?.[langKey]
+    const colorPool = luckyColorsByLang[language] || luckyColorsByLang[langKey] || luckyColorsByLang.ko || []
     
     if (!descs || descs.length === 0) {
+      const pool = getYearlyDetailedPool(language)
+      const fb = pool.length > 0 ? pool[Math.floor(Math.random() * pool.length)] : getFallbackTemplate('yearly', language)
       return {
         type: 'yearly',
         category,
         score: 7,
-        description: fallbackTemplates.yearly,
-        luckyColor: luckyColorsByLang.ko?.[0] || '#9C27B0',
+        description: fb,
+        luckyColor: colorPool[0] || '#9C27B0',
         luckyNumber: luckyNumbers?.[0] || 7,
       }
     }
@@ -1891,10 +1968,8 @@ export function generateYearlyFortune(category: FortuneCategory, language: Langu
       type: 'yearly',
       category,
       score,
-      description: descs[idx] || fallbackTemplates.yearly,
-      luckyColor: (luckyColorsByLang.ko && luckyColorsByLang.ko.length > 0)
-        ? luckyColorsByLang.ko[idx % luckyColorsByLang.ko.length]
-        : '#9C27B0',
+      description: descs[idx] || getFallbackTemplate('yearly', language),
+      luckyColor: colorPool.length > 0 ? colorPool[idx % colorPool.length] : '#9C27B0',
       luckyNumber: (luckyNumbers && luckyNumbers.length > 0)
         ? luckyNumbers[idx % luckyNumbers.length]
         : 7,
@@ -1905,7 +1980,7 @@ export function generateYearlyFortune(category: FortuneCategory, language: Langu
       type: 'yearly',
       category,
       score: 7,
-      description: fallbackTemplates.yearly,
+      description: getFallbackTemplate('yearly', language),
       luckyColor: '#9C27B0',
       luckyNumber: 7,
     }

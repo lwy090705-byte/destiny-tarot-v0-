@@ -1,11 +1,32 @@
-export type Language = 'ko'
+import { deMessages } from './i18n/packs/de'
+import { enMessages } from './i18n/packs/en'
+import { esMessages } from './i18n/packs/es'
+import { frMessages } from './i18n/packs/fr'
+import { hiMessages } from './i18n/packs/hi'
+import { jaMessages } from './i18n/packs/ja'
+import { ptMessages } from './i18n/packs/pt'
+import { thMessages } from './i18n/packs/th'
+import { viMessages } from './i18n/packs/vi'
+import { zhMessages } from './i18n/packs/zh'
+
+export const ALL_LANGUAGES = ['ko', 'en', 'ja', 'zh', 'es', 'fr', 'de', 'pt', 'hi', 'vi', 'th'] as const
+export type Language = (typeof ALL_LANGUAGES)[number]
 
 export const languages: { id: Language; label: string; flag: string }[] = [
   { id: 'ko', label: '한국어', flag: '🇰🇷' },
+  { id: 'en', label: 'English', flag: '🇺🇸' },
+  { id: 'ja', label: '日本語', flag: '🇯🇵' },
+  { id: 'zh', label: '中文', flag: '🇨🇳' },
+  { id: 'es', label: 'Español', flag: '🇪🇸' },
+  { id: 'fr', label: 'Français', flag: '🇫🇷' },
+  { id: 'de', label: 'Deutsch', flag: '🇩🇪' },
+  { id: 'pt', label: 'Português', flag: '🇵🇹' },
+  { id: 'hi', label: 'हिन्दी', flag: '🇮🇳' },
+  { id: 'vi', label: 'Tiếng Việt', flag: '🇻🇳' },
+  { id: 'th', label: 'ไทย', flag: '🇹🇭' },
 ]
 
-export const translations: Record<Language, Record<string, string>> = {
-  ko: {
+const koTranslations: Record<string, string> = {
     // Header
     'app.title': '운명과 타로',
 
@@ -20,6 +41,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'profile.gender': '성별',
     'profile.male': '남성',
     'profile.female': '여성',
+    'profile.defaultDisplayName': '사용자',
 
     // Category
     'category.title': '카테고리 선택',
@@ -55,6 +77,58 @@ export const translations: Record<Language, Record<string, string>> = {
     'mbti.subtitle': '12개의 질문으로 알아보는 나의 성격 유형',
     'mbti.features': '강점, 약점, 연애 스타일, 직업 성향까지!',
     'mbti.loading': 'Loading...',
+    'mbti.featurePersonality': '성격 분석',
+    'mbti.featureLoveStyle': '연애 스타일',
+    'mbti.featureCareer': '직업 성향',
+    'mbti.featureCompatibilityShort': 'MBTI 궁합',
+    'mbti.unlockForPoints': '10P로 잠금해제',
+    'mbti.compatPremiumTeaser': '궁합 상세 분석은 프리미엄 콘텐츠입니다',
+    'mbti.compatScoreStrong': '궁합 점수:',
+    'mbti.detailedTeaserTitle': '상세 분석 리포트',
+    'mbti.detailedTeaserDesc': '성격의 깊은 분석, 숨겨진 특성, 성장 방향...',
+    'mbti.detailedFullTitle': '상세 분석 리포트',
+    'mbti.detailedHidden': '숨겨진 특성:',
+    'mbti.detailedHiddenBody':
+      '{type}형은 겉으로 보이는 것과 달리 내면에 깊은 감수성을 가지고 있습니다. 혼자만의 시간에 진정한 자아를 발견하며, 창의적인 아이디어가 샘솟습니다.',
+    'mbti.detailedGrowth': '성장 방향:',
+    'mbti.detailedGrowthBody':
+      '자신의 감정을 더 솔직하게 표현하는 연습을 해보세요. 새로운 경험에 열린 마음을 가지면 더 큰 성장을 이룰 수 있습니다.',
+    'mbti.detailedStress': '스트레스 관리:',
+    'mbti.detailedStressBody':
+      '{type}형은 과도한 사회적 상황이나 예측 불가능한 변화에 스트레스를 받을 수 있습니다. 규칙적인 휴식과 취미 활동으로 균형을 유지하세요.',
+    'mbti.personalityCoreTitle': '핵심 성격 특성',
+    'mbti.commStyleTitle': '소통 스타일',
+    'mbti.growthDirectionTitle': '성장 방향',
+    'mbti.growthDirectionBody':
+      '자신의 약점을 인식하고 그것을 개선하려는 노력이 중요합니다. 강점을 더욱 발전시키면서 동시에 약점을 보완하는 전략을 세우세요. 주변 사람들의 피드백을 열린 마음으로 받아들이고 계속 배우고 성장하세요.',
+    'mbti.lovePageTitle': '{type}의 연애 스타일',
+    'mbti.loveTendencyTitle': '연애 성향',
+    'mbti.emotionExpressTitle': '감정 표현 방식',
+    'mbti.relationshipStrengthTitle': '관계 강점',
+    'mbti.relationshipStrengthBody':
+      '당신의 {type} 성향은 {match}과 특히 잘 맞습니다. 공통점을 찾아 깊은 유대감을 형성하세요.',
+    'mbti.cautionTitle': '주의할 점',
+    'mbti.cautionBody':
+      '상대방의 감정과 필요를 이해하려고 노력하세요. 항상 상대방의 입장에서 생각하고, 작은 것들에 감사하며 자주 표현하는 것이 좋습니다.',
+    'mbti.careerPageTitle': '{type}의 직업 성향',
+    'mbti.recommendedJobsTitle': '추천 직업',
+    'mbti.workStyleTitle': '업무 스타일',
+    'mbti.leadershipStyleTitle': '리더십 성향',
+    'mbti.careerAdviceTitle': '경력 조언',
+    'mbti.careerAdviceBody':
+      '당신의 강점을 활용할 수 있는 역할을 찾으세요. 약점을 보완하기 위해 지속적인 자기 개발을 하고, 멘토나 동료로부터 배우는 것을 게을리하지 마세요.',
+    'mbti.compatPageTitle': 'MBTI 궁합 분석',
+    'mbti.selectPartnerTitle': '상대 MBTI 선택',
+    'mbti.scoreUnit': '점',
+    'mbti.compatPremiumLockedTitle': '상세 분석은 프리미엄 콘텐츠입니다',
+    'mbti.strengthsTogetherTitle': '함께했을 때 강점',
+    'mbti.conflictRiskTitle': '갈등 위험 요소',
+    'mbti.conflictRiskBody':
+      '서로 다른 가치관이 충돌할 수 있습니다. 상대방의 관점을 이해하려 노력하고, 충돌 시 차분하게 대화하는 것이 중요합니다.',
+    'mbti.communicationTipsTitle': '소통 팁',
+    'mbti.communicationTipsBody':
+      '명확하고 정직한 소통을 유지하세요. 상대방의 말을 경청하고, 자신의 감정과 생각을 분명히 표현하는 것이 관계를 발전시킵니다.',
+    'mbti.compatPairPrefix': '{a}와 {b}의 조합은',
 
     // Date
     'date.calendar': '달력',
@@ -79,6 +153,9 @@ export const translations: Record<Language, Record<string, string>> = {
     'fortune.love': '애정운',
     'fortune.relationships': '대인운',
     'fortune.health': '건강운',
+    'fortune.generateError': '운세를 생성할 수 없습니다. 잠시 후 다시 시도해주세요.',
+    'fortune.dailyColorStrong': '🎨 색상:',
+    'fortune.dailyNumberStrong': '🔢 숫자:',
 
     // Buttons
     'button.viewFortune': '운세 보기',
@@ -179,6 +256,14 @@ export const translations: Record<Language, Record<string, string>> = {
     // Tarot
     'tarot.selectPrompt': '카드를 터치하여 선택하세요',
     'tarot.swipeHint': '좌우로 밀어 카드를 탐색하세요',
+    'tarot.cat.love': '연애',
+    'tarot.cat.wealth': '재물',
+    'tarot.cat.career': '진로',
+    'tarot.cat.health': '건강',
+    'tarot.pickOne': '한 장 뽑기',
+    'tarot.pickThree': '세 장 뽑기',
+    'tarot.hintSelectOneCard': '카드 1장을 선택하세요',
+    'tarot.hintSelectThreeOrdered': '카드 3장을 순서대로 선택하세요',
 
     // Footer
     'footer.text': '운명과 타로 - Destiny & Tarot',
@@ -192,15 +277,20 @@ export const translations: Record<Language, Record<string, string>> = {
 
     // Ad Sponsor Page
     'adSponsor.title': '광고협찬',
-    'adSponsor.howToUse': '이용방법',
+    'adSponsor.howToUse': '광고 이용방법',
     'adSponsor.registerAd': '광고 등록하기',
     'adSponsor.adSlot': '광고 슬롯',
     'adSponsor.available': '등록 가능',
+    'adSponsor.partnership': '협력제휴',
+    'adSponsor.register': '광고 등록하기',
+    'adSponsor.list': '광고 목록',
+    'adSponsor.page': '페이지',
+    'adSponsor.guide': '광고 이용방법',
 
     // Support Page
     'support.title': '후원하기',
     'support.thankYou': '응원해 주셔서 감사합니다',
-    'support.selectAmount': '후원 금액 ���택',
+    'support.selectAmount': '후원 금액 선택',
     'support.coffee': '커피 한 잔',
     'support.lunch': '점심 식사',
     'support.cheer': '응원의 마음',
@@ -211,10 +301,10 @@ export const translations: Record<Language, Record<string, string>> = {
     'support.viewAll': '전체 후원자 보기',
     'support.benefits': '후원자 혜택',
     'support.successTitle': '감사합니다!',
-    'support.successMessage': '후원���������주셔서 진심으로 감사드립니다.',
+    'support.successMessage': '후원해 주셔서 진심으로 감사드립니다.',
     'support.disclaimer1': '* 후원금은 Pi Network를 통해 전송됩니다.',
     'support.disclaimer2': '* 후원 내역은 익명 또는 닉네임으로 후원자 리스트에 표시됩니다.',
-    'support.disclaimer3': '* 후원��� 자발적이며, 환불이 불가능합니다.',
+    'support.disclaimer3': '* 후원은 자발적이며, 환불이 불가능합니다.',
     'support.badge': '후원자 전용 뱃지 제공',
     'support.earlyAccess': '신규 기능 우선 체험 기회',
     'support.listing': '후원자 명단에 이름 등재 (선택)',
@@ -229,12 +319,13 @@ export const translations: Record<Language, Record<string, string>> = {
     'community.writePost': '글쓰기',
     'community.likes': '좋아요',
     'community.comments': '댓글',
+    'community.empty': '게시글이 없습니다.',
 
     // Share Page
     'share.title': '친구 추천',
     'share.inviteFriends': '친구를 초대하고 보상을 받으세요',
-    'share.inviteDescription': '친구를 추천하면 포인트와 프리미엄 혜택을 받을 수 있어���!',
-    'share.yourCode': '��� 추천 코드',
+    'share.inviteDescription': '친구를 추천하면 포인트와 프리미엄 혜택을 받을 수 있습니다!',
+    'share.yourCode': '내 추천 코드',
     'share.copy': '복사',
     'share.copied': '복사됨',
     'share.shareVia': 'SNS로 공유하기',
@@ -245,16 +336,6 @@ export const translations: Record<Language, Record<string, string>> = {
     'share.earned': '적립',
     'share.status': '내 추천 현황',
     'share.nextReward': '다음 보상까지',
-
-    // Community Page
-    'community.title': '커뮤니티',
-    'community.empty': '게시글이 없습니다.',
-
-    // Support Page
-    'support.title': '후원하기',
-    'support.topSupporters': '최근 후원자',
-    'support.viewAll': '전체 후원자 보기',
-    'support.benefits': '후원자 혜택',
 
     // User Profile
     'userProfile.title': '내 프로필',
@@ -275,13 +356,13 @@ export const translations: Record<Language, Record<string, string>> = {
     'userProfile.bonus': '보너스 받기',
     'userProfile.onceDaily': '하루 1회',
     'userProfile.availableTomorrow': '내일 가능',
-    'userProfile.achievements': '업���',
+    'userProfile.achievements': '업적',
     'userProfile.levelSystem': '레벨 시스템',
     'userProfile.settings': '설정',
     'userProfile.premium': '프리미엄 구독',
     'userProfile.history': '활동 기록',
     'userProfile.terms': '이용약관',
-    'userProfile.privacy': '개���정보 방침',
+    'userProfile.privacy': '개인정보 방침',
 
     // Roulette
     'roulette.title': '보너스 룰렛',
@@ -331,15 +412,6 @@ export const translations: Record<Language, Record<string, string>> = {
     'achievement.6.title': '오행 탐험가', 'achievement.6.desc': '모든 오행 운세 확인',
     'achievement.5.reward': '프리미엄 7일',
 
-    // Ad Sponsor Page
-    'adSponsor.title': '광고협찬',
-    'adSponsor.howToUse': '광고 이용방법',
-    'adSponsor.partnership': '협력제휴',
-    'adSponsor.register': '광고 등록하기',
-    'adSponsor.list': '광고 목록',
-    'adSponsor.page': '페이지',
-    'adSponsor.guide': '광고 이용방법',
-
     // Partner Page
     'partner.title': '협력제휴 문의',
     'partner.headerTitle': '함께 성장할 파트너를 찾습니다',
@@ -363,14 +435,14 @@ export const translations: Record<Language, Record<string, string>> = {
     'partner.successMessage': '빠른 시일 내에 담당자가 연락드리겠습니다.',
     'partner.thanks': '감사합니다.',
     'partner.backHome': '홈으로 돌아가기',
-    'partner.errorSubmit': '문의 접수 중 오류가 발생했습니다. 다시 시도��주세요.',
+    'partner.errorSubmit': '문의 접수 중 오류가 발생했습니다. 다시 시도해 주세요.',
     'partner.errorNetwork': '네트워크 오류가 발생했습니다. 다시 시도해주세요.',
-    'partner.type.adMarketing': '��고/마케팅',
+    'partner.type.adMarketing': '광고/마케팅',
     'partner.type.appDev': '앱 개발/기술 협력',
     'partner.type.content': '콘텐츠 제휴',
     'partner.type.investment': '투자 문의',
     'partner.type.piNetwork': 'Pi Network 관련',
-    'partner.type.other': '���타',
+    'partner.type.other': '기타',
 
     // Terms Page
     'terms.title': '이용약관',
@@ -381,19 +453,19 @@ export const translations: Record<Language, Record<string, string>> = {
     'terms.section1.content2': '본 서비스는 오직 엔터테인먼트 및 정보 제공의 목적으로만 제공됩니다. 본 서비스의 콘텐츠는 과학적 근거를 보장하지 않으며, 중요한 인생 결정에 단독으로 의존해서는 안 됩니다.',
     'terms.section2.title': '2. 이용 조건',
     'terms.section3.title': '3. 사용자의 책임',
-    'terms.section4.title': '4. ��적재산권',
+    'terms.section4.title': '4. 지식재산권',
     'terms.section5.title': '5. 면책조항',
     'terms.section6.title': '6. 약관 변경',
     'terms.section7.title': '7. 파이 및 포인트 시스템',
     'terms.section8.title': '8. 광고 및 협력 정책',
     'terms.contact': '문의사항이 있으신가요?',
-    'terms.contactDesc': '약관과 관련된 문의는 lwy2016@naver.com으로 ��락주시기 바��니다.',
+    'terms.contactDesc': '약관과 관련된 문의는 lwy2016@naver.com으로 연락주시기 바랍니다.',
 
     // Privacy Page
     'privacy.title': '개인정보처리방침',
     'privacy.intro': '본 앱은 이용자의 개인정보를 중요하게 생각하며, 관련 법령을 준수합니다.',
     'privacy.section1.title': '1. 수집하는 개인정보 항목',
-    'privacy.section1.content': '본 앱은 서비스 제공�� 위해 다음과 같은 정보를 수집할 수 있습니다.',
+    'privacy.section1.content': '본 앱은 서비스 제공을 위해 다음과 같은 정보를 수집할 수 있습니다.',
     'privacy.section2.title': '2. 개인정보 수집 및 이용 목적',
     'privacy.section2.content': '수집된 개인정보는 다음의 목적을 위해 사용됩니다.',
     'privacy.section3.title': '3. 개인정보 보관 및 이용 기간',
@@ -404,6 +476,126 @@ export const translations: Record<Language, Record<string, string>> = {
     'privacy.section8.title': '8. 정책 변경',
     'privacy.section9.title': '9. 문의',
     'privacy.contactDesc': '개인정보 관련 문의는 아래 이메일로 연락 바랍니다.',
+
+    'profile.basicInfoTitle': '기본정보',
+    'profile.loading': '로딩 중...',
+    'profile.emptyList': '저장된 프로필이 없습니다',
+    'profile.hourNotEntered': '시간 미입력',
+    'category.desc.myungli': '동양의 고전 지혜',
+    'category.desc.daily': '오늘의 희망',
+    'category.desc.compatibility': '두 마음의 연결',
+    'category.desc.tarot': '신비의 깊이',
+    'community.recommendedBadge': '추천',
+    'community.recommendedWithCount': '추천 ({count}개)',
+    'community.modalNewPost': '새 글 작성',
+    'community.labelTitle': '제목',
+    'community.placeholderTitle': '제목을 입력하세요',
+    'community.labelContent': '내용',
+    'community.placeholderContent': '내용을 입력하세요',
+    'community.publish': '게시하기',
+    'community.labelComment': '댓글 달기',
+    'community.placeholderComment': '댓글을 입력하세요',
+    'community.send': '전송',
+    'community.anonymous': '익명사용자',
+    'support.helperLines':
+      '작은 응원이 큰 힘이 됩니다\n후원은 자발적이며\n후원도 포인트로 전환됩니다',
+    'support.piPaymentTitle': 'Pi 결제로 후원하기',
+    'support.piThankAmount': '{amount} Pi 후원해 주셔서 감사합니다!',
+    'support.piModalIntro': '원하는 금액을 선택하거나 직접 입력하세요',
+    'support.piModalCustomLabel': '또는 직접 입력',
+    'support.piModalPlaceholder': '예: 3.14',
+    'support.piModalDecimalHint': '소수점 입력 가능 (예: 3.14 Pi)',
+    'support.piModalSelectedLabel': '선택한 금액',
+    'support.piModalDueLabel': '결제 예정 금액',
+    'support.piModalProcessing': '처리 중...',
+    'support.piModalPayCta': '{amount} Pi 결제하기',
+    'support.piModalPayCtaGeneric': 'Pi 결제하기',
+    'support.piModalFooterHint':
+      '0 이하의 금액은 입력할 수 없습니다.\n결제 후 즉시 계정에 반영됩니다.',
+    'share.footerCopy': '코드를 복사하거나 아래 SNS로 공유하세요 • 추천 시 +{referrer}P 지급',
+    'share.enterReferralCodeTitle': '추천코드 입력',
+    'share.enterReferralHint':
+      '친구에게 받은 추천코드를 입력하면 +{referee}P를 드려요. 최초 1회만 적용됩니다.',
+    'share.sixDigitPlaceholder': '6자리 코드 입력',
+    'share.appliedCodeShow': '적용됨: {code}',
+    'share.referralCodeApplied': '추천코드가 적용되었습니다! +{points}P 지급',
+    'share.referralCodeUsed': '이미 추천코드를 사용하셨습니다.',
+    'share.referralCodeSelf': '자신의 추천코드는 사용할 수 없습니다.',
+    'share.referralCodeInvalid': '유효하지 않은 추천코드입니다.',
+    'share.tier1Label': '1명 추천',
+    'share.tier5Label': '5명 추천',
+    'share.tier10Label': '10명 추천',
+    'share.tier50Label': '50명 추천',
+    'share.completed': '완료!',
+    'share.progressRatio': '{current}명 / {required}명',
+    'share.socialTweet': '운세와 타로를 무료로 확인해보세요!',
+    'share.socialRecommend': '운세와 타로 앱을 추천합니다! ',
+    'share.myInvitesCount': '내 추천: {count}명',
+    'premium.titlePage': '프리미엄 구독',
+    'premium.heroTitle': '프리미엄 멤버십',
+    'premium.heroSubtitle': '모든 운세 서비스를 제한 없이 이용하세요',
+    'premium.planName.monthly': '1개월',
+    'premium.planName.quarterly': '3개월',
+    'premium.planName.yearly': '1년',
+    'premium.badgePopular': '인기',
+    'premium.badgeBestValue': '최고 혜택',
+    'premium.periodMonth': '월',
+    'premium.periodQuarter': '3개월',
+    'premium.periodYear': '년',
+    'premium.featuresMonthly':
+      '• 모든 프리미엄 운세 이용\n• 광고 없음\n• 타로 무제한\n• 궁합 분석 무제한\n• MBTI 프리미엄 리포트\n• MBTI 연애 스타일 분석',
+    'premium.featuresQuarterly':
+      '• 모든 프리미엄 운세 이용\n• 광고 없음\n• 타로 무제한\n• 궁합 분석 무제한\n• MBTI 프리미엄 리포트\n• MBTI 연애 스타일 분석\n• 우선 고객 지원',
+    'premium.featuresYearly':
+      '• 모든 프리미엄 운세 이용\n• 광고 없음\n• 타로 무제한\n• 궁합 분석 무제한\n• MBTI 프리미엄 리포트\n• MBTI 연애 스타일 분석\n• MBTI 궁합 프리미엄 결과\n• 우선 고객 지원\n• 독점 콘텐츠 이용\n• 포인트 2배 적립',
+    'premium.selectPlan': '이 플랜 선택',
+    'premium.paymentInfoTitle': '결제 안내',
+    'premium.notePi': '• 결제는 Pi(파이) 암호화폐로 진행됩니다.',
+    'premium.noteNoRenew': '• 구독 기간 만료 후 자동 갱신되지 않습니다.',
+    'premium.noteContact': '• 문의: lwy2016@naver.com',
+    'premium.modalPayTitle': '결제 확인',
+    'premium.labelPlan': '플랜',
+    'premium.labelAmount': '결제 금액',
+    'premium.modalPayBody': 'Pi 결제 시스템으로 연결됩니다.\n결제를 진행하시겠습니까?',
+    'premium.cancel': '취소',
+    'premium.payNow': '결제하기',
+    'premium.alertComingSoon': 'Pi 결제 시스템 준비 중입니다.',
+    'terms.bodySection2':
+      '• 본 서비스를 이용하는 모든 사용자는 이 약관에 동의합니다.\n• 14세 미만의 미성년자는 부모 또는 보호자의 동의 하에서만 본 서비스를 이용할 수 있습니다.\n• 사용자는 본 서비스를 적법한 목적으로만 이용해야 합니다.\n• 사용자는 다른 사용자의 권리를 침해하거나 불법적인 활동을 해서는 안 됩니다.',
+    'terms.bodySection3':
+      '• 사용자는 본 서비스 이용 시 발생하는 모든 책임을 자신이 짊어집니다.\n• 사용자는 본 서비스의 콘텐츠를 신뢰하여 내린 결정에 대한 책임이 있습니다.\n• 불법적인 목적으로 본 서비스를 이용하는 경우 법적 책임이 발생할 수 있습니다.',
+    'terms.bodySection4':
+      '• 본 서비스의 모든 콘텐츠(텍스트, 이미지, 아이콘 등)는 저작권법으로 보호됩니다.\n• 사용자는 개인적인 용도로만 콘텐츠를 사용할 수 있습니다.\n• 사용자는 서비스 운영자의 사전 동의 없이 콘텐츠를 복제, 배포, 수정할 수 없습니다.',
+    'terms.bodySection5':
+      '• 본 서비스는 "있는 그대로" 제공되며, 명시적 또는 묵시적 보증이 없습니다.\n• 서비스 운영자는 서비스 이용으로 인한 직접, 간접, 특수, 결과적 손해에 대해 책임지지 않습니다.\n• 서비스의 중단 또는 오류로 인한 손해에 대해 책임지지 않습니다.',
+    'terms.bodySection6':
+      '• 서비스 운영자는 사전 공지 없이 본 약관을 변경할 수 있습니다.\n• 변경된 약관은 웹사이트에 게시되며, 게시일로부터 효력이 발생합니다.\n• 사용자가 변경된 약관에 동의하지 않는 경우 서비스 이용을 중단할 수 있습니다.',
+    'terms.bodySection7':
+      '앱 내 재화 안내\n• 본 서비스는 파이(Pi)와 포인트(P) 두 가지 재화로만 운영됩니다.\n• 파이(Pi)는 실제 결제를 통해 충전할 수 있는 프리미엄 재화입니다.\n• 포인트(P)는 출석, 이벤트, 룰렛 등을 통해 무료로 적립되는 재화입니다.\n• 그 외 다른 형태의 재화나 암호화폐는 본 서비스에서 사용되지 않습니다.\n\n포인트 적립 방법\n• 매일 출석 체크: 20P\n• 광고 시청: 10P\n• 친구 추천: 30P\n• 보너스 룰렛 (1일 1회): 10P ~ 20P\n\n파이/포인트 사용처\n• 프리미엄 운세 분석 (상세 해석 포함)\n• 특별 타로 리딩 (프리미엄 카드 덱)\n• 심화 궁합 분석\n\n유효기간 및 소멸\n• 포인트의 유효기간은 적립일로부터 1년입니다.\n• 파이의 유효기간은 충전일로부터 5년입니다.\n• 회원 탈퇴 시 보유 재화는 즉시 소멸되며 복구되지 않습니다.\n• 부정한 방법으로 획득한 재화는 회수될 수 있습니다.',
+    'terms.bodySection8':
+      '광고 게재 원칙\n• 본 서비스는 사용자 경험을 해치지 않는 범위 내에서 광고를 게재합니다.\n• 모든 광고는 관련 법령을 준수하며, 허위 또는 과장 광고를 게재하지 않습니다.\n\n금지되는 광고 및 협력 콘텐츠\n• 불법 도박: 온라인 카지노, 불법 스포츠 베팅, 사행성 게임 등\n• 불법 금융: 불법 대출, 유사수신행위, 다단계 사기 등\n• 성인/음란물: 성인 콘텐츠, 음란물 사이트 등\n• 불법 의약품: 무허가 의약품, 마약류 등\n• 허위/사기: 허위 투자 정보, 피싱 사이트 등\n• 혐오/차별: 특정 집단에 대한 혐오 또는 차별 조장 콘텐츠\n\n협력 문의\n• 건전한 광고 및 협력 제안은 lwy2016@naver.com으로 문의해 주세요.\n• 위 금지 항목에 해당하는 제안은 검토 없이 거절됩니다.',
+    'privacy.bodySection1Extra': '• 이메일, 닉네임\n• 서비스 이용 기록, 접속 로그\n• 기기 정보(모델명, OS 정보 등)',
+    'privacy.bodySection2Extra':
+      '• 서비스 제공 및 운영\n• 사용자 식별 및 관리\n• 포인트 지급 및 보너스 기능 제공\n• 광고 및 콘텐츠 제공',
+    'privacy.section3.body':
+      '이용자의 개인정보는 회원 탈퇴 시까지 보관되며, 목적 달성 후 지체 없이 삭제됩니다.',
+    'privacy.section4.body':
+      '본 앱은 원칙적으로 이용자의 개인정보를 외부에 제공하지 않습니다.\n단, 광고 서비스 제공 및 앱 운영을 위해 필요한 경우 일부 정보가 외부 서비스에 제공될 수 있습니다.',
+    'privacy.section5.body':
+      '서비스 향상을 위해 일부 업무를 외부에 위탁할 수 있으며, 이 경우 관련 법령에 따라 안전하게 관리됩니다.',
+    'privacy.section6.body': '이용자는 언제든지 자신의 개인정보를 조회, 수정, 삭제 요청할 수 있습니다.',
+    'privacy.section7.body': '본 앱은 개인정보 보호를 위해 기술적, 관리적 보호 조치를 적용하고 있습니다.',
+    'privacy.section8.body': '본 개인정보처리방침은 변경될 수 있으며, 변경 시 앱 내 공지를 통해 안내합니다.',
+    'privacy.emailContact': '이메일: lwy2016@naver.com',
+    'userProfile.checkInBonusHeading': '출석체크 · 보너스 받기',
+    'userProfile.checkInBonusSub': '매일 포인트를 적립해보세요',
+    'userProfile.bonusWatchAdLine': '광고보고 보너스 받기',
+    'userProfile.dailyRewardWithMax': '일일 보상 ({current}/{max})',
+    'userProfile.pickDrawTitle': '뽑기',
+    'userProfile.pickDrawSubtitle': '5개의 선물 상자 중 하나를 선택하세요!',
+    'common.congrats': '축하합니다!',
+    'userProfile.rewardReceived': '보상을 획득했습니다!',
+    'userProfile.giftBoxNumber': '선물상자 {n}',
 
     // Copyright Page
     'copyright.title': '저작권 및 라이선스',
@@ -417,7 +609,20 @@ export const translations: Record<Language, Record<string, string>> = {
     'copyright.section6.title': '6. 면책조항',
     'copyright.contact': '저작권 관련 문의',
     'copyright.contactDesc': '저작권 및 라이선스 관련 문의는 copyright@example.com으로 연락주시기 바랍니다.',
-  },
+}
+
+export const translations: Record<Language, Record<string, string>> = {
+  ko: koTranslations,
+  en: { ...koTranslations, ...enMessages },
+  ja: { ...koTranslations, ...jaMessages },
+  zh: { ...koTranslations, ...zhMessages },
+  es: { ...koTranslations, ...esMessages },
+  fr: { ...koTranslations, ...frMessages },
+  de: { ...koTranslations, ...deMessages },
+  pt: { ...koTranslations, ...ptMessages },
+  hi: { ...koTranslations, ...hiMessages },
+  vi: { ...koTranslations, ...viMessages },
+  th: { ...koTranslations, ...thMessages },
 }
 
 // Fallback to Korean for missing translations

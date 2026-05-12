@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { usePathname } from "next/navigation"
 import type { Language } from "@/lib/i18n"
-import { translations } from "@/lib/i18n"
+import { ALL_LANGUAGES, translations } from "@/lib/i18n"
 import { injectLanguageTypographyStyles, getLanguageTypographyClass } from "@/lib/language-typography"
 
 interface LanguageContextType {
@@ -27,7 +27,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setIsMounted(true)
     const saved = localStorage.getItem('language') as Language | null
-    const langToUse = saved || 'ko'
+    const langToUse =
+      saved && (ALL_LANGUAGES as readonly string[]).includes(saved) ? saved : 'ko'
     setLanguageState(langToUse)
     applyLanguageStyles(langToUse)
     if (!saved) {
@@ -39,7 +40,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (isMounted) {
       const savedLanguage = localStorage.getItem('language') as Language | null
-      const langToUse = savedLanguage || 'ko'
+      const langToUse =
+        savedLanguage && (ALL_LANGUAGES as readonly string[]).includes(savedLanguage)
+          ? savedLanguage
+          : 'ko'
       setLanguageState(langToUse)
       applyLanguageStyles(langToUse)
       // Force re-render by dispatching a custom event
