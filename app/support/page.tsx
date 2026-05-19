@@ -11,6 +11,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useLanguage } from "@/lib/language-context"
 import { PiPaymentModal } from "@/components/pi-payment-modal"
+import { getAnonymousSupporterName, getSupportSampleSupporters } from "@/lib/support-sample-supporters"
 
 interface Supporter {
   id: string
@@ -31,13 +32,9 @@ export default function SupportPage() {
   const { t, language } = useLanguage()
   const pathname = usePathname()
   const [showPiModal, setShowPiModal] = useState(false)
-  const [recentSupporters, setRecentSupporters] = useState<Supporter[]>([
-    { id: "1", name: "행복한별***", amount: "3.14π", date: "2026-03-30", message: "좋은 서비스 감사합니다!" },
-    { id: "2", name: "운세마니***", amount: "31.4π", date: "2026-03-29" },
-    { id: "3", name: "타로러버***", amount: "0.314π", date: "2026-03-28", message: "항상 응원해요" },
-    { id: "4", name: "사주덕후***", amount: "3.14π", date: "2026-03-27" },
-    { id: "5", name: "익명의후***", amount: "314π", date: "2026-03-25", message: "최고의 앱입니다" },
-  ])
+  const [recentSupporters, setRecentSupporters] = useState<Supporter[]>(() =>
+    getSupportSampleSupporters(language)
+  )
   const [showSuccess, setShowSuccess] = useState(false)
   const [successMessage, setSuccessMessage] = useState("")
 
@@ -50,6 +47,10 @@ export default function SupportPage() {
   useEffect(() => {
     console.log("[v0] Support: Route changed to:", pathname)
   }, [pathname])
+
+  useEffect(() => {
+    setRecentSupporters(getSupportSampleSupporters(language))
+  }, [language])
 
   // localStorage에서 후원자 목록 로드
   useEffect(() => {
@@ -70,7 +71,7 @@ export default function SupportPage() {
       // 새로운 후원자 추가 (현재 사용자를 익명으로 표시)
       const newSupporter: Supporter = {
         id: Date.now().toString(),
-        name: maskName("익명의사용자"),
+        name: maskName(getAnonymousSupporterName(language)),
         amount: `${amount}π`,
         date: new Date().toISOString().split('T')[0],
         message: "",
@@ -94,10 +95,10 @@ export default function SupportPage() {
     } catch (error) {
       console.log("[v0] Error processing payment:", error)
     }
-  }, [recentSupporters, t])
+  }, [recentSupporters, t, language])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-900 via-purple-900 to-indigo-900 pb-24">
+    <div className="min-h-screen bg-gradient-to-br from-pink-900 via-purple-900 to-indigo-900 pb-12">
       {/* 헤더 */}
       <header className="sticky top-0 bg-white/10 backdrop-blur-md border-b border-white/20 z-40">
         <div className="max-w-lg mx-auto px-4 py-4 flex items-center gap-3">
@@ -108,7 +109,7 @@ export default function SupportPage() {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 py-6 space-y-6">
+      <main className="max-w-lg mx-auto px-4 py-3 space-y-4">
         {/* 상단 소개 */}
         <div className="bg-gradient-to-r from-pink-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg text-center">
           <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">

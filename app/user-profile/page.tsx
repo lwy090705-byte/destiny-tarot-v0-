@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 // Build: 20260403-v11-force-reload
 
 import { useState, useEffect, useMemo } from "react"
@@ -7,6 +7,13 @@ import { ArrowLeft, Star, Coins, Trophy, Target, Flame, Award, Crown, Sparkles, 
 import Link from "next/link"
 import { useLanguage } from "@/lib/language-context"
 import { usePoints } from "@/lib/points-context"
+import { useUser } from "@/lib/user-context"
+import {
+  canWatchAdReward,
+  DAILY_AD_REWARD_LIMIT,
+  incrementAdRewardWatch,
+  loadAdRewardState,
+} from "@/lib/ad-reward-storage"
 
 interface UserStats {
   points: number
@@ -33,6 +40,7 @@ interface Achievement {
 export default function UserProfilePage() {
   const { t, language } = useLanguage()
   const { points: contextPoints, addPoints } = usePoints()
+  const { user } = useUser()
   const [stats, setStats] = useState<UserStats>({
     points: 0, // Will be synced with context
     visitCount: 47,
@@ -152,41 +160,60 @@ export default function UserProfilePage() {
   const SEGMENT_COUNT = SEGMENTS.length
   const SEGMENT_DEG = 360 / SEGMENT_COUNT
 
+  // 모달이 열릴 때 body 스크롤 잠금 — 스크롤 위치 이동 방지
+  useEffect(() => {
+    const anyOpen = showRoulette || showAttendance || showPickDraw
+    if (anyOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [showRoulette, showAttendance, showPickDraw])
+
   useEffect(() => {
     setIsHydrated(true)
-    
-    // URL 해시에 따라 보너스 강조 활성화 (#bonus 앵커 사용)
-    if (typeof window !== 'undefined' && window.location.hash === '#bonus') {
-      setHighlightBonus(true)
-      // 2초 후 강조 효과 제거
-      const timer = setTimeout(() => setHighlightBonus(false), 2000)
-      return () => clearTimeout(timer)
-    }
-    
-    const today = new Date().toDateString()
-    const savedLastDate = localStorage.getItem('lastRewardDate')
-    const savedCount = localStorage.getItem('dailyRewardCount')
-    
-    // 새로운 날이면 카운트 리셋
-    if (savedLastDate !== today) {
-      setDailyRewardCount(0)
-      setLastRewardDate(today)
-      localStorage.setItem('lastRewardDate', today)
-      localStorage.setItem('dailyRewardCount', '0')
-    } else {
-      setDailyRewardCount(parseInt(savedCount || '0'))
-      setLastRewardDate(savedLastDate)
-    }
-    
-    // Points are now managed by points-context, no need to load from localStorage here
-    
-    // 출석 데이터 로드
+
+    const adState = loadAdRewardState()
+    setDailyRewardCount(adState.watchCount)
+    setLastRewardDate(adState.date)
+
     const savedAttendance = localStorage.getItem('attendanceData')
     if (savedAttendance) {
       const data = JSON.parse(savedAttendance)
       setAttendanceData(data)
       const todayStr = new Date().toDateString()
       setTodayChecked(data.includes(todayStr))
+    }
+  }, [])
+
+  // URL 해시에 따라 보너스 카드 화면 중앙 스크롤 (#bonus 앵커 사용)
+  useEffect(() => {
+    if (!isHydrated) return
+    if (typeof window === 'undefined' || window.location.hash !== '#bonus') return
+
+    setHighlightBonus(true)
+    const timer = setTimeout(() => {
+      document.getElementById('bonus-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 300)
+    const resetTimer = setTimeout(() => setHighlightBonus(false), 2300)
+    return () => {
+      clearTimeout(timer)
+      clearTimeout(resetTimer)
+    }
+  }, [isHydrated])
+
+  useEffect(() => {
+    const syncAdRewardFromStorage = () => {
+      const adState = loadAdRewardState()
+      setDailyRewardCount(adState.watchCount)
+      setLastRewardDate(adState.date)
+    }
+    window.addEventListener('pageshow', syncAdRewardFromStorage)
+    window.addEventListener('focus', syncAdRewardFromStorage)
+    return () => {
+      window.removeEventListener('pageshow', syncAdRewardFromStorage)
+      window.removeEventListener('focus', syncAdRewardFromStorage)
     }
   }, [])
 
@@ -228,22 +255,22 @@ export default function UserProfilePage() {
     return days
   }
 
-  const canClaimReward = () => dailyRewardCount < 5
+  const canClaimReward = () => dailyRewardCount < DAILY_AD_REWARD_LIMIT
 
   const updateRewardCount = (rewardPoints: number) => {
-    const newCount = dailyRewardCount + 1
-    setDailyRewardCount(newCount)
-    localStorage.setItem('dailyRewardCount', newCount.toString())
-    // addPoints will update context and localStorage
+    const next = incrementAdRewardWatch()
+    if (!next) return
+    setDailyRewardCount(next.watchCount)
+    setLastRewardDate(next.date)
     addPoints(rewardPoints)
   }
 
   const spinRoulette = () => {
-    if (!canClaimReward() || isSpinning) return
+    if (!canWatchAdReward() || isSpinning) return
     setIsSpinning(true)
     setRouletteResult(null)
 
-    // 확률 시스템:
+    // Weighted odds:
     // 10P: 60% (12/20)
     // 20P: 30% (6/20)
     // 40P: 6% (1/20)
@@ -279,7 +306,7 @@ export default function UserProfilePage() {
   }
 
   const handlePickDraw = (boxIndex: number) => {
-    if (!canClaimReward() || isDrawing) return
+    if (!canWatchAdReward() || isDrawing) return
     setIsDrawing(true)
     
     setTimeout(() => {
@@ -307,7 +334,7 @@ export default function UserProfilePage() {
   ], [language])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-900 to-purple-800 pb-24">
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-900 to-purple-800 pb-12">
       {/* 헤더 */}
       <header className="sticky top-0 bg-white/10 backdrop-blur-md border-b border-white/20 z-40">
         <div className="max-w-lg mx-auto px-4 py-4 flex items-center justify-between">
@@ -320,7 +347,7 @@ export default function UserProfilePage() {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 py-6 space-y-6">
+      <main className="max-w-lg mx-auto px-4 py-3 space-y-4">
         {/* 프로필 카드 */}
         <div className="bg-white rounded-2xl p-6 shadow-lg relative overflow-hidden">
           <div className="absolute -right-12 -top-12 w-40 h-40 bg-purple-100 rounded-full opacity-50" />
@@ -332,7 +359,7 @@ export default function UserProfilePage() {
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-bold text-gray-800">{t('userProfile.user')}</h2>
+                  <h2 className="text-xl font-bold text-gray-800">{user?.nickname || t('userProfile.user')}</h2>
                   <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
                     Lv.{stats.level}
                   </span>
@@ -390,73 +417,250 @@ export default function UserProfilePage() {
           </div>
         </div>
 
-        {/* 출석체크 · 보너스 받기 섹션 라벨 */}
-        <div className="text-center px-4 mb-4">
-          <h3 className="text-sm font-bold text-white mb-1">{t('userProfile.checkInBonusHeading')}</h3>
-          <p className="text-xs text-white/80">{t('userProfile.checkInBonusSub')}</p>
-        </div>
+        {/* 출석체크 · 보너스 받기 섹션 — flex-col gap-4로 완전 독립 분리 */}
+        <div className="flex flex-col gap-4">
 
-        {/* 출석체크 */}
-        <button 
-          onClick={() => setShowAttendance(true)}
-          className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl p-4 shadow-lg text-white hover:from-blue-600 hover:to-indigo-700 transition-all"
+          {/* 섹션 헤더 */}
+          <div className="text-center px-4">
+            <h3
+              className="font-extrabold text-white mb-1"
+              style={{ fontSize: 18, textShadow: '0 0 16px rgba(167,139,250,0.6)' }}
+            >
+              ✦ {t('userProfile.checkInBonusHeading')} ✦
+            </h3>
+            <p className="text-xs text-white/70">{t('userProfile.checkInBonusSub')}</p>
+          </div>
+
+          {/* 출석체크 카드 */}
+          <button
+            onClick={() => setShowAttendance(true)}
+            className="w-full text-white transition-all active:scale-[0.98]"
+            style={{
+              borderRadius: 20,
+            background: 'linear-gradient(135deg, #1e3a8a 0%, #3730a3 35%, #5b21b6 65%, #7c3aed 100%)',
+            boxShadow: '0 8px 32px rgba(91,33,182,0.45), 0 0 0 1px rgba(167,139,250,0.25), inset 0 1px 0 rgba(255,255,255,0.15)',
+            padding: '18px 16px 16px',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                <CalendarCheck className="h-5 w-5 text-white" />
+          {/* sparkle bg dots */}
+          <div style={{ position: 'absolute', top: 10, right: 60, width: 4, height: 4, borderRadius: '50%', background: 'rgba(255,255,255,0.5)' }} />
+          <div style={{ position: 'absolute', top: 30, right: 100, width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.35)' }} />
+          <div style={{ position: 'absolute', bottom: 18, left: 120, width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.4)' }} />
+          <div style={{ position: 'absolute', top: 14, left: 130, width: 2, height: 2, borderRadius: '50%', background: 'rgba(255,255,255,0.5)' }} />
+
+          <div className="flex items-center gap-3">
+            {/* 좌측 아이콘 */}
+            <div
+              className="relative flex-shrink-0"
+              style={{
+                width: 72, height: 72,
+                borderRadius: 16,
+                overflow: 'hidden',
+                boxShadow: '0 4px 16px rgba(91,33,182,0.5), 0 0 0 2px rgba(167,139,250,0.3)',
+              }}
+            >
+              <img
+                src="/icons/attendance-card.jpg"
+                alt={t('userProfile.attendance')}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            </div>
+
+            {/* 중앙 텍스트 */}
+            <div className="flex-1 text-left min-w-0">
+              <div
+                className="font-extrabold leading-tight"
+                style={{ fontSize: 20, textShadow: '0 1px 8px rgba(0,0,0,0.3)' }}
+              >
+                {t('userProfile.attendance')}
               </div>
-              <div className="text-left">
-                <div className="text-sm font-bold">{t('userProfile.attendance')}</div>
-                <div className="text-xs opacity-80">{todayChecked ? t('userProfile.attendanceComplete') : t('userProfile.attendanceReward')}</div>
+              <div className="text-sm mt-0.5" style={{ opacity: 0.9 }}>
+                {todayChecked ? t('userProfile.attendanceComplete') : t('userProfile.attendanceReward')}
+              </div>
+              <div className="text-xs mt-1" style={{ opacity: 0.7 }}>
+                {t('attendance.description')}
               </div>
             </div>
-            <ChevronRight className="h-5 w-5 opacity-70" />
-          </div>
-        </button>
 
-        {/* 보너스 받기 버튼 */}
-        <button 
-          onClick={() => canClaimReward() ? setShowRoulette(true) : null}
-          className={`w-full rounded-xl p-4 shadow-lg text-white transition-all ${
-            highlightBonus ? 'animate-bonus-highlight' : ''
-          } ${
-            canClaimReward() 
-              ? 'bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700' 
-              : 'bg-gray-400 cursor-not-allowed'
-          }`}
-          disabled={!canClaimReward()}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 flex-1">
-              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-                <Zap className="h-5 w-5 text-white" />
+            {/* 우측 체크 + 화살표 */}
+            <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+              <div
+                style={{
+                  width: 44, height: 44, borderRadius: '50%',
+                  background: todayChecked
+                    ? 'linear-gradient(135deg, #7c3aed, #a855f7)'
+                    : 'rgba(255,255,255,0.15)',
+                  boxShadow: todayChecked
+                    ? '0 0 16px rgba(167,139,250,0.7), 0 0 0 2px rgba(255,255,255,0.3)'
+                    : '0 0 0 2px rgba(255,255,255,0.2)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                <Check className="h-5 w-5 text-white" />
               </div>
-              <div className="text-left min-w-0">
-                <div className="text-sm font-bold">{t('userProfile.bonus')}</div>
-                <div className="text-xs opacity-80">{t('userProfile.bonusWatchAdLine')}</div>
-              </div>
+              <ChevronRight className="h-4 w-4" style={{ opacity: 0.6 }} />
             </div>
-            <ChevronRight className="h-5 w-5 opacity-70 flex-shrink-0" />
           </div>
-          
-          {/* 내부 일일 보상 진행도 */}
-          <div className="mt-3 pt-3 border-t border-white/20">
-            <div className="flex items-center justify-between mb-1.5 px-1">
-              <span className="text-xs font-bold">
-                {t('userProfile.dailyRewardWithMax')
-                  .replace('{current}', String(dailyRewardCount))
-                  .replace('{max}', '5')}
+
+          {/* 하단 주간 진행바 */}
+          <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.15)' }}>
+            <div className="flex items-center justify-between mb-2 px-0.5">
+              <span className="text-xs font-bold" style={{ opacity: 0.9 }}>
+                {t('attendance.weekly')}
+              </span>
+              <span className="text-xs" style={{ opacity: 0.7 }}>
+                {attendanceData.filter(d => {
+                  const dDate = new Date(d)
+                  const now = new Date()
+                  const startOfWeek = new Date(now)
+                  startOfWeek.setDate(now.getDate() - now.getDay())
+                  startOfWeek.setHours(0, 0, 0, 0)
+                  return dDate >= startOfWeek
+                }).length}/7
               </span>
             </div>
-            <div className="w-full bg-white/30 rounded-full h-2 overflow-hidden">
-              <div 
-                className="h-full bg-white transition-all duration-300"
-                style={{ width: `${(dailyRewardCount / 5) * 100}%` }}
+            <div
+              className="w-full rounded-full overflow-hidden"
+              style={{ height: 8, background: 'rgba(255,255,255,0.2)' }}
+            >
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{
+                  width: `${(attendanceData.filter(d => {
+                    const dDate = new Date(d)
+                    const now = new Date()
+                    const startOfWeek = new Date(now)
+                    startOfWeek.setDate(now.getDate() - now.getDay())
+                    startOfWeek.setHours(0, 0, 0, 0)
+                    return dDate >= startOfWeek
+                  }).length / 7) * 100}%`,
+                  background: 'linear-gradient(90deg, #a78bfa, #ffffff)',
+                  boxShadow: '0 0 8px rgba(167,139,250,0.8)',
+                }}
               />
             </div>
           </div>
-        </button>
+          </button>
+
+          {/* 보너스 받기 카드 */}
+          <button
+            id="bonus-card"
+            onClick={() => canClaimReward() ? setShowRoulette(true) : null}
+            disabled={!canClaimReward()}
+            className={`w-full text-white transition-all active:scale-[0.98] ${highlightBonus ? 'animate-bonus-highlight' : ''}`}
+            style={{
+              borderRadius: 20,
+            background: canClaimReward()
+              ? 'linear-gradient(135deg, #ea580c 0%, #f97316 30%, #fb923c 60%, #ec4899 100%)'
+              : 'linear-gradient(135deg, #6b7280, #9ca3af)',
+            boxShadow: canClaimReward()
+              ? '0 8px 32px rgba(234,88,12,0.45), 0 0 0 1px rgba(251,146,60,0.25), inset 0 1px 0 rgba(255,255,255,0.15)'
+              : '0 4px 16px rgba(0,0,0,0.2)',
+            padding: '18px 16px 16px',
+            position: 'relative',
+            overflow: 'hidden',
+            cursor: canClaimReward() ? 'pointer' : 'not-allowed',
+          }}
+        >
+          {/* sparkle bg */}
+          <div style={{ position: 'absolute', top: 12, right: 80, width: 4, height: 4, borderRadius: '50%', background: 'rgba(255,255,255,0.5)' }} />
+          <div style={{ position: 'absolute', top: 28, right: 130, width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.4)' }} />
+          <div style={{ position: 'absolute', bottom: 20, left: 110, width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.35)' }} />
+
+          <div className="flex items-center gap-3">
+            {/* 좌측 보물상자 아이콘 */}
+            <div
+              className="relative flex-shrink-0"
+              style={{
+                width: 72, height: 72,
+                borderRadius: 16,
+                overflow: 'hidden',
+                boxShadow: '0 4px 16px rgba(234,88,12,0.5), 0 0 0 2px rgba(251,191,36,0.35)',
+              }}
+            >
+              <img
+                src="/icons/bonus-chest.jpg"
+                alt={t('userProfile.bonus')}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            </div>
+
+            {/* 중앙 텍스트 */}
+            <div className="flex-1 text-left min-w-0">
+              <div
+                className="font-extrabold leading-tight"
+                style={{ fontSize: 20, textShadow: '0 1px 8px rgba(0,0,0,0.3)' }}
+              >
+                {t('userProfile.bonus')}
+              </div>
+              <div className="text-sm mt-0.5" style={{ opacity: 0.9 }}>
+                {t('userProfile.bonusWatchAdLine')}
+              </div>
+              <div className="text-xs mt-1" style={{ opacity: 0.7 }}>
+                {t('attendance.description').replace('20P', '50P')}
+              </div>
+            </div>
+
+            {/* 우측 룰렛/50P — 출석체크 체크 서클과 동일한 44px */}
+            <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+              <div
+                style={{
+                  width: 44, height: 44,
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  boxShadow: '0 0 16px rgba(251,191,36,0.6), 0 0 0 2px rgba(255,255,255,0.3)',
+                  position: 'relative',
+                }}
+              >
+                <img
+                  src="/icons/roulette-wheel.jpg"
+                  alt="50P"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+                <div
+                  style={{
+                    position: 'absolute', inset: 0,
+                    display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', justifyContent: 'center',
+                    background: 'rgba(0,0,0,0.4)',
+                  }}
+                >
+                  <span style={{ fontSize: 10, fontWeight: 900, color: '#fbbf24', lineHeight: 1.2 }}>50P</span>
+                </div>
+              </div>
+              <ChevronRight className="h-4 w-4" style={{ opacity: 0.6 }} />
+            </div>
+          </div>
+
+          {/* 하단 일일 보상 진행바 */}
+          <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.2)' }}>
+            <div className="flex items-center justify-between mb-2 px-0.5">
+              <span className="text-xs font-bold" style={{ opacity: 0.95 }}>
+                {t('userProfile.dailyRewardWithMax')
+                  .replace('{current}', String(dailyRewardCount))
+                  .replace('{max}', String(DAILY_AD_REWARD_LIMIT))}
+              </span>
+              <Gift className="h-4 w-4" style={{ opacity: 0.7 }} />
+            </div>
+            <div
+              className="w-full rounded-full overflow-hidden"
+              style={{ height: 8, background: 'rgba(255,255,255,0.25)' }}
+            >
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{
+                  width: `${(dailyRewardCount / DAILY_AD_REWARD_LIMIT) * 100}%`,
+                  background: 'linear-gradient(90deg, #fbbf24, #ffffff)',
+                  boxShadow: '0 0 10px rgba(251,191,36,0.8)',
+                }}
+              />
+            </div>
+          </div>
+          </button>
+
+        </div>{/* end flex-col gap-4 wrapper */}
 
         {/* 업적 시스템 */}
         <div className="bg-white rounded-2xl p-4 shadow-lg">

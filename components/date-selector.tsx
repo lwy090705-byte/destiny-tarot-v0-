@@ -75,7 +75,7 @@ export function DateSelector({
           <div>
             <Label className="text-gray-600 text-sm">{t('date.year')}</Label>
             <Select value={year.toString()} onValueChange={(v) => onYearChange(parseInt(v))}>
-              <SelectTrigger className="mt-1 border-gray-200">
+              <SelectTrigger className="mt-1 border-gray-200 text-gray-800">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -88,7 +88,7 @@ export function DateSelector({
           <div>
             <Label className="text-gray-600 text-sm">{t('date.month')}</Label>
             <Select value={month.toString()} onValueChange={(v) => onMonthChange(parseInt(v))}>
-              <SelectTrigger className="mt-1 border-gray-200">
+              <SelectTrigger className="mt-1 border-gray-200 text-gray-800">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -101,7 +101,7 @@ export function DateSelector({
           <div>
             <Label className="text-gray-600 text-sm">{t('date.day')}</Label>
             <Select value={day.toString()} onValueChange={(v) => onDayChange(parseInt(v))}>
-              <SelectTrigger className="mt-1 border-gray-200">
+              <SelectTrigger className="mt-1 border-gray-200 text-gray-800">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -120,7 +120,7 @@ export function DateSelector({
               value={hour?.toString() || ""} 
               onValueChange={(v) => onHourChange?.(parseInt(v))}
             >
-              <SelectTrigger className="mt-1 border-gray-200 w-24">
+              <SelectTrigger className="mt-1 border-gray-200 text-gray-800 w-24">
                 <SelectValue placeholder={t('date.hour')} />
               </SelectTrigger>
               <SelectContent>

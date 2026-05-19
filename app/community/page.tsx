@@ -1,43 +1,21 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 import { ArrowLeft, Heart, MessageCircle, ThumbsUp, Star, Flame, Plus, Search, X } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/lib/language-context"
+import {
+  COMMUNITY_CATEGORY_COLOR,
+  getCommunitySamplePosts,
+  type CommunityCategoryKey,
+  type CommunitySamplePost,
+} from "@/lib/community-sample-posts"
 
+const PAGE_SIZE = 10
 
-type Post = {
-  id: number
-  title: string
-  author: string
-  date: string
-  likes: number
-  comments: number
-  category: string
-  preview: string
-  isRecommended?: boolean
-  userLikes?: number[] // Track which user IDs have liked this post
-}
-
-const INITIAL_POSTS: Post[] = [
-  { id: 9, title: '2025년 타로로 보는 하반기 운세 정리', author: '별빛타로', date: '2025-01-12', likes: 142, comments: 38, category: '타로', preview: '2025년 하반기 주요 타로 카드 해석을 모아봤습니다...', isRecommended: true },
-  { id: 8, title: '용띠 2025년 총운 분석', author: '동양철학자', date: '2025-01-11', likes: 98, comments: 22, category: '사주', preview: '용띠 분들의 2025년 운세를 상세히 분석해드립니다...' },
-  { id: 7, title: '궁합 볼 때 꼭 알아야 할 5가지', author: '운명의실', date: '2025-01-10', likes: 215, comments: 61, category: '궁합', preview: '궁합을 볼 때 많은 분들이 놓치는 중요한 포인트들...', isRecommended: true },
-  { id: 6, title: '오늘 운세가 안 좋을 때 극복하는 법', author: '희망별', date: '2025-01-09', likes: 77, comments: 14, category: '운세', preview: '오늘의 운세가 좋지 않게 나왔다면 이렇게 해보세요...' },
-  { id: 5, title: '사주 보기 전에 꼭 확인해야 할 것들', author: '철학도', date: '2025-01-08', likes: 156, comments: 44, category: '사주', preview: '사주 상담을 받기 전에 미리 알아두면 좋은 정보들...', isRecommended: true },
-  { id: 4, title: '2025년 12간지 새해 운세 총정리', author: '천간지지', date: '2025-01-07', likes: 304, comments: 89, category: '운세', preview: '2025년 12간지별 신년 운세를 한눈에 정리했습니다...' },
-  { id: 3, title: '타로 카드 메이저 아르카나 완벽 정리', author: '달빛마녀', date: '2025-01-06', likes: 189, comments: 55, category: '타로', preview: '메이저 아르카나 22장의 의미와 해석 방법을 정리...' },
-  { id: 2, title: '소띠와 말띠 궁합은 정말 안 맞을까?', author: '궁합연구소', date: '2025-01-05', likes: 63, comments: 19, category: '궁합', preview: '소띠와 말띠 궁합에 대한 속설을 팩트체크해봤어요...' },
-  { id: 1, title: '처음 운세 앱 쓰는 분들을 위한 가이드', author: '운세초보', date: '2025-01-04', likes: 41, comments: 7, category: '기타', preview: '운세 앱을 처음 쓰시는 분들을 위한 기본 사용법 안내...' },
-]
-
-const CATEGORY_COLORS: Record<string, string> = {
-  '타로': 'bg-purple-100 text-purple-700',
-  '사주': 'bg-amber-100 text-amber-700',
-  '궁합': 'bg-rose-100 text-rose-700',
-  '운세': 'bg-blue-100 text-blue-700',
-  '기타': 'bg-gray-100 text-gray-600',
+type Post = CommunitySamplePost & {
+  userLikes?: number[]
 }
 
 function PostCard({ post, onLike, onSelect, currentUserId, isUserLiked, t }: { post: Post; onLike: (id: number) => void; onSelect: (post: Post) => void; currentUserId: number; isUserLiked: boolean; t: (k: string) => string }) {
@@ -46,8 +24,8 @@ function PostCard({ post, onLike, onSelect, currentUserId, isUserLiked, t }: { p
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${CATEGORY_COLORS[post.category] ?? 'bg-gray-100 text-gray-600'}`}>
-              {post.category}
+            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${COMMUNITY_CATEGORY_COLOR[post.categoryKey]}`}>
+              {t(`community.category.${post.categoryKey}`)}
             </span>
             {post.isRecommended && (
               <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 flex items-center gap-1">
@@ -92,17 +70,21 @@ function PostCard({ post, onLike, onSelect, currentUserId, isUserLiked, t }: { p
 
 export default function CommunityPage() {
   const { t, language } = useLanguage()
-  const [currentUserId] = useState(() => Math.floor(Math.random() * 1000000)) // Simple user ID generation
-  const [posts, setPosts] = useState<Post[]>(INITIAL_POSTS.map(p => ({ ...p, userLikes: [] })))
+  const [currentUserId] = useState(() => Math.floor(Math.random() * 1000000))
+  const [posts, setPosts] = useState<Post[]>(() =>
+    getCommunitySamplePosts(language).map((p) => ({ ...p, userLikes: [] }))
+  )
   const [activeTab, setActiveTab] = useState<'latest' | 'recommended'>('latest')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedPost, setSelectedPost] = useState<Post | null>(null)
   const [showWriteModal, setShowWriteModal] = useState(false)
   const [newPostTitle, setNewPostTitle] = useState('')
   const [newPostContent, setNewPostContent] = useState('')
-  const [newPostCategory, setNewPostCategory] = useState('기타')
+  const [newPostCategory, setNewPostCategory] = useState<CommunityCategoryKey>('other')
   const [commentText, setCommentText] = useState('')
   const [comments, setComments] = useState<Array<{ id: number; author: string; date: string; text: string }>>([])
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  const loaderRef = useRef<HTMLDivElement>(null)
 
   // Toggle like with user tracking and prevention of duplicate likes
   const handleLike = (id: number) => {
@@ -151,14 +133,14 @@ export default function CommunityPage() {
         date: new Date().toISOString().split('T')[0],
         likes: 0,
         comments: 0,
-        category: newPostCategory,
+        categoryKey: newPostCategory,
         preview: newPostContent.substring(0, 100),
         isRecommended: false,
       }
       setPosts(prev => [newPost, ...prev])
       setNewPostTitle('')
       setNewPostContent('')
-      setNewPostCategory('기타')
+      setNewPostCategory('other')
       setShowWriteModal(false)
     }
   }
@@ -182,7 +164,7 @@ export default function CommunityPage() {
     .filter(p =>
       p.title.includes(searchQuery) ||
       p.author.includes(searchQuery) ||
-      p.category.includes(searchQuery)
+      t(`community.category.${p.categoryKey}`).includes(searchQuery)
     )
     .sort((a, b) => b.id - a.id)
 
@@ -190,7 +172,41 @@ export default function CommunityPage() {
     .filter(p => p.isRecommended)
     .sort((a, b) => b.likes - a.likes)
 
-  const displayPosts = activeTab === 'latest' ? latestPosts : recommendedPosts
+  const allDisplayPosts = activeTab === 'latest' ? latestPosts : recommendedPosts
+  const displayPosts = allDisplayPosts.slice(0, visibleCount)
+  const hasMore = visibleCount < allDisplayPosts.length
+
+  useEffect(() => {
+    setPosts(getCommunitySamplePosts(language).map((p) => ({ ...p, userLikes: [] })))
+    setVisibleCount(PAGE_SIZE)
+    setSelectedPost(null)
+  }, [language])
+
+  // 탭이나 검색어 변경 시 visibleCount 초기화
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE)
+  }, [activeTab, searchQuery])
+
+  // IntersectionObserver로 스크롤 시 자동 추가 로드
+  useEffect(() => {
+    const node = loaderRef.current
+    if (!node) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          setVisibleCount(prev => Math.min(prev + PAGE_SIZE, allDisplayPosts.length))
+        }
+      },
+      { threshold: 0.1 }
+    )
+    observer.observe(node)
+
+    return () => {
+      observer.unobserve(node)
+      observer.disconnect()
+    }
+  }, [hasMore, allDisplayPosts.length])
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -219,7 +235,7 @@ export default function CommunityPage() {
             placeholder={t('community.searchPlaceholder')}
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+            className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-800 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-400"
           />
         </div>
 
@@ -269,6 +285,17 @@ export default function CommunityPage() {
               <p className="text-sm">{t('community.empty')}</p>
             </div>
           )}
+
+          {/* 무한 스크롤 센티널 */}
+          <div ref={loaderRef} className="h-6 flex items-center justify-center">
+            {hasMore && (
+              <div className="flex items-center gap-2 text-gray-400 text-xs py-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -285,11 +312,11 @@ export default function CommunityPage() {
             <div className="space-y-3">
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1">{t('community.labelTitle')}</label>
-                <input type="text" value={newPostTitle} onChange={(e) => setNewPostTitle(e.target.value)} placeholder={t('community.placeholderTitle')} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400" />
+                <input type="text" value={newPostTitle} onChange={(e) => setNewPostTitle(e.target.value)} placeholder={t('community.placeholderTitle')} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-800 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-400" />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1">{t('community.labelContent')}</label>
-                <textarea value={newPostContent} onChange={(e) => setNewPostContent(e.target.value)} placeholder={t('community.placeholderContent')} rows={6} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 resize-none" />
+                <textarea value={newPostContent} onChange={(e) => setNewPostContent(e.target.value)} placeholder={t('community.placeholderContent')} rows={6} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-800 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-400 resize-none" />
               </div>
               <Button onClick={handleWritePost} className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold">
                 {t('community.publish')}
@@ -310,8 +337,8 @@ export default function CommunityPage() {
             </div>
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${CATEGORY_COLORS[selectedPost.category] ?? 'bg-gray-100 text-gray-600'}`}>
-                  {selectedPost.category}
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${COMMUNITY_CATEGORY_COLOR[selectedPost.categoryKey]}`}>
+                  {t(`community.category.${selectedPost.categoryKey}`)}
                 </span>
               </div>
               <h2 className="text-xl font-bold text-gray-800 mb-3">{selectedPost.title}</h2>
@@ -340,7 +367,7 @@ export default function CommunityPage() {
             <div className="space-y-2 border-t pt-4">
               <label className="text-sm font-medium text-gray-700 block">{t('community.labelComment')}</label>
               <div className="flex gap-2">
-                <input type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder={t('community.placeholderComment')} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400" />
+                <input type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder={t('community.placeholderComment')} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-800 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-400" />
                 <Button onClick={handleAddComment} className="bg-purple-600 hover:bg-purple-700 text-white px-4">
                   {t('community.send')}
                 </Button>

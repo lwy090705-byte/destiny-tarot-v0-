@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { ArrowLeft, Coins, CreditCard, History, Gift, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -23,15 +23,18 @@ const POINT_PACKAGES = [
   { id: '2000', points: 2000, price: '120 Pi', priceNum: 120, bonus: 500 },
 ]
 
-const AD_REWARDS = [
-  { id: '1', duration: '15초', reward: 10, description: '짧은 광고' },
-  { id: '2', duration: '30초', reward: 20, description: '표준 광고' },
-  { id: '3', duration: '60초', reward: 50, description: '장편 광고' },
-]
-
 export default function PointsShopPage() {
   const { addPoints } = usePoints()
   const { t, language } = useLanguage()
+
+  const AD_REWARDS = useMemo(
+    () => [
+      { id: '1', duration: t('pointsShop.adDuration15'), durationSec: 15, reward: 10, description: t('pointsShop.adShort') },
+      { id: '2', duration: t('pointsShop.adDuration30'), durationSec: 30, reward: 20, description: t('pointsShop.adStandard') },
+      { id: '3', duration: t('pointsShop.adDuration60'), durationSec: 60, reward: 50, description: t('pointsShop.adLong') },
+    ],
+    [t]
+  )
   
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
@@ -39,24 +42,28 @@ export default function PointsShopPage() {
   const [selectedAd, setSelectedAd] = useState<string | null>(null)
   const [isWatchingAd, setIsWatchingAd] = useState(false)
   const [adProgress, setAdProgress] = useState(0)
-  const [purchases, setPurchases] = useState<Purchase[]>([
-    {
-      id: '1',
-      date: '2026-01-15',
-      type: 'points',
-      description: '포인트 500 구매',
-      amount: 500,
-      status: 'completed'
-    },
-    {
-      id: '2',
-      date: '2026-01-10',
-      type: 'premium',
-      description: '프리미엄 1개월',
-      amount: 20,
-      status: 'completed'
-    },
-  ])
+  const [purchases, setPurchases] = useState<Purchase[]>([])
+
+  useEffect(() => {
+    setPurchases([
+      {
+        id: '1',
+        date: '2026-01-15',
+        type: 'points',
+        description: t('pointsShop.purchasePoints').replace('{n}', '500'),
+        amount: 500,
+        status: 'completed',
+      },
+      {
+        id: '2',
+        date: '2026-01-10',
+        type: 'premium',
+        description: t('pointsShop.premiumMonth'),
+        amount: 20,
+        status: 'completed',
+      },
+    ])
+  }, [t, language])
 
   const selectedPackageData = POINT_PACKAGES.find(p => p.id === selectedPackage)
   const selectedAdData = AD_REWARDS.find(a => a.id === selectedAd)
@@ -76,7 +83,9 @@ export default function PointsShopPage() {
         id: Date.now().toString(),
         date: new Date().toISOString().split('T')[0],
         type: 'points',
-        description: `포인트 ${selectedPackageData.points} 구매 (보너스 ${selectedPackageData.bonus})`,
+        description: t('pointsShop.purchasePointsBonus')
+          .replace('{n}', String(selectedPackageData.points))
+          .replace('{bonus}', String(selectedPackageData.bonus)),
         amount: selectedPackageData.priceNum,
         status: 'completed'
       }
@@ -93,7 +102,7 @@ export default function PointsShopPage() {
       setAdProgress(0)
       
       // 광고 시청 시뮬레이션
-      const adDuration = parseInt(selectedAdData.duration) * 1000
+      const adDuration = selectedAdData.durationSec * 1000
       const interval = setInterval(() => {
         setAdProgress(prev => {
           if (prev >= 100) {
@@ -113,7 +122,7 @@ export default function PointsShopPage() {
           id: Date.now().toString(),
           date: new Date().toISOString().split('T')[0],
           type: 'points',
-          description: `광고 시청 보상 (${selectedAdData.duration})`,
+          description: t('pointsShop.adRewardDesc').replace('{duration}', selectedAdData.duration),
           amount: 0,
           status: 'completed'
         }
@@ -133,7 +142,7 @@ export default function PointsShopPage() {
           <Link href="/user-profile">
             <ArrowLeft className="h-6 w-6 text-white" />
           </Link>
-          <h1 className="text-lg font-bold text-white">포인트 충전</h1>
+          <h1 className="text-lg font-bold text-white">{t('pointsShop.title')}</h1>
         </div>
       </div>
 
@@ -142,7 +151,7 @@ export default function PointsShopPage() {
         <div className="space-y-3">
           <h2 className="text-white font-bold text-base flex items-center gap-2">
             <Coins className="h-5 w-5 text-amber-400" />
-            포인트 패키지
+            {t('pointsShop.packages')}
           </h2>
           
           <div className="grid grid-cols-2 gap-3">
@@ -158,7 +167,7 @@ export default function PointsShopPage() {
                 </div>
                 <p className="text-purple-200 text-xs mb-2">{pkg.price}</p>
                 {pkg.bonus > 0 && (
-                  <p className="text-green-400 text-xs font-semibold">+ {pkg.bonus} 보너스</p>
+                  <p className="text-green-400 text-xs font-semibold">{t('pointsShop.bonus').replace('{n}', String(pkg.bonus))}</p>
                 )}
               </button>
             ))}
@@ -169,7 +178,7 @@ export default function PointsShopPage() {
         <div className="space-y-3">
           <h2 className="text-white font-bold text-base flex items-center gap-2">
             <Play className="h-5 w-5 text-blue-400" />
-            광고 시청 보상
+            {t('pointsShop.adRewards')}
           </h2>
           
           <button
@@ -179,7 +188,7 @@ export default function PointsShopPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Gift className="h-5 w-5" />
-                <span className="font-semibold">광고를 시청하고 포인트를 받으세요</span>
+                <span className="font-semibold">{t('pointsShop.watchAdCta')}</span>
               </div>
             </div>
           </button>
@@ -189,7 +198,7 @@ export default function PointsShopPage() {
         <div className="space-y-3">
           <h2 className="text-white font-bold text-base flex items-center gap-2">
             <History className="h-5 w-5 text-purple-300" />
-            구매 내역
+            {t('pointsShop.history')}
           </h2>
           
           <div className="space-y-2">
@@ -207,12 +216,12 @@ export default function PointsShopPage() {
                     <p className="text-amber-400 font-bold text-sm">
                       {purchase.type === 'points' ? `+${purchase.amount} P` : `-${purchase.amount} Pi`}
                     </p>
-                    <span className="text-xs text-green-400">완료</span>
+                    <span className="text-xs text-green-400">{t('pointsShop.statusDone')}</span>
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-purple-300 text-sm text-center py-4">거래 내역이 없습니다</p>
+              <p className="text-purple-300 text-sm text-center py-4">{t('pointsShop.noHistory')}</p>
             )}
           </div>
         </div>
@@ -222,31 +231,33 @@ export default function PointsShopPage() {
       {showPaymentModal && selectedPackageData && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full">
-            <h3 className="text-xl font-bold text-center text-gray-800 mb-4">포인트 구매</h3>
+            <h3 className="text-xl font-bold text-center text-gray-800 mb-4">{t('pointsShop.buyTitle')}</h3>
             <div className="bg-gray-50 rounded-xl p-4 mb-4 space-y-2">
               <div className="flex justify-between">
-                <span className="text-gray-600">패키지</span>
+                <span className="text-gray-600">{t('pointsShop.packageLabel')}</span>
                 <span className="font-bold text-gray-800">{selectedPackageData.points}P</span>
               </div>
               {selectedPackageData.bonus > 0 && (
                 <div className="flex justify-between text-green-600">
-                  <span>보너스</span>
+                  <span>{t('pointsShop.bonusLabel')}</span>
                   <span className="font-bold">+{selectedPackageData.bonus}P</span>
                 </div>
               )}
               <div className="border-t border-gray-200 pt-2 flex justify-between">
-                <span className="font-semibold text-gray-800">총 포인트</span>
+                <span className="font-semibold text-gray-800">{t('pointsShop.totalPoints')}</span>
                 <span className="font-bold text-lg text-purple-600">
                   {selectedPackageData.points + selectedPackageData.bonus}P
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600 text-sm">결제 금액</span>
+                <span className="text-gray-600 text-sm">{t('pointsShop.payAmount')}</span>
                 <span className="font-bold text-gray-800 text-sm">{selectedPackageData.price}</span>
               </div>
             </div>
             <p className="text-gray-500 text-sm text-center mb-5">
-              Pi로 결제합니다.<br />결제를 진행하시겠습니까?
+              {t('pointsShop.payConfirm').split('\n').map((line, i, arr) => (
+                <span key={i}>{line}{i < arr.length - 1 ? <br /> : null}</span>
+              ))}
             </p>
             <div className="flex gap-3">
               <Button
@@ -254,13 +265,13 @@ export default function PointsShopPage() {
                 className="flex-1"
                 onClick={() => setShowPaymentModal(false)}
               >
-                취소
+                {t('announcements.cancel')}
               </Button>
               <Button
                 className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0"
                 onClick={handlePaymentConfirm}
               >
-                결제하기
+                {t('pointsShop.pay')}
               </Button>
             </div>
           </div>
@@ -271,7 +282,7 @@ export default function PointsShopPage() {
       {showAdReward && !isWatchingAd && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full">
-            <h3 className="text-xl font-bold text-center text-gray-800 mb-4">광고 선택</h3>
+            <h3 className="text-xl font-bold text-center text-gray-800 mb-4">{t('pointsShop.selectAd')}</h3>
             <div className="space-y-2 mb-5">
               {AD_REWARDS.map((ad) => (
                 <button
@@ -299,14 +310,14 @@ export default function PointsShopPage() {
                 className="flex-1"
                 onClick={() => { setShowAdReward(false); setSelectedAd(null) }}
               >
-                닫기
+                {t('pointsShop.close')}
               </Button>
               <Button
                 className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-0"
                 onClick={handleWatchAd}
                 disabled={!selectedAd}
               >
-                광고보기
+                {t('pointsShop.watchAd')}
               </Button>
             </div>
           </div>
@@ -317,7 +328,7 @@ export default function PointsShopPage() {
       {isWatchingAd && selectedAdData && (
         <div className="fixed inset-0 bg-black flex items-center justify-center z-50 p-4">
           <div className="bg-gray-900 rounded-2xl p-6 max-w-sm w-full text-center">
-            <p className="text-white text-lg font-bold mb-4">광고 시청 중...</p>
+            <p className="text-white text-lg font-bold mb-4">{t('pointsShop.watchingAd')}</p>
             <div className="bg-black rounded-lg p-8 mb-4 aspect-video flex items-center justify-center">
               <div className="text-center">
                 <Play className="h-12 w-12 text-white/30 mx-auto mb-2" />
@@ -330,7 +341,7 @@ export default function PointsShopPage() {
                 style={{ width: `${adProgress}%` }}
               />
             </div>
-            <p className="text-white/60 text-xs">완료 {Math.round(adProgress)}%</p>
+            <p className="text-white/60 text-xs">{t('pointsShop.completed')} {Math.round(adProgress)}%</p>
           </div>
         </div>
       )}

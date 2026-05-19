@@ -3,7 +3,8 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { usePathname } from "next/navigation"
 import type { Language } from "@/lib/i18n"
-import { ALL_LANGUAGES, translations } from "@/lib/i18n"
+import { ALL_LANGUAGES, translations, koTranslations } from "@/lib/i18n"
+import { resolveTranslation } from "@/lib/i18n/resolve-translation"
 import { injectLanguageTypographyStyles, getLanguageTypographyClass } from "@/lib/language-typography"
 
 interface LanguageContextType {
@@ -74,7 +75,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   }
 
   const t = (key: string): string => {
-    return translations[language]?.[key] ?? translations['ko']?.[key] ?? key
+    return resolveTranslation(language, translations[language], koTranslations, key)
   }
 
   if (!isMounted) {

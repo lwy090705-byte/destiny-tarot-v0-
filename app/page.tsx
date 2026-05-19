@@ -115,83 +115,94 @@ export default function Home() {
         onClose={() => setShowAnnouncement(false)}
       />
 
-      <main className="container mx-auto px-4 py-3 max-w-lg pb-28 relative z-10">
-        <div className="mb-4">
-          <ProfileManager
-            profiles={profiles}
-            selectedProfile={selectedProfile}
-            onAddProfile={handleAddProfile}
-            onDeleteProfile={handleDeleteProfile}
-            onSelectProfile={handleSelectProfile}
-            isHydrated={isHydrated}
-          />
-        </div>
+      <main className="container mx-auto px-4 py-3 max-w-lg pb-16 relative z-10">
 
-        <div 
-          className="rounded-3xl p-6"
-          style={{ 
+        {/* 카테고리 선택 - 최상단, 메인 포커스 */}
+        <div
+          className="rounded-3xl p-5 mb-2"
+          style={{
             background: 'linear-gradient(180deg, #fefcf8 0%, #faf5ff 50%, #fefcf8 100%)',
-            boxShadow: '0 8px 40px rgba(108, 43, 217, 0.12)',
-            border: '2px solid #d4af37'
+            boxShadow: '0 8px 40px rgba(108, 43, 217, 0.18), 0 0 0 2px #d4af37',
+            border: '2px solid #d4af37',
           }}
         >
           <h2 className="text-xl font-bold text-[#5b21b6] mb-4 text-center" suppressHydrationWarning>
             {t('category.title')}
           </h2>
+          <CategoryTabs
+            activeCategory={activeCategory}
+            onCategoryChange={setActiveCategory}
+          />
+        </div>
 
-          <div className="mb-6">
-            <CategoryTabs
-              activeCategory={activeCategory}
-              onCategoryChange={setActiveCategory}
+        {/* 기본정보 + 결과 영역 - 타로/MBTI는 숨김 */}
+        {(activeCategory === 'myungli' || activeCategory === 'daily' || activeCategory === 'compatibility') && (
+          <div className="mb-4">
+            <ProfileManager
+              profiles={profiles}
+              selectedProfile={selectedProfile}
+              onAddProfile={handleAddProfile}
+              onDeleteProfile={handleDeleteProfile}
+              onSelectProfile={handleSelectProfile}
+              isHydrated={isHydrated}
             />
           </div>
+        )}
 
-          <div className="mt-6">
-            <ErrorBoundary>
-              {activeCategory === 'myungli' && (
-                <MyungliSection
-                  key={`${language}-${selectedProfile?.name || 'default'}`}
-                  initialYear={selectedProfile?.birthYear}
-                  initialMonth={selectedProfile?.birthMonth}
-                  initialDay={selectedProfile?.birthDay}
-                  initialHour={selectedProfile?.birthHour}
-                  initialName={selectedProfile?.name}
-                  initialGender={selectedProfile?.gender}
-                  calendarType={calendarType}
-                  onCalendarTypeChange={handleCalendarTypeChange}
-                />
-              )}
+        {/* 콘텐츠 섹션 */}
+        <div
+          className="rounded-3xl py-5 px-3"
+          style={{
+            background: 'linear-gradient(180deg, #fefcf8 0%, #faf5ff 50%, #fefcf8 100%)',
+            boxShadow: '0 8px 40px rgba(108, 43, 217, 0.12)',
+            border: '2px solid #d4af37',
+          }}
+        >
+          <ErrorBoundary>
+            {activeCategory === 'myungli' && (
+              <MyungliSection
+                key={`${language}-${selectedProfile?.name || 'default'}`}
+                initialYear={selectedProfile?.birthYear}
+                initialMonth={selectedProfile?.birthMonth}
+                initialDay={selectedProfile?.birthDay}
+                initialHour={selectedProfile?.birthHour}
+                initialName={selectedProfile?.name}
+                initialGender={selectedProfile?.gender}
+                calendarType={calendarType}
+                onCalendarTypeChange={handleCalendarTypeChange}
+              />
+            )}
 
-              {activeCategory === 'daily' && (
-                <DailyFortuneSection
-                  key={language}
-                  initialYear={selectedProfile?.birthYear}
-                  initialMonth={selectedProfile?.birthMonth}
-                  initialDay={selectedProfile?.birthDay}
-                  initialHour={selectedProfile?.birthHour}
-                  initialGender={selectedProfile?.gender}
-                  calendarType={calendarType}
-                  onCalendarTypeChange={handleCalendarTypeChange}
-                />
-              )}
+            {activeCategory === 'daily' && (
+              <DailyFortuneSection
+                key={language}
+                initialYear={selectedProfile?.birthYear}
+                initialMonth={selectedProfile?.birthMonth}
+                initialDay={selectedProfile?.birthDay}
+                initialHour={selectedProfile?.birthHour}
+                initialGender={selectedProfile?.gender}
+                initialName={selectedProfile?.name ?? ''}
+                calendarType={calendarType}
+                onCalendarTypeChange={handleCalendarTypeChange}
+              />
+            )}
 
-              {activeCategory === 'tarot' && (
-                <TarotSection key={language} />
-              )}
+            {activeCategory === 'tarot' && (
+              <TarotSection key={language} />
+            )}
 
-              {activeCategory === 'compatibility' && (
-                <CompatibilitySection
-                  key={language}
-                  profiles={profiles}
-                  selectedProfile={selectedProfile}
-                />
-              )}
+            {activeCategory === 'compatibility' && (
+              <CompatibilitySection
+                key={language}
+                profiles={profiles}
+                selectedProfile={selectedProfile}
+              />
+            )}
 
-              {activeCategory === 'mbti' && (
-                <MbtiSection key={language} />
-              )}
-            </ErrorBoundary>
-          </div>
+            {activeCategory === 'mbti' && (
+              <MbtiSection key={language} />
+            )}
+          </ErrorBoundary>
         </div>
 
         <div className="h-20" />

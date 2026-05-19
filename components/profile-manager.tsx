@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select"
 import type { UserProfile } from "@/lib/types"
 import { useLanguage } from "@/lib/language-context"
+import { formatBirthHourDisplay, getBirthHourOptions } from "@/lib/i18n/birth-hour-labels"
 
 interface ProfileManagerProps {
   profiles: UserProfile[]
@@ -34,7 +35,7 @@ export function ProfileManager({
   onSelectProfile,
   isHydrated = false
 }: ProfileManagerProps) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   
   const [name, setName] = useState("")
   const [birthYear, setBirthYear] = useState(2000)
@@ -50,21 +51,7 @@ export function ProfileManager({
   const months = useMemo(() => Array.from({ length: 12 }, (_, i) => i + 1), [])
   const days = useMemo(() => Array.from({ length: 31 }, (_, i) => i + 1), [])
 
-  // 12지 시간 목록
-  const hourOptions = [
-    { value: 23, label: '子時', time: '23~01시' },
-    { value: 1,  label: '丑時', time: '01~03시' },
-    { value: 3,  label: '寅時', time: '03~05시' },
-    { value: 5,  label: '卯時', time: '05~07시' },
-    { value: 7,  label: '辰時', time: '07~09시' },
-    { value: 9,  label: '巳時', time: '09~11시' },
-    { value: 11, label: '午時', time: '11~13시' },
-    { value: 13, label: '未時', time: '13~15시' },
-    { value: 15, label: '申時', time: '15~17시' },
-    { value: 17, label: '酉時', time: '17~19시' },
-    { value: 19, label: '戌時', time: '19~21시' },
-    { value: 21, label: '亥時', time: '21~23시' },
-  ]
+  const hourOptions = useMemo(() => getBirthHourOptions(language), [language])
 
   // 시간 Select 값: 'unknown' | 숫자 문자열
   const hourSelectValue = hourUnknown ? 'unknown' : (birthHour !== undefined ? birthHour.toString() : '')
@@ -175,9 +162,9 @@ export function ProfileManager({
             onClick={handleAddProfile}
             className="h-12 px-6 rounded-full text-white font-bold shadow-lg transition-all active:scale-95 hover:shadow-xl"
             style={{
-              background: 'linear-gradient(135deg, #6c2bd9 0%, #8b5cf6 50%, #5b21b6 100%)',
-              boxShadow: '0 6px 25px rgba(91, 33, 182, 0.4), inset 0 1px 0 rgba(255,255,255,0.2)',
-              border: '1px solid rgba(255,255,255,0.3)'
+              background: 'linear-gradient(135deg, hsl(248,87%,56%) 0%, hsl(271,91%,65%) 50%, hsl(258,80%,50%) 100%)',
+              boxShadow: '0 6px 25px rgba(124, 58, 237, 0.55), inset 0 1px 0 rgba(255,255,255,0.25)',
+              border: '1px solid rgba(255,255,255,0.35)',
             }}
           >
             <Plus className="h-4 w-4 mr-1" />
@@ -198,9 +185,9 @@ export function ProfileManager({
             htmlFor="profile-solar" 
             className="flex items-center gap-3 cursor-pointer flex-1 rounded-full px-4 py-3 transition-all active:scale-95"
             style={calendarType === 'solar' ? {
-              background: 'linear-gradient(135deg, #5b21b6 0%, #7c3aed 50%, #4c1d95 100%)',
+              background: 'linear-gradient(135deg, hsl(248,87%,56%) 0%, hsl(271,91%,65%) 50%, hsl(258,80%,50%) 100%)',
               border: '2px solid #d4af37',
-              boxShadow: '0 4px 20px rgba(91, 33, 182, 0.4)'
+              boxShadow: '0 4px 20px rgba(124, 58, 237, 0.5)',
             } : {
               background: '#ffffff',
               border: '1.5px solid #c9b896'
@@ -222,9 +209,9 @@ export function ProfileManager({
             htmlFor="profile-lunar" 
             className="flex items-center gap-3 cursor-pointer flex-1 rounded-full px-4 py-3 transition-all active:scale-95"
             style={calendarType === 'lunar' ? {
-              background: 'linear-gradient(135deg, #5b21b6 0%, #7c3aed 50%, #4c1d95 100%)',
+              background: 'linear-gradient(135deg, hsl(248,87%,56%) 0%, hsl(271,91%,65%) 50%, hsl(258,80%,50%) 100%)',
               border: '2px solid #d4af37',
-              boxShadow: '0 4px 20px rgba(91, 33, 182, 0.4)'
+              boxShadow: '0 4px 20px rgba(124, 58, 237, 0.5)',
             } : {
               background: '#ffffff',
               border: '1.5px solid #c9b896'
@@ -247,7 +234,7 @@ export function ProfileManager({
 
       {/* 성별 선택 */}
       <div className="mb-6">
-        <Label className="text-[#2d1b4e] text-sm font-bold mb-2 block">{t('profile.gender') || '성별'}</Label>
+        <Label className="text-[#2d1b4e] text-sm font-bold mb-2 block">{t('profile.gender')}</Label>
         <RadioGroup
           value={gender}
           onValueChange={(value) => setGender(value as 'male' | 'female')}
@@ -257,9 +244,9 @@ export function ProfileManager({
             htmlFor="profile-male" 
             className="flex items-center gap-3 cursor-pointer flex-1 rounded-full px-4 py-3 transition-all active:scale-95"
             style={gender === 'male' ? {
-              background: 'linear-gradient(135deg, #5b21b6 0%, #7c3aed 50%, #4c1d95 100%)',
+              background: 'linear-gradient(135deg, hsl(248,87%,56%) 0%, hsl(271,91%,65%) 50%, hsl(258,80%,50%) 100%)',
               border: '2px solid #d4af37',
-              boxShadow: '0 4px 20px rgba(91, 33, 182, 0.4)'
+              boxShadow: '0 4px 20px rgba(124, 58, 237, 0.5)',
             } : {
               background: '#ffffff',
               border: '1.5px solid #c9b896'
@@ -273,16 +260,16 @@ export function ProfileManager({
             </div>
             <RadioGroupItem value="male" id="profile-male" className="sr-only" />
             <span className={`text-sm font-semibold ${gender === 'male' ? 'text-white' : 'text-[#2d1b4e]'}`}>
-              {t('profile.male') || '남성'}
+              {t('profile.male')}
             </span>
           </label>
           <label 
             htmlFor="profile-female" 
             className="flex items-center gap-3 cursor-pointer flex-1 rounded-full px-4 py-3 transition-all active:scale-95"
             style={gender === 'female' ? {
-              background: 'linear-gradient(135deg, #5b21b6 0%, #7c3aed 50%, #4c1d95 100%)',
+              background: 'linear-gradient(135deg, hsl(248,87%,56%) 0%, hsl(271,91%,65%) 50%, hsl(258,80%,50%) 100%)',
               border: '2px solid #d4af37',
-              boxShadow: '0 4px 20px rgba(91, 33, 182, 0.4)'
+              boxShadow: '0 4px 20px rgba(124, 58, 237, 0.5)',
             } : {
               background: '#ffffff',
               border: '1.5px solid #c9b896'
@@ -296,7 +283,7 @@ export function ProfileManager({
             </div>
             <RadioGroupItem value="female" id="profile-female" className="sr-only" />
             <span className={`text-sm font-semibold ${gender === 'female' ? 'text-white' : 'text-[#2d1b4e]'}`}>
-              {t('profile.female') || '여성'}
+              {t('profile.female')}
             </span>
           </label>
         </RadioGroup>
@@ -362,13 +349,13 @@ export function ProfileManager({
 
       {/* 시간 선택 */}
       <div className="mb-6">
-        <Label className="text-[#2d1b4e] text-sm font-bold mb-2 block">{t('date.hour') || '시간 선택'}</Label>
+        <Label className="text-[#2d1b4e] text-sm font-bold mb-2 block">{t('date.hour')}</Label>
         <Select value={hourSelectValue} onValueChange={handleHourSelect}>
           <SelectTrigger 
             className="h-12 bg-white rounded-xl text-[#2d1b4e] font-medium max-w-[200px]"
             style={{ border: '1.5px solid #c9b896' }}
           >
-            <SelectValue placeholder={t('date.hour') || '시간 선택'} />
+            <SelectValue placeholder={t('date.hour')} />
           </SelectTrigger>
           <SelectContent className="bg-white rounded-xl shadow-xl border-gray-100">
             <SelectItem value="unknown" className="text-[#2d1b4e]">{t('profile.hourUnknown')}</SelectItem>
@@ -407,7 +394,7 @@ export function ProfileManager({
                 <p className="text-xs text-[#6c2bd9] mt-0.5">
                   {profile.birthYear}-{String(profile.birthMonth).padStart(2, '0')}-{String(profile.birthDay).padStart(2, '0')}
                   {profile.birthHour !== undefined
-                    ? ` · ${hourOptions.find(h => h.value === profile.birthHour)?.label ?? ''}(${hourOptions.find(h => h.value === profile.birthHour)?.time ?? ''})`
+                    ? ` · ${formatBirthHourDisplay(language, profile.birthHour)}`
                     : ` · ${t('profile.hourNotEntered')}`}
                   {' '}({profile.calendarType === 'lunar' ? t('profile.lunar') : t('profile.solar')})
                 </p>

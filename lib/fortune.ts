@@ -1,6 +1,23 @@
+import './fortune-pools-wire'
 import type { FortuneResult, FortuneType, FortuneCategory, LifetimeFortune } from './types'
 import type { Language } from './i18n'
-import { getFortuneContentLanguage } from './fortune-generator'
+import { getFortuneContentLanguage, pickFortunePool, type FortuneContentLanguage } from './fortune-generator'
+import {
+  attachEsId,
+  attachDe,
+  attachFr,
+  attachPt,
+  attachVi,
+  attachTh,
+  attachHi,
+} from './fortune-lang-extend'
+import { templatePoolsEsId } from './fortune-pools-es-id'
+import { templatePoolsDe } from './fortune-pools-de'
+import { templatePoolsFr } from './fortune-pools-fr'
+import { templatePoolsPt } from './fortune-pools-pt'
+import { templatePoolsVi } from './fortune-pools-vi'
+import { templatePoolsTh } from './fortune-pools-th'
+import { templatePoolsHi } from './fortune-pools-hi'
 import { getPersonalizationVariant, createPersonalization, type FortunePersonalization } from './myeongrihak'
 import { getMonthlyFortune } from './monthly-fortunes'
 import { 
@@ -624,12 +641,50 @@ export interface FortuneProfileContext {
 
 // ─── 다국어 운세 텍스트 ────────────────────────────────────────────────────
 
-// 지원하는 운세 설명 언어 (나머지는 영어로 fallback)
-type SupportedFortuneLanguage = 'ko' | 'en' | 'ja' | 'zh'
-type LangMap = Record<SupportedFortuneLanguage, string[]>
+type LangMap = Partial<Record<FortuneContentLanguage, string[]>>
 
-function getFortuneLanguage(lang: Language): SupportedFortuneLanguage {
+function getFortuneLanguage(lang: Language): FortuneContentLanguage {
   return getFortuneContentLanguage(lang)
+}
+
+const dailyEsIdCategoryMap: Record<
+  FortuneCategory,
+  keyof typeof templatePoolsEsId
+> = {
+  total: 'opportunity',
+  wealth: 'wealth',
+  business: 'career',
+  love: 'love',
+  relationships: 'relationship',
+  health: 'health',
+}
+
+type DailyTemplatePoolKey = keyof typeof templatePoolsEsId
+
+const dailyTemplatePoolAttachers: Array<{
+  attach: (map: Record<string, string[]>, arr: string[]) => void
+  pools: Record<DailyTemplatePoolKey, string[]>
+}> = [
+  { attach: attachDe, pools: templatePoolsDe },
+  { attach: attachFr, pools: templatePoolsFr },
+  { attach: attachPt, pools: templatePoolsPt },
+  { attach: attachVi, pools: templatePoolsVi },
+  { attach: attachTh, pools: templatePoolsTh },
+  { attach: attachHi, pools: templatePoolsHi },
+]
+
+function wireDailyFortuneDescriptions(): void {
+  for (const cat of Object.keys(dailyEsIdCategoryMap) as FortuneCategory[]) {
+    const poolKey = dailyEsIdCategoryMap[cat]
+    const map = fortuneDescriptions[cat]
+    if (!map) continue
+    const pair = templatePoolsEsId[poolKey]
+    if (pair) attachEsId(map, pair)
+    for (const { attach, pools } of dailyTemplatePoolAttachers) {
+      const localized = pools[poolKey]
+      if (localized?.length) attach(map, localized)
+    }
+  }
 }
 
 const fortuneDescriptions: Record<FortuneCategory, LangMap> = {
@@ -860,6 +915,8 @@ const fortuneDescriptions: Record<FortuneCategory, LangMap> = {
     ],
   },
 }
+
+wireDailyFortuneDescriptions()
 
 // ─── 한해운 다국어 ──────────────────────────────────────────────────────────
 
@@ -1110,13 +1167,14 @@ const luckyColorsByLang: Record<Language, string[]> = {
   en: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange', 'Pink', 'Sky blue', 'Black', 'White', 'Gold', 'Silver'],
   ja: ['赤', '青', '黄', '緑', '紫', 'オレンジ', 'ピンク', '水色', '黒', '白', '金', '銀'],
   zh: ['红色', '蓝色', '黄色', '绿色', '紫色', '橙色', '粉色', '天蓝', '黑色', '白色', '金色', '银色'],
-  es: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange', 'Pink', 'Sky blue', 'Black', 'White', 'Gold', 'Silver'],
-  fr: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange', 'Pink', 'Sky blue', 'Black', 'White', 'Gold', 'Silver'],
-  de: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange', 'Pink', 'Sky blue', 'Black', 'White', 'Gold', 'Silver'],
-  pt: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange', 'Pink', 'Sky blue', 'Black', 'White', 'Gold', 'Silver'],
-  hi: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange', 'Pink', 'Sky blue', 'Black', 'White', 'Gold', 'Silver'],
-  vi: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange', 'Pink', 'Sky blue', 'Black', 'White', 'Gold', 'Silver'],
-  th: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange', 'Pink', 'Sky blue', 'Black', 'White', 'Gold', 'Silver'],
+  es: ['Rojo', 'Azul', 'Amarillo', 'Verde', 'Morado', 'Naranja', 'Rosa', 'Celeste', 'Negro', 'Blanco', 'Dorado', 'Plateado'],
+  id: ['Merah', 'Biru', 'Kuning', 'Hijau', 'Ungu', 'Oranye', 'Merah muda', 'Biru langit', 'Hitam', 'Putih', 'Emas', 'Perak'],
+  fr: ['Rouge', 'Bleu', 'Jaune', 'Vert', 'Violet', 'Orange', 'Rose', 'Bleu ciel', 'Noir', 'Blanc', 'Or', 'Argent'],
+  de: ['Rot', 'Blau', 'Gelb', 'Grün', 'Lila', 'Orange', 'Rosa', 'Himmelblau', 'Schwarz', 'Weiß', 'Gold', 'Silber'],
+  pt: ['Vermelho', 'Azul', 'Amarelo', 'Verde', 'Roxo', 'Laranja', 'Rosa', 'Azul claro', 'Preto', 'Branco', 'Dourado', 'Prateado'],
+  hi: ['लाल', 'नीला', 'पीला', 'हरा', 'बैंगनी', 'नारंगी', 'गुलाबी', 'आसमानी', 'काला', 'सफेद', 'सोना', 'चांदी'],
+  vi: ['Đỏ', 'Xanh dương', 'Vàng', 'Xanh lá', 'Tím', 'Cam', 'Hồng', 'Xanh da trời', 'Đen', 'Trắng', 'Vàng kim', 'Bạc'],
+  th: ['แดง', 'น้ำเงิน', 'เหลือง', 'เขียว', 'ม่วง', 'ส้ม', 'ชมพู', 'ฟ้า', 'ดำ', 'ขาว', 'ทอง', 'เงิน'],
 }
 
 const luckyNumbers = ['1, 7', '2, 8', '3, 9', '4, 5', '6, 0', '1, 3', '2, 6', '4, 8', '5, 9', '3, 7', '1, 6', '2, 4']
@@ -1124,18 +1182,38 @@ const luckyNumbers = ['1, 7', '2, 8', '3, 9', '4, 5', '6, 0', '1, 3', '2, 6', '4
 // ─── 평생운 제목 다국어 ──────────────────────────────────────────────────
 
 /** Short phase labels for legacy lifetime generator fallbacks */
-const legacyLifetimePhaseTitles: Record<SupportedFortuneLanguage, { early: string; mid: string; late: string }> = {
+const legacyLifetimePhaseTitles: Partial<Record<FortuneContentLanguage, { early: string; mid: string; late: string }>> = {
   ko: { early: '초기', mid: '중기', late: '말기' },
   en: { early: 'Early phase', mid: 'Mid phase', late: 'Late phase' },
   ja: { early: '初期', mid: '中期', late: '晩期' },
   zh: { early: '初期', mid: '中期', late: '晚期' },
+  es: { early: 'Fase inicial', mid: 'Fase media', late: 'Fase final' },
+  id: { early: 'Fase awal', mid: 'Fase pertengahan', late: 'Fase akhir' },
+  pt: { early: 'Fase inicial', mid: 'Fase média', late: 'Fase final' },
+  fr: { early: 'Phase initiale', mid: 'Phase intermédiaire', late: 'Phase finale' },
+  de: { early: 'Frühphase', mid: 'Mittlere Phase', late: 'Spätphase' },
+  vi: { early: 'Giai đoạn đầu', mid: 'Giai đoạn giữa', late: 'Giai đoạn cuối' },
+  th: { early: 'ช่วงต้น', mid: 'ช่วงกลาง', late: 'ช่วงปลาย' },
+  hi: { early: 'प्रारंभिक चरण', mid: 'मध्य चरण', late: 'अंतिम चरण' },
 }
 
-const lifetimeTitlesByContentLang: Record<SupportedFortuneLanguage, { early: string; mid: string; late: string }> = {
+const lifetimeTitlesByContentLang: Partial<Record<FortuneContentLanguage, { early: string; mid: string; late: string }>> = {
   ko: { early: '초년운 (1세~30세)', mid: '중년운 (31세~50세)', late: '말년운 (51세 이후)' },
   en: { early: 'Early-life fortune (ages 1–30)', mid: 'Mid-life fortune (ages 31–50)', late: 'Later-life fortune (age 51+)' },
   ja: { early: '初年運（1〜30歳）', mid: '中年運（31〜50歳）', late: '晩年運（51歳以降）' },
   zh: { early: '早年运（1–30 岁）', mid: '中年运（31–50 岁）', late: '晚年运（51 岁以后）' },
+  es: { early: 'Fortuna de la juventud (1–30 años)', mid: 'Fortuna de la madurez (31–50 años)', late: 'Fortuna del tramo final (51+ años)' },
+  id: { early: 'Keberuntungan awal (usia 1–30)', mid: 'Keberuntungan pertengahan (usia 31–50)', late: 'Keberuntungan tahun kemudian (usia 51+)' },
+  pt: { early: 'Sorte da juventude (1–30 anos)', mid: 'Sorte da maturidade (31–50 anos)', late: 'Sorte da fase final (51+ anos)' },
+  fr: { early: 'Fortune de la jeunesse (1–30 ans)', mid: 'Fortune de la maturité (31–50 ans)', late: 'Fortune de la phase finale (51+ ans)' },
+  de: { early: 'Glück der Jugend (1–30 Jahre)', mid: 'Glück der Reife (31–50 Jahre)', late: 'Glück der Spätphase (51+ Jahre)' },
+  vi: { early: 'Vận may tuổi trẻ (1–30 tuổi)', mid: 'Vận may trưởng thành (31–50 tuổi)', late: 'Vận may giai đoạn cuối (51+ tuổi)' },
+  th: { early: 'โชคช่วงวัยเยาว์ (1–30 ปี)', mid: 'โชคช่วงวัยผู้ใหญ่ (31–50 ปี)', late: 'โชคช่วงปลาย (51+ ปี)' },
+  hi: {
+    early: 'प्रारंभिक जीवन भाग्य (1–30 वर्ष)',
+    mid: 'मध्य जीवन भाग्य (31–50 वर्ष)',
+    late: 'उत्तरार्ध जीवन भाग्य (51+ वर्ष)',
+  },
 }
 
 export function getLifetimeTitles(language: Language) {
@@ -1164,7 +1242,7 @@ export function generateFortune(
     
     // 월별 운세인 경우 새로운 상세 운세 사용
     if (type === 'monthly' && seedOrMonth !== undefined) {
-      const monthlyText = getMonthlyFortune(seedOrMonth, langKey as 'ko' | 'en')
+      const monthlyText = getMonthlyFortune(seedOrMonth, langKey)
       const random1 = seededRandom(seedOrMonth + (personalizationVariant || 0))
       const random2 = seededRandom(seedOrMonth + 100 + (personalizationVariant || 0))
       const random3 = seededRandom(seedOrMonth + 200 + (personalizationVariant || 0))
@@ -1198,7 +1276,7 @@ export function generateFortune(
       }
     }
 
-    const descs = descsMap[langKey] || descsMap.ko || []
+    const descs = pickFortunePool(descsMap, language, `daily:${category}`)
     if (!Array.isArray(descs) || descs.length === 0) {
       return {
         type,
@@ -1323,7 +1401,7 @@ export function generateEnhancedFortuneWithProfile(
       }
 
       const pool = categoryTemplateMap[primaryCategory] || categoryTemplateMap.love
-      const templates = pool[langKey]?.length ? pool[langKey] : pool.en?.length ? pool.en : pool.ko
+      const templates = pickFortunePool(pool, language, `profile:${primaryCategory}`)
       if (templates.length > 0) {
         // Enhanced template selection - include type and month for more variety
         const typeBonus = type === 'daily' ? 13 : type === 'yearly' ? 97 : (month || 1) * 47
@@ -1551,12 +1629,27 @@ export function generateLifetimeFortuneWithProfile(
     // 각 생명 단계마다 카테고리별 전문 pool 사용하여 4-5줄 이상 생성
     const categoryPools = categorySpecificPools[category as keyof typeof categorySpecificPools] || categorySpecificPools.total
     
-    let localizedLifetimePool = lifetimeDetailedTemplates.ko
-    if (lifetimeDetailedTemplates[langKey]?.length) {
-      localizedLifetimePool = lifetimeDetailedTemplates[langKey]
-    } else if (lifetimeDetailedTemplates.en?.length) {
-      localizedLifetimePool = lifetimeDetailedTemplates.en
-    }
+    const lifetimeExt = lifetimeDetailedTemplates as Partial<
+      Record<FortuneContentLanguage, string[]>
+    >
+    const localizedLifetimePool = pickFortunePool(
+      {
+        ko: lifetimeDetailedTemplates.ko,
+        en: lifetimeDetailedTemplates.en,
+        ja: lifetimeDetailedTemplates.ja,
+        zh: lifetimeDetailedTemplates.zh,
+        es: lifetimeExt.es,
+        id: lifetimeExt.id,
+        pt: lifetimeExt.pt,
+        fr: lifetimeExt.fr,
+        de: lifetimeExt.de,
+        vi: lifetimeExt.vi,
+        th: lifetimeExt.th,
+        hi: lifetimeExt.hi,
+      },
+      language,
+      'lifetimeDetailed'
+    )
 
     let earlyDescription: string
     let midDescription: string

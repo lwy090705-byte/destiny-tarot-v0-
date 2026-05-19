@@ -22,11 +22,21 @@ interface Ad {
 const ADS_PER_PAGE = 10
 const MAX_PAGES = 2
 
-function AdCard({ ad, index }: { ad: Ad | null; index: number }) {
+function AdCard({
+  ad,
+  index,
+  t,
+  dateLocale,
+}: {
+  ad: Ad | null
+  index: number
+  t: (key: string) => string
+  dateLocale: string
+}) {
   if (!ad || !ad.active) {
     return (
       <div className="bg-white rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center h-24 text-gray-400 text-sm">
-        광고 영역 {index + 1}
+        {t('adSponsor.adSlotPlaceholder').replace('{n}', String(index + 1))}
       </div>
     )
   }
@@ -57,7 +67,10 @@ function AdCard({ ad, index }: { ad: Ad | null; index: number }) {
           </p>
         )}
         <p className="text-xs text-purple-500 mt-1">
-          ~{new Date(ad.expiresAt).toLocaleDateString('ko-KR')} 까지
+          {t('adSponsor.expiresUntil').replace(
+            '{date}',
+            new Date(ad.expiresAt).toLocaleDateString(dateLocale)
+          )}
         </p>
       </div>
     </a>
@@ -92,6 +105,9 @@ export default function AdSponsorPage() {
       localStorage.setItem("adSponsorList", JSON.stringify(updated))
     }
   }, [])
+
+  const dateLocale =
+    language === 'ko' ? 'ko-KR' : language === 'ja' ? 'ja-JP' : language === 'zh' ? 'zh-CN' : language
 
   const startIdx = (currentPage - 1) * ADS_PER_PAGE
   const activeAds = ads.filter(a => a.active)
@@ -162,7 +178,7 @@ export default function AdSponsorPage() {
 
         <div className="space-y-3">
           {pageAds.map((ad, i) => (
-            <AdCard key={startIdx + i} ad={ad} index={startIdx + i} />
+            <AdCard key={startIdx + i} ad={ad} index={startIdx + i} t={t} dateLocale={dateLocale} />
           ))}
         </div>
 
@@ -197,19 +213,13 @@ export default function AdSponsorPage() {
               <h3 className="text-lg font-bold text-gray-900">{t('adSponsor.guide')}</h3>
             </div>
             <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-line">
-              {`홍보용 광고 영역입니다.
-
-협찬이 필요한 경우 파이 결제 후 일정 기간(예: 7일, 1개월) 광고 등록이 가능합니다.
-
-현재는 무료로 제공되며, 공지 전까지 자유롭게 이용 가능합니다.
-
-단, 불법 도박, 금융, 음란물, 사기, 혐오에 관한 협찬은 불가함을 알려 드리며 위반 사항 확인 시 개발자가 강제 삭제 조치합니다.`}
+              {t('adSponsor.guideBody')}
             </p>
             <Button
               onClick={() => setShowGuide(false)}
               className="w-full mt-5 bg-sky-500 hover:bg-sky-600 text-white font-bold"
             >
-              확인
+              {t('common.confirm')}
             </Button>
           </div>
         </div>

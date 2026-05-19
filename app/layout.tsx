@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next'
+import Script from 'next/script'
 import { Noto_Sans_KR } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { LanguageProvider } from '@/lib/language-context'
@@ -42,6 +43,8 @@ export const viewport: Viewport = {
   themeColor: '#1e0a3c',
   width: 'device-width',
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 }
 
 export default function RootLayout({
@@ -52,6 +55,11 @@ export default function RootLayout({
   return (
     <html lang="ko" suppressHydrationWarning className="bg-[#1e0a3c]">
       <body className={`${notoSansKR.variable} font-sans antialiased`} suppressHydrationWarning>
+        {/* Kakao SDK — strategy="lazyOnload" 으로 페이지 로드 블로킹 없이 로드 */}
+        <Script
+          src="https://developers.kakao.com/sdk/js/kakao.min.js"
+          strategy="lazyOnload"
+        />
         <LanguageProvider>
           <PointsProvider>
             <UserProvider>

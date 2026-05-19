@@ -305,26 +305,103 @@ export function TarotSection() {
     )
   }
 
+  const TAROT_CATEGORY_ICONS: Record<TarotType, string> = {
+    love:   '/icons/tarot-love.jpg',
+    wealth: '/icons/tarot-wealth.jpg',
+    career: '/icons/tarot-career.jpg',
+    health: '/icons/tarot-health.jpg',
+  }
+
+
   // 타로 타입 선택 + 카드 선택 화면
   return (
-    <div className="space-y-4 bg-gradient-to-br from-slate-700/10 via-white to-purple-900/10 rounded-3xl p-6">
+    <div className="space-y-4 bg-gradient-to-br from-slate-700/10 via-white to-purple-900/10 rounded-3xl p-4 pb-3">
       {/* 카테고리 선택 버튼 - 2x2 그리드 */}
       <div className="grid grid-cols-2 gap-3">
-        {tarotCategoryButtons.map(({ type, label, idleBg, idleBorder, idleText, activeBg, activeBorder, activeText, activeShadow }) => (
-          <button
-            key={type}
-            onClick={() => { setTarotType(type); setTarotMode(null); setSelectedCards([]) }}
-            className="rounded-2xl py-4 px-4 text-center transition-all duration-200 font-semibold text-base"
-            style={{
-              background: tarotType === type ? activeBg : idleBg,
-              border: `1.5px solid ${tarotType === type ? activeBorder : idleBorder}`,
-              color: tarotType === type ? activeText : idleText,
-              boxShadow: tarotType === type ? `0 3px 12px ${activeShadow}` : 'none',
-            }}
-          >
-            {label}
-          </button>
-        ))}
+        {tarotCategoryButtons.map(({ type, label, idleBg, idleBorder, idleText, activeBg, activeBorder, activeText, activeShadow }) => {
+          const isActive = tarotType === type
+          const subtitle = t(`tarot.subtitle.${type}`)
+          return (
+            <button
+              key={type}
+              onClick={() => { setTarotType(type); setTarotMode(null); setSelectedCards([]) }}
+              className="rounded-2xl transition-all duration-200 text-left relative overflow-hidden"
+              style={{
+                background: isActive ? activeBg : idleBg,
+                border: `1.5px solid ${isActive ? activeBorder : idleBorder}`,
+                boxShadow: isActive
+                  ? `0 0 0 3px ${activeShadow}, 0 4px 16px ${activeShadow}`
+                  : '0 1px 4px rgba(0,0,0,0.06)',
+                padding: '0',
+              }}
+            >
+              {/* Icon image top */}
+              <div
+                style={{
+                  width: '100%',
+                  height: 90,
+                  overflow: 'hidden',
+                  borderRadius: '14px 14px 0 0',
+                  position: 'relative',
+                  background: isActive ? activeBg : idleBg,
+                }}
+              >
+                <img
+                  src={TAROT_CATEGORY_ICONS[type]}
+                  alt={label}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    objectPosition: 'center',
+                    filter: isActive
+                      ? 'brightness(1.08) saturate(1.2) drop-shadow(0 0 8px currentColor)'
+                      : 'brightness(0.97) saturate(1)',
+                    transition: 'filter 0.2s',
+                  }}
+                />
+                {/* glow overlay on active */}
+                {isActive && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      background: `radial-gradient(ellipse at 50% 80%, ${activeShadow} 0%, transparent 70%)`,
+                      pointerEvents: 'none',
+                    }}
+                  />
+                )}
+                {/* sparkle dots */}
+                {isActive && (
+                  <>
+                    <span style={{ position: 'absolute', top: 6, right: 8, fontSize: 10, color: activeText, opacity: 0.7 }}>✦</span>
+                    <span style={{ position: 'absolute', top: 14, right: 20, fontSize: 7, color: activeText, opacity: 0.5 }}>✦</span>
+                  </>
+                )}
+              </div>
+
+              {/* Text area */}
+              <div style={{ padding: '8px 10px 10px' }}>
+                <div
+                  className="font-bold text-sm leading-tight"
+                  style={{ color: isActive ? activeText : idleText }}
+                >
+                  {label}
+                </div>
+                <div
+                  className="text-xs mt-0.5 leading-snug"
+                  style={{
+                    color: isActive ? activeText : idleText,
+                    opacity: 0.7,
+                    wordBreak: 'keep-all',
+                  }}
+                >
+                  {subtitle}
+                </div>
+              </div>
+            </button>
+          )
+        })}
       </div>
 
       {/* 한 장/세 장 선택 (카테고리 선택 후에만 표시) */}
@@ -368,19 +445,26 @@ export function TarotSection() {
 
             {/* 선택된 카드 미리보기 */}
             {selectedCards.length > 0 && (
-              <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
+              <div className="flex gap-3 mb-4 overflow-x-auto pb-1">
                 {selectedCards.map((card, idx) => (
                   <div key={`${card.id}-${idx}`} className="relative flex-shrink-0">
-                    <div className="relative w-12 h-18 rounded-lg overflow-hidden shadow-md ring-2 ring-yellow-400" style={{ height: 72 }}>
+                    <div
+                      className="relative rounded-lg overflow-hidden ring-2 ring-yellow-400"
+                      style={{
+                        width: 52,
+                        height: 78,
+                        boxShadow: '0 4px 16px rgba(212,175,55,0.4)',
+                      }}
+                    >
                       <Image
                         src={getCardImagePath(card.id)}
                         alt={getCardName(card.id, language)}
                         fill
                         className="object-cover"
-                        sizes="48px"
+                        sizes="52px"
                       />
                     </div>
-                    <span className="absolute -top-1.5 -right-1.5 text-white text-xs font-bold bg-yellow-500 rounded-full w-4 h-4 flex items-center justify-center shadow">
+                    <span className="absolute -top-1.5 -right-1.5 text-white text-xs font-bold bg-yellow-500 rounded-full w-5 h-5 flex items-center justify-center shadow-lg">
                       {idx + 1}
                     </span>
                   </div>
@@ -390,10 +474,10 @@ export function TarotSection() {
 
             {/* 카드 덱 */}
             <div
-              className="overflow-x-auto pb-2 select-none"
+              className="overflow-x-auto pb-3 select-none"
               style={{ WebkitOverflowScrolling: 'touch' }}
             >
-              <div className="flex px-3 py-4" style={{ gap: 0 }}>
+              <div className="flex px-4 py-5" style={{ gap: 0 }}>
                 {cards.map((card, idx) => {
                   const isSelected = !!selectedCards.find(c => c.id === card.id)
                   const selIdx = selectedCards.findIndex(c => c.id === card.id)
@@ -404,34 +488,48 @@ export function TarotSection() {
                       key={card.id}
                       onClick={() => handleCardClick(card)}
                       disabled={isDisabled}
-                      className="relative flex-shrink-0 transition-all duration-150 focus:outline-none"
+                      className="relative flex-shrink-0 transition-all duration-200 focus:outline-none"
                       style={{
-                        width: 44,
-                        height: 66,
-                        marginLeft: idx === 0 ? 0 : -22,
-                        opacity: isDisabled ? 0.35 : 1,
+                        width: 72,
+                        height: 108,
+                        marginLeft: idx === 0 ? 0 : -36,
+                        opacity: isDisabled ? 0.3 : 1,
                         cursor: isDisabled ? 'not-allowed' : 'pointer',
-                        zIndex: isSelected ? 50 : idx,
-                        transform: isSelected ? 'translateY(-10px) scale(1.12)' : 'none',
+                        zIndex: isSelected ? 100 : idx,
+                        transform: isSelected
+                          ? 'translateY(-16px) scale(1.15)'
+                          : 'none',
+                        filter: isSelected
+                          ? 'drop-shadow(0 8px 16px rgba(212,175,55,0.55))'
+                          : isDisabled
+                          ? 'none'
+                          : 'drop-shadow(0 2px 4px rgba(91,33,182,0.25))',
                       }}
                     >
                       <div
-                        className={`relative w-full h-full rounded-md overflow-hidden shadow ${
+                        className={`relative w-full h-full rounded-lg overflow-hidden ${
                           isSelected
-                            ? 'ring-2 ring-yellow-400 shadow-lg shadow-yellow-200'
-                            : 'hover:ring-1 hover:ring-purple-300'
+                            ? 'ring-2 ring-yellow-400 shadow-xl'
+                            : 'shadow-md'
                         }`}
+                        style={{
+                          boxShadow: isSelected
+                            ? '0 0 0 2px #fbbf24, 0 8px 24px rgba(212,175,55,0.4)'
+                            : '0 2px 8px rgba(91,33,182,0.3)',
+                        }}
                       >
                         <Image
                           src={isSelected ? getCardImagePath(card.id) : '/tarot/card-back.jpg'}
                           alt={isSelected ? getCardName(card.id, language) : 'Card Back'}
                           fill
                           className="object-cover"
-                          sizes="44px"
+                          sizes="72px"
                         />
                       </div>
                       {isSelected && (
-                        <div className="absolute -top-1 -right-0.5 bg-yellow-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center shadow pointer-events-none">
+                        <div className="absolute -top-1.5 -right-1 bg-yellow-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-lg pointer-events-none"
+                          style={{ boxShadow: '0 2px 8px rgba(212,175,55,0.5)' }}
+                        >
                           {selIdx + 1}
                         </div>
                       )}

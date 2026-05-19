@@ -1,9 +1,16 @@
 import type { TarotCard, TarotReading } from './types'
 import type { Language } from './i18n'
-import { getFortuneContentLanguage } from './fortune-generator'
+import { getFortuneContentLanguage, normalizeLanguage, type FortuneContentLanguage } from './fortune-generator'
+import {
+  getExtendedMajorName,
+  getExtendedMinorName,
+  resolveTarotNameLang,
+  type TarotCardNameLang,
+} from './tarot-card-names'
 import { getTarotParagraphPools, pickTarotParagraph } from './tarot-message-pools'
+import './fortune-pools-wire'
 
-type TarotContentLang = 'ko' | 'en' | 'ja' | 'zh'
+type TarotContentLang = FortuneContentLanguage
 
 const MAJOR_EN: string[] = [
   'The Fool', 'The Magician', 'The High Priestess', 'The Empress', 'The Emperor', 'The Hierophant', 'The Lovers', 'The Chariot',
@@ -136,16 +143,25 @@ function minorTarotName(cardId: number, lang: TarotContentLang): string {
   return tarotCardsRecord[cardId]?.nameKr ?? ''
 }
 
-function localizeTarotCardName(cardId: number, lang: TarotContentLang): string {
+function localizeTarotCardName(cardId: number, lang: TarotContentLang | TarotCardNameLang): string {
   const card = tarotCardsRecord[cardId]
   if (!card) return ''
   if (lang === 'ko') return card.nameKr
+
+  const extendedMajor = getExtendedMajorName(cardId, lang as TarotCardNameLang)
   if (cardId >= 0 && cardId <= 21) {
-    if (lang === 'en') return MAJOR_EN[cardId] ?? ''
+    if (extendedMajor) return extendedMajor
     if (lang === 'ja') return MAJOR_JA[cardId] ?? ''
     if (lang === 'zh') return MAJOR_ZH[cardId] ?? ''
+    return MAJOR_EN[cardId] ?? ''
   }
-  return minorTarotName(cardId, lang)
+
+  const extendedMinor = getExtendedMinorName(cardId, lang as TarotCardNameLang)
+  if (extendedMinor) return extendedMinor
+
+  const nameLang: 'en' | 'ja' | 'zh' =
+    lang === 'ja' ? 'ja' : lang === 'zh' ? 'zh' : 'en'
+  return minorTarotName(cardId, nameLang)
 }
 
 // Export as array for components that need to iterate
@@ -162,12 +178,15 @@ export const tarotCards = Object.entries(tarotCardsRecord).map(([id, card]) => {
 })
 
 export function getCardName(cardId: number, language: Language): string {
-  const L = getFortuneContentLanguage(language)
+  const L = resolveTarotNameLang(language)
   const primary = localizeTarotCardName(cardId, L)
   if (primary.trim()) return primary
   const en = localizeTarotCardName(cardId, 'en')
   if (en.trim()) return en
-  return localizeTarotCardName(cardId, 'ko')
+  if (normalizeLanguage(language) === 'ko') {
+    return localizeTarotCardName(cardId, 'ko')
+  }
+  return en
 }
 
 export function getTarotMessage(language: Language, category: string, index: number): string {

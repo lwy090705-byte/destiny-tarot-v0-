@@ -1,0 +1,52 @@
+/** Thai UI strings for profile basic info, support, premium, and Pi payment modal */
+export const uiOverlayThExtra: Record<string, string> = {
+  'profile.basicInfoTitle': 'ข้อมูลพื้นฐาน',
+  'profile.loading': 'กำลังโหลด…',
+  'support.helperLines':
+    'การสนับสนุนทุกอย่างมีความหมาย\nการบริจาคเป็นไปโดยสมัครใจ\nการบริจาคอาจแปลงเป็นพอยต์ได้',
+  'support.piPaymentTitle': 'บริจาคด้วย Pi',
+  'support.piThankAmount': 'ขอบคุณที่บริจาค {amount} Pi!',
+  'support.piModalIntro': 'เลือกจำนวนเงินหรือใส่จำนวนที่ต้องการ',
+  'support.piModalCustomLabel': 'หรือใส่จำนวนเอง',
+  'support.piModalPlaceholder': 'เช่น 3.14',
+  'support.piModalDecimalHint': 'ใส่ทศนิยมได้ (เช่น 3.14 Pi)',
+  'support.piModalSelectedLabel': 'จำนวนที่เลือก',
+  'support.piModalDueLabel': 'จำนวนที่ต้องชำระ',
+  'support.piModalProcessing': 'กำลังดำเนินการ…',
+  'support.piModalPayCta': 'ชำระ {amount} Pi',
+  'support.piModalPayCtaGeneric': 'ชำระด้วย Pi',
+  'support.piModalFooterHint':
+    'จำนวนเงินต้องมากกว่า 0\nยอดคงเหลือจะอัปเดตทันทีหลังชำระ',
+  'support.piModalComingSoonTitle': 'การชำระ Pi กำลังมาเร็วๆ นี้',
+  'support.piModalComingSoonBody':
+    'ฟีเจอร์ชำระ Pi จะเปิดให้ใช้งานในเร็วๆ นี้ ขณะนี้ยังไม่มีการชำระเงินจริง',
+  'premium.titlePage': 'สมัครสมาชิกพรีเมียม',
+  'premium.heroTitle': 'สมาชิกพรีเมียม',
+  'premium.heroSubtitle': 'ใช้ฟีเจอร์ดวงครบทุกอย่างไม่จำกัด',
+  'premium.planName.monthly': '1 เดือน',
+  'premium.planName.quarterly': '3 เดือน',
+  'premium.planName.yearly': '1 ปี',
+  'premium.badgePopular': 'ยอดนิยม',
+  'premium.badgeBestValue': 'คุ้มที่สุด',
+  'premium.periodMonth': 'เดือน',
+  'premium.periodQuarter': '3 เดือน',
+  'premium.periodYear': 'ปี',
+  'premium.featuresMonthly':
+    '• ดวงพรีเมียมทั้งหมด\n• ไม่มีโฆษณา\n• ทาโรต์ไม่จำกัด\n• ความเข้ากันไม่จำกัด\n• รายงาน MBTI พรีเมียม\n• วิเคราะห์สไตล์ความรัก MBTI',
+  'premium.featuresQuarterly':
+    '• ดวงพรีเมียมทั้งหมด\n• ไม่มีโฆษณา\n• ทาโรต์ไม่จำกัด\n• ความเข้ากันไม่จำกัด\n• รายงาน MBTI พรีเมียม\n• วิเคราะห์สไตล์ความรัก MBTI\n• การสนับสนุนลำดับความสำคัญ',
+  'premium.featuresYearly':
+    '• ดวงพรีเมียมทั้งหมด\n• ไม่มีโฆษณา\n• ทาโรต์ไม่จำกัด\n• ความเข้ากันไม่จำกัด\n• รายงาน MBTI พรีเมียม\n• วิเคราะห์สไตล์ความรัก MBTI\n• ความเข้ากัน MBTI พรีเมียม\n• การสนับสนุนลำดับความสำคัญ\n• เนื้อหาพิเศษเฉพาะ\n• พอยต์สองเท่า',
+  'premium.selectPlan': 'เลือกแพ็กเกจนี้',
+  'premium.paymentInfoTitle': 'ข้อมูลการชำระเงิน',
+  'premium.notePi': '• ชำระเงินด้วยสกุลเงินดิจิทัล Pi',
+  'premium.noteNoRenew': '• ไม่ต่ออายุอัตโนมัติหลังหมดอายุ',
+  'premium.noteContact': '• ติดต่อ: lwy2016@naver.com',
+  'premium.modalPayTitle': 'ยืนยันการชำระเงิน',
+  'premium.labelPlan': 'แพ็กเกจ',
+  'premium.labelAmount': 'จำนวนเงิน',
+  'premium.modalPayBody': 'คุณจะไปยังขั้นตอนชำระ Pi\nดำเนินการชำระเงินต่อหรือไม่?',
+  'premium.cancel': 'ยกเลิก',
+  'premium.payNow': 'ชำระเงิน',
+  'premium.alertComingSoon': 'การชำระ Pi กำลังมาเร็วๆ นี้',
+}

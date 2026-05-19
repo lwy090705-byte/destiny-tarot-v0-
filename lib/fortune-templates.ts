@@ -4,14 +4,14 @@
  */
 
 import type { FortuneContentLanguage } from './fortune-generator'
-import { getFortuneContentLanguage } from './fortune-generator'
+import { getFortuneContentLanguage, pickFortunePool, pickFortuneString } from './fortune-generator'
 import type { Language } from './i18n'
 
 // ─── Fallback Templates (장애 복구용 기본 템플릿) ──────────────────────────────
 
 export type FallbackTemplateKey = 'lifetime' | 'yearly' | 'monthly' | 'general'
 
-export const fallbackTemplatesByLang: Record<FortuneContentLanguage, Record<FallbackTemplateKey, string>> = {
+export const fallbackTemplatesByLang: Partial<Record<FortuneContentLanguage, Record<FallbackTemplateKey, string>>> = {
   ko: {
     lifetime:
       '당신의 인생은 지속적인 성장과 변화의 흐름입니다. 초반부에는 기초를 다지는 시기로 인내심과 노력이 필요하며, 중반부에는 노력이 결실을 맺기 시작합니다. 후반부에는 지혜와 경험으로 주변 사람들을 돕게 됩니다.',
@@ -55,13 +55,36 @@ export const fallbackTemplatesByLang: Record<FortuneContentLanguage, Record<Fall
 }
 
 export function getFallbackTemplate(key: FallbackTemplateKey, language: Language | string = 'ko'): string {
-  const L = getFortuneContentLanguage(language as Language)
-  const row = fallbackTemplatesByLang[L] ?? fallbackTemplatesByLang.en
-  const v = row[key]
-  if (typeof v === 'string' && v.trim().length > 0) return v
-  const en = fallbackTemplatesByLang.en[key]
-  if (typeof en === 'string' && en.trim().length > 0) return en
-  return fallbackTemplatesByLang.ko[key] ?? ''
+  const koRow = fallbackTemplatesByLang.ko
+  const enRow = fallbackTemplatesByLang.en ?? koRow
+  const jaRow = fallbackTemplatesByLang.ja ?? enRow
+  const zhRow = fallbackTemplatesByLang.zh ?? enRow
+  const esRow = fallbackTemplatesByLang.es ?? enRow
+  const idRow = fallbackTemplatesByLang.id ?? enRow
+  const ptRow = fallbackTemplatesByLang.pt ?? enRow
+  const frRow = fallbackTemplatesByLang.fr ?? enRow
+  const deRow = fallbackTemplatesByLang.de ?? enRow
+  const viRow = fallbackTemplatesByLang.vi ?? enRow
+  const thRow = fallbackTemplatesByLang.th ?? enRow
+  const hiRow = fallbackTemplatesByLang.hi ?? enRow
+  return pickFortuneString(
+    {
+      ko: koRow?.[key],
+      en: enRow?.[key],
+      ja: jaRow?.[key],
+      zh: zhRow?.[key],
+      es: esRow?.[key],
+      id: idRow?.[key],
+      pt: ptRow?.[key],
+      fr: frRow?.[key],
+      de: deRow?.[key],
+      vi: viRow?.[key],
+      th: thRow?.[key],
+      hi: hiRow?.[key],
+    },
+    language,
+    `fallback:${key}`
+  )
 }
 
 /** @deprecated Prefer getFallbackTemplate(lang) — Korean-only snapshot */
@@ -240,11 +263,34 @@ const yearlyComprehensiveZh: string[] = [
 ]
 
 export function getYearlyComprehensivePool(language: Language | string): string[] {
-  const L = getFortuneContentLanguage(language as Language)
-  if (L === 'ko') return yearlyComprehensiveTemplates.ko
-  if (L === 'ja') return yearlyComprehensiveJa
-  if (L === 'zh') return yearlyComprehensiveZh
-  return yearlyComprehensiveEn
+  const ext = yearlyComprehensiveTemplates as {
+    es?: string[]
+    id?: string[]
+    pt?: string[]
+    fr?: string[]
+    de?: string[]
+    vi?: string[]
+    th?: string[]
+    hi?: string[]
+  }
+  return pickFortunePool(
+    {
+      ko: yearlyComprehensiveTemplates.ko,
+      en: yearlyComprehensiveEn,
+      ja: yearlyComprehensiveJa,
+      zh: yearlyComprehensiveZh,
+      es: ext.es,
+      id: ext.id,
+      pt: ext.pt,
+      fr: ext.fr,
+      de: ext.de,
+      vi: ext.vi,
+      th: ext.th,
+      hi: ext.hi,
+    },
+    language,
+    'yearlyComprehensive'
+  )
 }
 
 const yearlyDetailedEn: string[] = [
@@ -272,11 +318,34 @@ const yearlyDetailedZh: string[] = [
 ]
 
 export function getYearlyDetailedPool(language: Language | string): string[] {
-  const L = getFortuneContentLanguage(language as Language)
-  if (L === 'ko') return yearlyDetailedTemplates.ko
-  if (L === 'ja') return yearlyDetailedJa
-  if (L === 'zh') return yearlyDetailedZh
-  return yearlyDetailedEn
+  const ext = yearlyDetailedTemplates as {
+    es?: string[]
+    id?: string[]
+    pt?: string[]
+    fr?: string[]
+    de?: string[]
+    vi?: string[]
+    th?: string[]
+    hi?: string[]
+  }
+  return pickFortunePool(
+    {
+      ko: yearlyDetailedTemplates.ko,
+      en: yearlyDetailedEn,
+      ja: yearlyDetailedJa,
+      zh: yearlyDetailedZh,
+      es: ext.es,
+      id: ext.id,
+      pt: ext.pt,
+      fr: ext.fr,
+      de: ext.de,
+      vi: ext.vi,
+      th: ext.th,
+      hi: ext.hi,
+    },
+    language,
+    'yearlyDetailed'
+  )
 }
 
 const monthlyDetailedEn: string[] = [
@@ -326,16 +395,40 @@ const monthlyDetailedZh: string[] = [
 
 export function getMonthlyDetailedLine(month: number, language: Language | string): string {
   const idx = Math.max(0, Math.min(11, month - 1))
-  const L = getFortuneContentLanguage(language as Language)
-  if (L === 'ko') return monthlyDetailedTemplates.ko[idx] ?? ''
-  if (L === 'ja') return monthlyDetailedJa[idx] ?? monthlyDetailedEn[idx] ?? ''
-  if (L === 'zh') return monthlyDetailedZh[idx] ?? monthlyDetailedEn[idx] ?? ''
-  return monthlyDetailedEn[idx] ?? ''
+  const ext = monthlyDetailedTemplates as {
+    es?: string[]
+    id?: string[]
+    pt?: string[]
+    fr?: string[]
+    de?: string[]
+    vi?: string[]
+    th?: string[]
+    hi?: string[]
+  }
+  const pool = pickFortunePool(
+    {
+      ko: monthlyDetailedTemplates.ko,
+      en: monthlyDetailedEn,
+      ja: monthlyDetailedJa,
+      zh: monthlyDetailedZh,
+      es: ext.es,
+      id: ext.id,
+      pt: ext.pt,
+      fr: ext.fr,
+      de: ext.de,
+      vi: ext.vi,
+      th: ext.th,
+      hi: ext.hi,
+    },
+    language,
+    'monthlyDetailed'
+  )
+  return pool[idx] ?? ''
 }
 
 export type FortuneCategory = 'love' | 'wealth' | 'career' | 'health' | 'opportunity' | 'warning' | 'relationship'
 
-export type LocalizedTemplatePool = Record<FortuneContentLanguage, string[]>
+export type LocalizedTemplatePool = Partial<Record<FortuneContentLanguage, string[]>>
 
 export const loveFortuneTemplates: LocalizedTemplatePool = {
   ko: [
@@ -705,10 +798,7 @@ export const allTemplates: Record<FortuneCategory, LocalizedTemplatePool> = {
 }
 
 function pickLocalizedPool(pool: LocalizedTemplatePool, language: string): string[] {
-  const L = getFortuneContentLanguage(language as Language)
-  if (pool[L]?.length) return pool[L]
-  if (pool.en?.length) return pool.en
-  return pool.ko
+  return pickFortunePool(pool, language, 'template')
 }
 
 /**

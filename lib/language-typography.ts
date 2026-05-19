@@ -14,6 +14,7 @@ export const languageTypography: Record<Language, typeof koTypography> = {
   ja: koTypography,
   zh: koTypography,
   es: koTypography,
+  id: koTypography,
   fr: koTypography,
   de: koTypography,
   pt: koTypography,

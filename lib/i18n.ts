@@ -1,4 +1,5 @@
 import { deMessages } from './i18n/packs/de'
+import { idMessages } from './i18n/packs/id'
 import { enMessages } from './i18n/packs/en'
 import { esMessages } from './i18n/packs/es'
 import { frMessages } from './i18n/packs/fr'
@@ -8,8 +9,13 @@ import { ptMessages } from './i18n/packs/pt'
 import { thMessages } from './i18n/packs/th'
 import { viMessages } from './i18n/packs/vi'
 import { zhMessages } from './i18n/packs/zh'
+import { getCopyrightBodies } from './i18n/copyright-bodies'
+import { getPagesMisc } from './i18n/pages-misc-i18n'
+import { resolveTranslation } from './i18n/resolve-translation'
 
-export const ALL_LANGUAGES = ['ko', 'en', 'ja', 'zh', 'es', 'fr', 'de', 'pt', 'hi', 'vi', 'th'] as const
+export { resolveTranslation } from './i18n/resolve-translation'
+
+export const ALL_LANGUAGES = ['ko', 'en', 'ja', 'zh', 'es', 'id', 'fr', 'de', 'pt', 'hi', 'vi', 'th'] as const
 export type Language = (typeof ALL_LANGUAGES)[number]
 
 export const languages: { id: Language; label: string; flag: string }[] = [
@@ -18,6 +24,7 @@ export const languages: { id: Language; label: string; flag: string }[] = [
   { id: 'ja', label: '日本語', flag: '🇯🇵' },
   { id: 'zh', label: '中文', flag: '🇨🇳' },
   { id: 'es', label: 'Español', flag: '🇪🇸' },
+  { id: 'id', label: 'Indonesia', flag: '🇮🇩' },
   { id: 'fr', label: 'Français', flag: '🇫🇷' },
   { id: 'de', label: 'Deutsch', flag: '🇩🇪' },
   { id: 'pt', label: 'Português', flag: '🇵🇹' },
@@ -26,7 +33,7 @@ export const languages: { id: Language; label: string; flag: string }[] = [
   { id: 'th', label: 'ไทย', flag: '🇹🇭' },
 ]
 
-const koTranslations: Record<string, string> = {
+export const koTranslations: Record<string, string> = {
     // Header
     'app.title': '운명과 타로',
 
@@ -34,14 +41,22 @@ const koTranslations: Record<string, string> = {
     'profile.title': '저장된 생년월일 목록',
     'profile.name': '이름',
     'profile.namePlaceholder': '이름 입력',
-    'profile.add': '추가',
+    'profile.add': '저장',
     'profile.solar': '양력',
     'profile.lunar': '음력',
     'profile.hourUnknown': '모름 (시주 없이 계산)',
     'profile.gender': '성별',
     'profile.male': '남성',
     'profile.female': '여성',
+    'profile.readOnly': '저장된 프로필',
     'profile.defaultDisplayName': '사용자',
+
+    // Community categories
+    'community.category.tarot': '타로',
+    'community.category.saju': '사주',
+    'community.category.compatibility': '궁합',
+    'community.category.fortune': '운세',
+    'community.category.other': '기타',
 
     // Category
     'category.title': '카테고리 선택',
@@ -122,6 +137,7 @@ const koTranslations: Record<string, string> = {
     'mbti.scoreUnit': '점',
     'mbti.compatPremiumLockedTitle': '상세 분석은 프리미엄 콘텐츠입니다',
     'mbti.strengthsTogetherTitle': '함께했을 때 강점',
+    'mbti.strengthsTogetherLead': '서로의 다른 점을 보완하며 함께 성장할 수 있습니다.',
     'mbti.conflictRiskTitle': '갈등 위험 요소',
     'mbti.conflictRiskBody':
       '서로 다른 가치관이 충돌할 수 있습니다. 상대방의 관점을 이해하려 노력하고, 충돌 시 차분하게 대화하는 것이 중요합니다.',
@@ -264,6 +280,12 @@ const koTranslations: Record<string, string> = {
     'tarot.pickThree': '세 장 뽑기',
     'tarot.hintSelectOneCard': '카드 1장을 선택하세요',
     'tarot.hintSelectThreeOrdered': '카드 3장을 순서대로 선택하세요',
+    'tarot.reading': '당신의 리딩',
+    'tarot.card': '카드',
+    'tarot.subtitle.love': '사랑과 관계',
+    'tarot.subtitle.wealth': '금전과 풍요',
+    'tarot.subtitle.career': '직업과 방향',
+    'tarot.subtitle.health': '건강과 마음',
 
     // Footer
     'footer.text': '운명과 타로 - Destiny & Tarot',
@@ -512,6 +534,9 @@ const koTranslations: Record<string, string> = {
     'support.piModalPayCtaGeneric': 'Pi 결제하기',
     'support.piModalFooterHint':
       '0 이하의 금액은 입력할 수 없습니다.\n결제 후 즉시 계정에 반영됩니다.',
+    'support.piModalComingSoonTitle': 'Pi 결제 준비 중',
+    'support.piModalComingSoonBody':
+      'Pi 결제 기능은 추후 지원 예정입니다. 현재는 실제 결제가 진행되지 않습니다.',
     'share.footerCopy': '코드를 복사하거나 아래 SNS로 공유하세요 • 추천 시 +{referrer}P 지급',
     'share.enterReferralCodeTitle': '추천코드 입력',
     'share.enterReferralHint':
@@ -546,8 +571,8 @@ const koTranslations: Record<string, string> = {
       '• 모든 프리미엄 운세 이용\n• 광고 없음\n• 타로 무제한\n• 궁합 분석 무제한\n• MBTI 프리미엄 리포트\n• MBTI 연애 스타일 분석',
     'premium.featuresQuarterly':
       '• 모든 프리미엄 운세 이용\n• 광고 없음\n• 타로 무제한\n• 궁합 분석 무제한\n• MBTI 프리미엄 리포트\n• MBTI 연애 스타일 분석\n• 우선 고객 지원',
-    'premium.featuresYearly':
-      '• 모든 프리미엄 운세 이용\n• 광고 없음\n• 타로 무제한\n• 궁합 분석 무제한\n• MBTI 프리미엄 리포트\n• MBTI 연애 스타일 분석\n• MBTI 궁합 프리미엄 결과\n• 우선 고객 지원\n• 독점 콘텐츠 이용\n• 포인트 2배 적립',
+  'premium.featuresYearly':
+  '• 모든 프리미엄 운세 이용\n• 광고 없음\n• 타로 무제한\n• 궁합 분석 무제한\n• MBTI 프리미엄 리포트\n• MBTI 연애 스타일 분석\n• MBTI 궁합 프리미엄 결과\n• 우선 고객 지원',
     'premium.selectPlan': '이 플랜 선택',
     'premium.paymentInfoTitle': '결제 안내',
     'premium.notePi': '• 결제는 Pi(파이) 암호화폐로 진행됩니다.',
@@ -570,8 +595,8 @@ const koTranslations: Record<string, string> = {
       '• 본 서비스는 "있는 그대로" 제공되며, 명시적 또는 묵시적 보증이 없습니다.\n• 서비스 운영자는 서비스 이용으로 인한 직접, 간접, 특수, 결과적 손해에 대해 책임지지 않습니다.\n• 서비스의 중단 또는 오류로 인한 손해에 대해 책임지지 않습니다.',
     'terms.bodySection6':
       '• 서비스 운영자는 사전 공지 없이 본 약관을 변경할 수 있습니다.\n• 변경된 약관은 웹사이트에 게시되며, 게시일로부터 효력이 발생합니다.\n• 사용자가 변경된 약관에 동의하지 않는 경우 서비스 이용을 중단할 수 있습니다.',
-    'terms.bodySection7':
-      '앱 내 재화 안내\n• 본 서비스는 파이(Pi)와 포인트(P) 두 가지 재화로만 운영됩니다.\n• 파이(Pi)는 실제 결제를 통해 충전할 수 있는 프리미엄 재화입니다.\n• 포인트(P)는 출석, 이벤트, 룰렛 등을 통해 무료로 적립되는 재화입니다.\n• 그 외 다른 형태의 재화나 암호화폐는 본 서비스에서 사용되지 않습니다.\n\n포인트 적립 방법\n• 매일 출석 체크: 20P\n• 광고 시청: 10P\n• 친구 추천: 30P\n• 보너스 룰렛 (1일 1회): 10P ~ 20P\n\n파이/포인트 사용처\n• 프리미엄 운세 분석 (상세 해석 포함)\n• 특별 타로 리딩 (프리미엄 카드 덱)\n• 심화 궁합 분석\n\n유효기간 및 소멸\n• 포인트의 유효기간은 적립일로부터 1년입니다.\n• 파이의 유효기간은 충전일로부터 5년입니다.\n• 회원 탈퇴 시 보유 재화는 즉시 소멸되며 복구되지 않습니다.\n• 부정한 방법으로 획득한 재화는 회수될 수 있습니다.',
+        'terms.bodySection7':
+      '앱 내 재화 안내\n• 본 서비스는 파이(Pi)와 포인트(P) 두 가지 재화로만 운영됩니다.\n• 파이(Pi)는 실제 결제를 통해 충전할 수 있는 프리미엄 재화입니다.\n• 포인트(P)는 출석, 이벤트, 룰렛 등을 통해 무료로 적립되는 재화입니다.\n• 그 외 다른 형태의 재화나 암호화폐는 본 서비스에서 사용되지 않습니다.\n\n포인트 적립 방법\n• 매일 출석 체크: 20P\n• 광고 시청: 10P\n• 친구 추천: 30P\n• 보너스 룰렛 (1일 1회): 10P ~ 50P\n\n파이/포인트 사용처\n• 프리미엄 운세 분석 (상세 해석 포함)\n• 특별 타로 리딩 (프리미엄 카드 덱)\n• 심화 궁합 분석\n\n유효기간 및 소멸\n• 포인트의 유효기간은 적립일로부터 1년입니다.\n• 파이의 유효기간은 충전일로부터 5년입니다.\n• 회원 탈퇴 시 보유 재화는 즉시 소멸되며 복구되지 않습니다.\n• 부정한 방법으로 획득한 재화는 회수될 수 있습니다.',
     'terms.bodySection8':
       '광고 게재 원칙\n• 본 서비스는 사용자 경험을 해치지 않는 범위 내에서 광고를 게재합니다.\n• 모든 광고는 관련 법령을 준수하며, 허위 또는 과장 광고를 게재하지 않습니다.\n\n금지되는 광고 및 협력 콘텐츠\n• 불법 도박: 온라인 카지노, 불법 스포츠 베팅, 사행성 게임 등\n• 불법 금융: 불법 대출, 유사수신행위, 다단계 사기 등\n• 성인/음란물: 성인 콘텐츠, 음란물 사이트 등\n• 불법 의약품: 무허가 의약품, 마약류 등\n• 허위/사기: 허위 투자 정보, 피싱 사이트 등\n• 혐오/차별: 특정 집단에 대한 혐오 또는 차별 조장 콘텐츠\n\n협력 문의\n• 건전한 광고 및 협력 제안은 lwy2016@naver.com으로 문의해 주세요.\n• 위 금지 항목에 해당하는 제안은 검토 없이 거절됩니다.',
     'privacy.bodySection1Extra': '• 이메일, 닉네임\n• 서비스 이용 기록, 접속 로그\n• 기기 정보(모델명, OS 정보 등)',
@@ -611,21 +636,26 @@ const koTranslations: Record<string, string> = {
     'copyright.contactDesc': '저작권 및 라이선스 관련 문의는 copyright@example.com으로 연락주시기 바랍니다.',
 }
 
-export const translations: Record<Language, Record<string, string>> = {
-  ko: koTranslations,
-  en: { ...koTranslations, ...enMessages },
-  ja: { ...koTranslations, ...jaMessages },
-  zh: { ...koTranslations, ...zhMessages },
-  es: { ...koTranslations, ...esMessages },
-  fr: { ...koTranslations, ...frMessages },
-  de: { ...koTranslations, ...deMessages },
-  pt: { ...koTranslations, ...ptMessages },
-  hi: { ...koTranslations, ...hiMessages },
-  vi: { ...koTranslations, ...viMessages },
-  th: { ...koTranslations, ...thMessages },
+function buildLangPack(language: Language, pack: Record<string, string>): Record<string, string> {
+  return { ...koTranslations, ...pack, ...getCopyrightBodies(language), ...getPagesMisc(language) }
 }
 
-// Fallback to Korean for missing translations
+export const translations: Record<Language, Record<string, string>> = {
+  ko: { ...koTranslations, ...getCopyrightBodies('ko'), ...getPagesMisc('ko') },
+  en: buildLangPack('en', enMessages),
+  ja: buildLangPack('ja', jaMessages),
+  zh: buildLangPack('zh', zhMessages),
+  es: buildLangPack('es', esMessages),
+  id: buildLangPack('id', idMessages),
+  fr: buildLangPack('fr', frMessages),
+  de: buildLangPack('de', deMessages),
+  pt: buildLangPack('pt', ptMessages),
+  hi: buildLangPack('hi', hiMessages),
+  vi: buildLangPack('vi', viMessages),
+  th: buildLangPack('th', thMessages),
+}
+
+/** UI strings: localized pack → English → key (never Korean for non-ko). */
 export function useTranslation(language: Language) {
-  return (key: string) => translations[language]?.[key] || translations['ko']?.[key] || key
+  return (key: string) => resolveTranslation(language, translations[language], koTranslations, key)
 }

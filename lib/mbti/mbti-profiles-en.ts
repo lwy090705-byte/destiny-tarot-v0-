@@ -1,0 +1,164 @@
+import type { MBTIType } from './mbti-types'
+import type { MbtiTypeProfile } from './mbti-types'
+
+export const mbtiProfilesEn: Record<MBTIType, MbtiTypeProfile> = {
+  INTJ: {
+    title: 'Architect',
+    description:
+      'An independent, analytical strategist with high standards who values efficiency and logic. You set long-term visions and move steadily toward your goals.',
+    strengths: ['Strategic thinking', 'Independence', 'Decisiveness', 'High standards', 'Love of learning'],
+    weaknesses: ['Perfectionism', 'Difficulty expressing emotions', 'Overly critical', 'Low flexibility'],
+    loveStyle:
+      'You seek deep, meaningful relationships and enjoy intellectual conversation. You are loyal, though emotional expression may not come easily.',
+    career: ['Scientist', 'Strategy consultant', 'Investment analyst', 'Software developer', 'Professor'],
+  },
+  INTP: {
+    title: 'Logician',
+    description:
+      'A thoughtful innovator who loves logic and analysis and enjoys solving complex problems.',
+    strengths: ['Analytical skill', 'Creativity', 'Objectivity', 'Curiosity', 'Problem solving'],
+    weaknesses: ['Indecision', 'Low sociability', 'Ignoring emotions', 'Weak follow-through'],
+    loveStyle:
+      'Intellectual connection matters to you; you want freedom in relationships and enjoy partners who love deep debate.',
+    career: ['Researcher', 'Programmer', 'Philosopher', 'Mathematician', 'Game developer'],
+  },
+  ENTJ: {
+    title: 'Commander',
+    description:
+      'A natural leader who pursues efficiency and guides organizations toward their goals.',
+    strengths: ['Leadership', 'Confidence', 'Decisiveness', 'Efficiency', 'Strategic thinking'],
+    weaknesses: ['Dominating', 'Impatience', 'Ignoring emotions', 'Stubbornness'],
+    loveStyle:
+      'You seek growth in relationships and prefer ambitious partners. You favor honest, direct communication.',
+    career: ['CEO', 'Lawyer', 'Management consultant', 'Politician', 'Entrepreneur'],
+  },
+  ENTP: {
+    title: 'Debater',
+    description:
+      'A creative challenger who enjoys debate and exploring new ideas.',
+    strengths: ['Creativity', 'Adaptability', 'Passion', 'Sense of humor', 'Problem solving'],
+    weaknesses: ['Argumentative', 'Rule-breaking', 'Poor focus', 'Ignoring emotions'],
+    loveStyle:
+      'You want intellectual, fun relationships and a partner who enjoys debate and new experiences.',
+    career: ['Entrepreneur', 'Inventor', 'Lawyer', 'Marketer', 'Filmmaker'],
+  },
+  INFJ: {
+    title: 'Advocate',
+    description:
+      'An idealist with deep insight who wants to help others and make the world better.',
+    strengths: ['Insight', 'Idealism', 'Decisiveness', 'Passion', 'Altruism'],
+    weaknesses: ['Perfectionism', 'Burnout', 'Secretiveness', 'Sensitivity to criticism'],
+    loveStyle:
+      'You pursue deep, meaningful bonds and want authentic relationships with a true soulmate.',
+    career: ['Counselor', 'Writer', 'Psychologist', 'Teacher', 'Activist'],
+  },
+  INFP: {
+    title: 'Mediator',
+    description:
+      'A dreamer of an ideal world with deep feeling and creativity who values authenticity.',
+    strengths: ['Empathy', 'Creativity', 'Idealism', 'Passion', 'Adaptability'],
+    weaknesses: ['Unrealistic', 'Self-criticism', 'Avoidance', 'Oversensitivity'],
+    loveStyle:
+      'You dream of romantic, ideal love and want deep emotional connection and understanding.',
+    career: ['Writer', 'Artist', 'Counselor', 'Musician', 'Social worker'],
+  },
+  ENFJ: {
+    title: 'Protagonist',
+    description:
+      'A charismatic leader who helps others grow and exerts a positive influence.',
+    strengths: ['Charisma', 'Altruism', 'Reliability', 'Passion', 'Communication'],
+    weaknesses: ['Excessive idealism', 'Self-sacrifice', 'Sensitivity to criticism', 'Indecision'],
+    loveStyle:
+      'You are a devoted, warm partner who enjoys supporting your partner’s growth.',
+    career: ['Teacher', 'Counselor', 'HR manager', 'Politician', 'Event planner'],
+  },
+  ENFP: {
+    title: 'Campaigner',
+    description:
+      'A passionate, creative free spirit who explores new possibilities and inspires others.',
+    strengths: ['Passion', 'Creativity', 'Sociability', 'Positivity', 'Adaptability'],
+    weaknesses: ['Poor focus', 'Intense emotions', 'Unrealistic', 'Excessive optimism'],
+    loveStyle:
+      'You enjoy passionate, romantic love and want new experiences with deep emotional connection.',
+    career: ['Actor', 'Journalist', 'Marketer', 'Counselor', 'Entrepreneur'],
+  },
+  ISTJ: {
+    title: 'Logistician',
+    description:
+      'A reliable pillar of responsibility who values rules and finishes what you start.',
+    strengths: ['Responsibility', 'Diligence', 'Organization', 'Reliability', 'Patience'],
+    weaknesses: ['Stubbornness', 'Resistance to change', 'Low emotional expression', 'Overly strict'],
+    loveStyle:
+      'You seek stable, devoted relationships and are a trustworthy, responsible partner.',
+    career: ['Accountant', 'Civil servant', 'Soldier', 'Banker', 'Legal professional'],
+  },
+  ISFJ: {
+    title: 'Defender',
+    description:
+      'A warm, devoted protector who enjoys caring for others and helping quietly.',
+    strengths: ['Devotion', 'Attention to detail', 'Reliability', 'Patience', 'Observation'],
+    weaknesses: ['Self-sacrifice', 'Resistance to change', 'Conflict avoidance', 'Excessive shyness'],
+    loveStyle:
+      'You love with devotion and warmth, carefully looking after and supporting your partner.',
+    career: ['Nurse', 'Teacher', 'Social worker', 'Librarian', 'Administrator'],
+  },
+  ESTJ: {
+    title: 'Executive',
+    description:
+      'An efficient manager who values order and rules and leads organizations systematically.',
+    strengths: ['Organization', 'Leadership', 'Diligence', 'Decisiveness', 'Responsibility'],
+    weaknesses: ['Low flexibility', 'Stubbornness', 'Ignoring emotions', 'Dominating'],
+    loveStyle:
+      'You want stable, traditional relationships and are a responsible, dependable partner.',
+    career: ['Manager', 'Police officer', 'Judge', 'Finance officer', 'Military officer'],
+  },
+  ESFJ: {
+    title: 'Consul',
+    description:
+      'A sociable, caring guardian of harmony who nurtures people and fosters unity.',
+    strengths: ['Sociability', 'Caring', 'Organization', 'Cooperation', 'Loyalty'],
+    weaknesses: ['Need for approval', 'Resistance to change', 'Sensitivity to criticism', 'Conflict avoidance'],
+    loveStyle:
+      'You love warmly and devotedly, are family-oriented, and care for your partner attentively.',
+    career: ['Nurse', 'Teacher', 'Event planner', 'HR specialist', 'Sales'],
+  },
+  ISTP: {
+    title: 'Virtuoso',
+    description:
+      'A logical, practical problem-solver with strong hands-on skill who enjoys spontaneous action.',
+    strengths: ['Practicality', 'Analysis', 'Adaptability', 'Calm', 'Efficiency'],
+    weaknesses: ['Low emotional expression', 'Detachment', 'Risk-seeking', 'Avoiding commitments'],
+    loveStyle: 'You want freedom and independence in love and often show affection through actions.',
+    career: ['Engineer', 'Pilot', 'Technician', 'Athlete', 'Firefighter'],
+  },
+  ISFP: {
+    title: 'Adventurer',
+    description:
+      'A gentle soul with artistic sensibility who enjoys the present and pursues beauty.',
+    strengths: ['Artistic sense', 'Empathy', 'Flexibility', 'Loyalty', 'Adventurousness'],
+    weaknesses: ['Low self-esteem', 'Conflict avoidance', 'Unpredictability', 'Weak planning'],
+    loveStyle:
+      'You love romantically and sensitively, quietly expressing deep affection.',
+    career: ['Artist', 'Designer', 'Veterinarian', 'Chef', 'Photographer'],
+  },
+  ESTP: {
+    title: 'Entrepreneur',
+    description:
+      'An active, realistic adventurer who enjoys the moment and is not afraid of risk.',
+    strengths: ['Adaptability', 'Observation', 'Boldness', 'Practicality', 'Sociability'],
+    weaknesses: ['Impulsiveness', 'Rule-breaking', 'Low patience', 'Ignoring emotions'],
+    loveStyle:
+      'You like fun, active relationships and want a partner to share new experiences with.',
+    career: ['Entrepreneur', 'Sales', 'Athlete', 'Actor', 'Emergency responder'],
+  },
+  ESFP: {
+    title: 'Entertainer',
+    description:
+      'A sociable mood-maker who enjoys the present and loves being with people.',
+    strengths: ['Sociability', 'Optimism', 'Practicality', 'Observation', 'Boldness'],
+    weaknesses: ['Poor focus', 'Difficulty with long-term plans', 'Sensitivity to criticism', 'Impulsiveness'],
+    loveStyle:
+      'You are affectionate and fun-loving and enjoy sharing joyful experiences together.',
+    career: ['Entertainer', 'Event planner', 'Tour guide', 'Chef', 'Preschool teacher'],
+  },
+}

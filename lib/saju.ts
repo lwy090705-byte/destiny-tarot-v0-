@@ -138,7 +138,49 @@ export function getElementInfo(element: string, language: string = 'ko'): { colo
       earth: { color: '黄色, 褐色', numbers: '5, 10', direction: '中央', description: '稳定、信任、调停力' },
       metal: { color: '白色, 金色', numbers: '4, 9', direction: '西方', description: '决断力、正义感、品位' },
       water: { color: '黑色, 蓝色', numbers: '1, 6', direction: '北方', description: '智慧、情感、沟通、适应性' }
-    }
+    },
+    es: {
+      wood: { color: 'Verde, cian', numbers: '3, 8', direction: 'Este', description: 'Crecimiento, creación, paciencia' },
+      fire: { color: 'Rojo, púrpura', numbers: '2, 7', direction: 'Sur', description: 'Pasión, arte, actividad' },
+      earth: { color: 'Amarillo, marrón', numbers: '5, 10', direction: 'Centro', description: 'Estabilidad, confianza, mediación' },
+      metal: { color: 'Blanco, dorado', numbers: '4, 9', direction: 'Oeste', description: 'Decisión, justicia, dignidad' },
+      water: { color: 'Negro, azul', numbers: '1, 6', direction: 'Norte', description: 'Sabiduría, emoción, comunicación, adaptabilidad' }
+    },
+    id: {
+      wood: { color: 'Hijau, sian', numbers: '3, 8', direction: 'Timur', description: 'Pertumbuhan, kreasi, kesabaran' },
+      fire: { color: 'Merah, ungu', numbers: '2, 7', direction: 'Selatan', description: 'Gairah, seni, aktivitas' },
+      earth: { color: 'Kuning, cokelat', numbers: '5, 10', direction: 'Tengah', description: 'Stabilitas, kepercayaan, mediasi' },
+      metal: { color: 'Putih, emas', numbers: '4, 9', direction: 'Barat', description: 'Ketegasan, keadilan, martabat' },
+      water: { color: 'Hitam, biru', numbers: '1, 6', direction: 'Utara', description: 'Kebijaksanaan, emosi, komunikasi, adaptabilitas' }
+    },
+    fr: {
+      wood: { color: 'Vert, cyan', numbers: '3, 8', direction: 'Est', description: 'Croissance, création, patience' },
+      fire: { color: 'Rouge, violet', numbers: '2, 7', direction: 'Sud', description: 'Passion, art, activité' },
+      earth: { color: 'Jaune, marron', numbers: '5, 10', direction: 'Centre', description: 'Stabilité, confiance, médiation' },
+      metal: { color: 'Blanc, or', numbers: '4, 9', direction: 'Ouest', description: 'Décision, justice, dignité' },
+      water: { color: 'Noir, bleu', numbers: '1, 6', direction: 'Nord', description: 'Sagesse, émotion, communication, adaptabilité' }
+    },
+    de: {
+      wood: { color: 'Grün, Cyan', numbers: '3, 8', direction: 'Osten', description: 'Wachstum, Schöpfung, Geduld' },
+      fire: { color: 'Rot, Violett', numbers: '2, 7', direction: 'Süden', description: 'Leidenschaft, Kunst, Aktivität' },
+      earth: { color: 'Gelb, Braun', numbers: '5, 10', direction: 'Mitte', description: 'Stabilität, Vertrauen, Vermittlung' },
+      metal: { color: 'Weiß, Gold', numbers: '4, 9', direction: 'Westen', description: 'Entschlossenheit, Gerechtigkeit, Würde' },
+      water: { color: 'Schwarz, Blau', numbers: '1, 6', direction: 'Norden', description: 'Weisheit, Emotion, Kommunikation, Anpassungsfähigkeit' }
+    },
+    vi: {
+      wood: { color: 'Xanh lá, xanh lơ', numbers: '3, 8', direction: 'Đông', description: 'Phát triển, sáng tạo, kiên nhẫn' },
+      fire: { color: 'Đỏ, tím', numbers: '2, 7', direction: 'Nam', description: 'Đam mê, nghệ thuật, năng động' },
+      earth: { color: 'Vàng, nâu', numbers: '5, 10', direction: 'Trung tâm', description: 'Ổn định, tin cậy, hòa giải' },
+      metal: { color: 'Trắng, vàng', numbers: '4, 9', direction: 'Tây', description: 'Quyết đoán, công lý, phẩm giá' },
+      water: { color: 'Đen, xanh dương', numbers: '1, 6', direction: 'Bắc', description: 'Trí tuệ, cảm xúc, giao tiếp, thích nghi' }
+    },
+    th: {
+      wood: { color: 'เขียว, ฟ้าอมเขียว', numbers: '3, 8', direction: 'ตะวันออก', description: 'การเติบโต การสร้างสรรค์ ความอดทน' },
+      fire: { color: 'แดง, ม่วง', numbers: '2, 7', direction: 'ใต้', description: 'ความหลงใหล ศิลปะ พลังงาน' },
+      earth: { color: 'เหลือง, น้ำตาล', numbers: '5, 10', direction: 'กลาง', description: 'ความมั่นคง ความไว้วางใจ การไกล่เกลี่ย' },
+      metal: { color: 'ขาว, ทอง', numbers: '4, 9', direction: 'ตะวันตก', description: 'ความเด็ดขาด ความยุติธรรม ศักดิ์ศรี' },
+      water: { color: 'ดำ, น้ำเงิน', numbers: '1, 6', direction: 'เหนือ', description: 'ปัญญา อารมณ์ การสื่อสาร การปรับตัว' }
+    },
   }
   
   const langInfo = infoByLanguage[contentLang] ?? infoByLanguage.en ?? infoByLanguage.ko

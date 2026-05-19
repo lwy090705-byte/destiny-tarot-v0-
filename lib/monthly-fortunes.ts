@@ -3,7 +3,10 @@
  * 각 월별로 3~5문장의 상세한 운세를 제공합니다
  */
 
-type MonthlyFortuneMap = Record<number, Record<'ko' | 'en', string>>
+import type { FortuneContentLanguage } from './fortune-generator'
+import { getFortuneContentLanguage, pickFortuneString } from './fortune-generator'
+
+type MonthlyFortuneMap = Record<number, Partial<Record<FortuneContentLanguage, string>>>
 
 export const monthlyFortunes: MonthlyFortuneMap = {
   1: {
@@ -56,12 +59,13 @@ export const monthlyFortunes: MonthlyFortuneMap = {
   }
 }
 
-export function getMonthlyFortune(month: number, language: 'ko' | 'en' = 'ko'): string {
+export function getMonthlyFortune(month: number, language: string = 'ko'): string {
   const fortune = monthlyFortunes[month]
   if (!fortune) {
-    return language === 'ko' 
+    const L = getFortuneContentLanguage(language)
+    return L === 'ko'
       ? '유효한 월별운세 정보를 찾을 수 없습니다.'
       : 'Monthly fortune information not available.'
   }
-  return fortune[language]
+  return pickFortuneString(fortune, language, `monthlyFortune:${month}`)
 }

@@ -235,7 +235,7 @@ export function MyungliSection({
                   ))}
                   <span className="ml-1 text-xs text-gray-600">{lifetimeFortune.early.score}/10</span>
                 </div>
-                <p className="text-gray-700 leading-relaxed text-xs">{lifetimeFortune.early.description}</p>
+                <p className="text-gray-700 leading-relaxed text-sm">{lifetimeFortune.early.description}</p>
               </div>
 
               {/* 중년운 */}
@@ -252,7 +252,7 @@ export function MyungliSection({
                   ))}
                   <span className="ml-1 text-xs text-gray-600">{lifetimeFortune.mid.score}/10</span>
                 </div>
-                <p className="text-gray-700 leading-relaxed text-xs">{lifetimeFortune.mid.description}</p>
+                <p className="text-gray-700 leading-relaxed text-sm">{lifetimeFortune.mid.description}</p>
               </div>
 
               {/* 말년운 */}
@@ -269,7 +269,7 @@ export function MyungliSection({
                   ))}
                   <span className="ml-1 text-xs text-gray-600">{lifetimeFortune.late.score}/10</span>
                 </div>
-                <p className="text-gray-700 leading-relaxed text-xs">{lifetimeFortune.late.description}</p>
+                <p className="text-gray-700 leading-relaxed text-sm">{lifetimeFortune.late.description}</p>
               </div>
             </div>
           </div>
@@ -301,7 +301,7 @@ export function MyungliSection({
                       <span className="ml-1 text-xs text-gray-600">{result.score}/10</span>
                     </div>
                   </div>
-                  <p className="text-gray-700 leading-relaxed text-xs">{result.description}</p>
+                  <p className="text-gray-700 leading-relaxed text-sm">{result.description}</p>
                   <div className="mt-2 pt-2 border-t border-purple-100 flex gap-3 text-xs">
                     <span className="text-purple-600">{t('elements.luckyColor')}: <strong>{result.luckyColor}</strong></span>
                     <span className="text-purple-600">{t('elements.luckyNumber')}: <strong>{result.luckyNumber}</strong></span>
@@ -338,7 +338,7 @@ export function MyungliSection({
                       <span className="ml-1 text-xs text-gray-600">{result.score}/10</span>
                     </div>
                   </div>
-                  <p className="text-gray-700 leading-relaxed text-xs">{result.description}</p>
+                  <p className="text-gray-700 leading-relaxed text-sm">{result.description}</p>
                   <div className="mt-3 flex gap-3 text-xs">
                     <span className="text-purple-600">{t('elements.luckyColor')}: <strong>{result.luckyColor}</strong></span>
                     <span className="text-purple-600">{t('elements.luckyNumber')}: <strong>{result.luckyNumber}</strong></span>
@@ -422,61 +422,274 @@ export function MyungliSection({
     )
   }
 
+  // 운세 종류 아이콘 맵
+  const typeIconMap: Record<string, string> = {
+    lifetime: '/icons/fortune-lifetime.jpg',
+    yearly:   '/icons/fortune-yearly.jpg',
+    monthly:  '/icons/fortune-monthly.jpg',
+  }
+
+  // 운세 카테고리 아이콘 맵
+  const categoryIconMap: Record<string, string> = {
+    total:         '/icons/fortune-total.jpg',
+    wealth:        '/icons/fortune-wealth.jpg',
+    business:      '/icons/fortune-business.jpg',
+    love:          '/icons/fortune-love.jpg',
+    relationships: '/icons/fortune-relationships.jpg',
+    health:        '/icons/fortune-health.jpg',
+  }
+
   return (
-    <div className="space-y-4 bg-gradient-to-br from-amber-50/30 via-white to-amber-100/10 rounded-3xl p-6">
+    <div className="space-y-3">
 
       {/* 운세 종류 */}
-      <div className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-purple-400">
-        <h3 className="font-semibold text-gray-800 mb-3">{t('fortune.type')}</h3>
-        <RadioGroup
-          value={fortuneType}
-          onValueChange={(v) => setFortuneType(v as FortuneType)}
-          className="grid grid-cols-2 gap-3"
-        >
-          {(Array.isArray(fortuneTypes) ? fortuneTypes : []).map((type) => (
-            <div key={type.id} className="flex items-center gap-2">
-              <RadioGroupItem 
-                value={type.id} 
-                id={type.id}
-                className="border-purple-400 text-purple-600"
-              />
-              <Label htmlFor={type.id} className="text-gray-700 cursor-pointer">
-                {type.label}
-              </Label>
-            </div>
-          ))}
-        </RadioGroup>
+      <div
+        className="bg-white rounded-2xl shadow-sm"
+        style={{ border: '1.5px solid #d4af37', padding: '10px 8px 12px' }}
+      >
+        <div className="flex items-center gap-1.5 mb-2">
+          <span style={{ color: '#7c3aed', fontSize: 13, lineHeight: 1 }}>✦</span>
+          <h3 className="font-bold text-gray-800 text-sm">{t('fortune.type')}</h3>
+        </div>
+
+        {/* gap 8로 카드 간격 줄여 각 카드 너비 최대화 */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          {(Array.isArray(fortuneTypes) ? fortuneTypes : []).map((type) => {
+            const isSelected = fortuneType === type.id
+            return (
+              <button
+                key={type.id}
+                onClick={() => setFortuneType(type.id as FortuneType)}
+                style={{
+                  borderRadius: 14,
+                  border: isSelected ? '2px solid #7c3aed' : '1.5px solid #e5e7eb',
+                  background: isSelected
+                    ? 'linear-gradient(135deg, rgba(124,58,237,0.09) 0%, rgba(168,85,247,0.13) 100%)'
+                    : '#ffffff',
+                  boxShadow: isSelected
+                    ? '0 0 0 3px rgba(124,58,237,0.15), 0 4px 16px rgba(124,58,237,0.20)'
+                    : '0 1px 4px rgba(0,0,0,0.07)',
+                  /* padding: 라디오(16px) + icon(28px) + gap(6px) + 좌우(6+6) = 62px 소비
+                     나머지 공간 전부 title에 할당 */
+                  padding: '6px 6px 6px 6px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                  position: 'relative',
+                  overflow: 'hidden',
+                  transition: 'box-shadow 0.15s, border-color 0.15s, background 0.15s',
+                  minHeight: 56,
+                  width: '100%',
+                  textAlign: 'left',
+                  boxSizing: 'border-box',
+                }}
+              >
+                {/* 라디오 도트 — in-flow (absolute 제거, flexShrink:0으로 고정 너비 확보) */}
+                <div
+                  style={{
+                    width: 16,
+                    height: 16,
+                    borderRadius: '50%',
+                    border: isSelected ? '2px solid #7c3aed' : '2px solid #d1d5db',
+                    background: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  {isSelected && (
+                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#7c3aed' }} />
+                  )}
+                </div>
+
+                {/* 아이콘 — 28px compact */}
+                <div
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 8,
+                    overflow: 'hidden',
+                    flexShrink: 0,
+                    boxShadow: isSelected
+                      ? '0 0 10px rgba(124,58,237,0.60), 0 0 4px rgba(168,85,247,0.45)'
+                      : '0 1px 4px rgba(0,0,0,0.15)',
+                    filter: isSelected
+                      ? 'brightness(1.12) saturate(1.25) drop-shadow(0 0 4px rgba(124,58,237,0.55))'
+                      : 'none',
+                    transition: 'box-shadow 0.15s, filter 0.15s',
+                  }}
+                >
+                  <img
+                    src={typeIconMap[type.id]}
+                    alt={type.label}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                </div>
+
+                {/* 제목 — 남은 공간 전부 차지, 2줄까지 허용 */}
+                <span
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: isSelected ? '#5b21b6' : '#1f2937',
+                    lineHeight: 1.3,
+                    wordBreak: 'keep-all',
+                    overflowWrap: 'break-word',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {type.label}
+                </span>
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       {/* 운세 카테고리 */}
-      <div className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-purple-400">
-        <h3 className="font-semibold text-gray-800 mb-3">{t('fortune.category')}</h3>
-        <RadioGroup
-          value={fortuneCategory}
-          onValueChange={(v) => setFortuneCategory(v as FortuneCategory)}
-          className="grid grid-cols-2 gap-3"
-        >
-          {(Array.isArray(fortuneCategories) ? fortuneCategories : []).map((cat) => (
-            <div key={cat.id} className="flex items-center gap-2">
-              <RadioGroupItem 
-                value={cat.id} 
-                id={`cat-${cat.id}`}
-                className="border-purple-400 text-purple-600"
-              />
-              <Label htmlFor={`cat-${cat.id}`} className="text-gray-700 cursor-pointer">
-                {cat.label}
-              </Label>
-            </div>
-          ))}
-        </RadioGroup>
+      <div
+        className="bg-white rounded-2xl shadow-sm"
+        style={{ border: '1.5px solid #d4af37', padding: '10px 8px 12px' }}
+      >
+        <div className="flex items-center gap-1.5 mb-2">
+          <span style={{ color: '#7c3aed', fontSize: 13, lineHeight: 1 }}>✦</span>
+          <h3 className="font-bold text-gray-800 text-sm">{t('fortune.category')}</h3>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          {(Array.isArray(fortuneCategories) ? fortuneCategories : []).map((cat) => {
+            const isSelected = fortuneCategory === cat.id
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setFortuneCategory(cat.id as FortuneCategory)}
+                style={{
+                  borderRadius: 14,
+                  border: isSelected ? '2px solid #7c3aed' : '1.5px solid #e5e7eb',
+                  background: isSelected
+                    ? 'linear-gradient(135deg, rgba(124,58,237,0.09) 0%, rgba(168,85,247,0.13) 100%)'
+                    : '#ffffff',
+                  boxShadow: isSelected
+                    ? '0 0 0 3px rgba(124,58,237,0.15), 0 4px 16px rgba(124,58,237,0.20)'
+                    : '0 1px 4px rgba(0,0,0,0.07)',
+                  padding: '6px 6px 6px 6px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                  position: 'relative',
+                  overflow: 'hidden',
+                  transition: 'box-shadow 0.15s, border-color 0.15s, background 0.15s',
+                  minHeight: 52,
+                  width: '100%',
+                  textAlign: 'left',
+                  boxSizing: 'border-box',
+                }}
+              >
+                {/* 라디오 도트 — in-flow */}
+                <div
+                  style={{
+                    width: 16,
+                    height: 16,
+                    borderRadius: '50%',
+                    border: isSelected ? '2px solid #7c3aed' : '2px solid #d1d5db',
+                    background: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  {isSelected && (
+                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#7c3aed' }} />
+                  )}
+                </div>
+
+                {/* 아이콘 — 28px compact */}
+                <div
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 8,
+                    overflow: 'hidden',
+                    flexShrink: 0,
+                    boxShadow: isSelected
+                      ? '0 0 10px rgba(124,58,237,0.60), 0 0 4px rgba(168,85,247,0.45)'
+                      : '0 1px 4px rgba(0,0,0,0.15)',
+                    filter: isSelected
+                      ? 'brightness(1.12) saturate(1.25) drop-shadow(0 0 4px rgba(124,58,237,0.55))'
+                      : 'none',
+                    transition: 'box-shadow 0.15s, filter 0.15s',
+                  }}
+                >
+                  <img
+                    src={categoryIconMap[cat.id]}
+                    alt={cat.label}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                </div>
+
+                {/* 제목 */}
+                <span
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: isSelected ? '#5b21b6' : '#1f2937',
+                    lineHeight: 1.3,
+                    wordBreak: 'keep-all',
+                    overflowWrap: 'break-word',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {cat.label}
+                </span>
+              </button>
+            )
+          })}
+        </div>
       </div>
 
-      <Button 
+      {/* 운세 보기 버튼 */}
+      <button
         onClick={handleViewFortune}
-        className="w-full bg-gradient-to-r from-purple-500 to-fuchsia-500 hover:from-purple-600 hover:to-fuchsia-600 text-white py-6 rounded-xl text-lg font-semibold shadow-lg"
+        style={{
+          width: '100%',
+          borderRadius: 16,
+          padding: '12px 24px',
+          background: 'linear-gradient(135deg, #5b21b6 0%, #7c3aed 40%, #a855f7 70%, #c026d3 100%)',
+          boxShadow: '0 6px 24px rgba(124,58,237,0.40), 0 0 0 2px rgba(212,175,55,0.50), inset 0 1px 0 rgba(255,255,255,0.18)',
+          border: '2px solid #d4af37',
+          color: '#ffffff',
+          fontWeight: 700,
+          fontSize: 18,
+          cursor: 'pointer',
+          position: 'relative',
+          overflow: 'hidden',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 10,
+          letterSpacing: '-0.01em',
+        }}
       >
-        {t('button.viewFortune')}
-      </Button>
+        <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>✦</span>
+        <span>{t('button.viewFortune')}</span>
+        <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>✦</span>
+      </button>
 
       {/* Points Insufficient Modal */}
       <PointsInsufficientModal

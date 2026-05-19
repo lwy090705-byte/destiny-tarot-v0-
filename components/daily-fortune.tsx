@@ -3,7 +3,6 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react"
 import { Button } from "@/components/ui/button"
-import { DateSelector } from "./date-selector"
 import { generateFortune } from "@/lib/fortune"
 import type { FortuneResult } from "@/lib/types"
 import { useLanguage } from "@/lib/language-context"
@@ -17,6 +16,7 @@ interface DailyFortuneSectionProps {
   initialDay?: number
   initialHour?: number
   initialGender?: 'male' | 'female'
+  initialName?: string
   calendarType: 'solar' | 'lunar'
   onCalendarTypeChange: (type: 'solar' | 'lunar') => void
 }
@@ -58,6 +58,7 @@ export function DailyFortuneSection({
   initialDay = 1,
   initialHour,
   initialGender = 'male',
+  initialName = '',
   calendarType,
   onCalendarTypeChange
 }: DailyFortuneSectionProps) {
@@ -79,18 +80,20 @@ export function DailyFortuneSection({
   const [day, setDay] = useState(initialDay)
   const [hour, setHour] = useState(initialHour)
   const [gender, setGender] = useState(initialGender)
+  const [name, setName] = useState(initialName)
   const [showResult, setShowResult] = useState(false)
 
-  // 프로필 선택 시 날짜 및 시간, 성별 동기화
+  // 프로필 선택 시 날짜 및 시간, 성별, 이름 동기화
   useEffect(() => {
     setYear(initialYear)
     setMonth(initialMonth)
     setDay(initialDay)
     setHour(initialHour)
     setGender(initialGender)
+    setName(initialName)
     setShowResult(false)
     setFortuneResults([])
-  }, [initialYear, initialMonth, initialDay, initialHour, initialGender])
+  }, [initialYear, initialMonth, initialDay, initialHour, initialGender, initialName])
   
   // 언어 변경 시 결과 리셋
   useEffect(() => {
@@ -220,6 +223,7 @@ export function DailyFortuneSection({
         <div className="premium-card rounded-3xl p-7 shadow-xl">
           <h3 className="text-2xl font-bold text-[#5b21b6] mb-4 text-center">{t('fortune.daily')}</h3>
           <p className="text-center text-[#7c5cbf] mb-6 text-sm font-medium">
+            {name && <span className="font-bold text-[#5b21b6]">{name} · </span>}
             {year}{t('date.year')} {month}{t('date.month')} {day}{t('date.day')} ({calendarType === 'lunar' ? t('profile.lunar') : t('profile.solar')})
           </p>
 
@@ -273,19 +277,72 @@ export function DailyFortuneSection({
     )
   }
 
+  // 프로필 미선택 상태 처리
+  const hasProfile = initialYear !== 2000 || initialMonth !== 1 || initialDay !== 1 || initialName !== ''
+
+  if (!hasProfile) {
+    return (
+      <div className="space-y-4 rounded-3xl p-4 pb-3" style={{
+        background: 'linear-gradient(180deg, #fefcf8 0%, #faf5ff 50%, #fefcf8 100%)',
+      }}>
+        <div className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-purple-400 text-center py-8">
+          <p className="text-purple-500 font-semibold mb-1">{t('profile.title')}</p>
+          <p className="text-gray-400 text-sm">{t('profile.emptyList')}</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="space-y-4 bg-gradient-to-br from-yellow-50/30 via-white to-orange-100/10 rounded-3xl p-6">
-      <DateSelector
-        year={year}
-        month={month}
-        day={day}
-        calendarType={calendarType}
-        onYearChange={setYear}
-        onMonthChange={setMonth}
-        onDayChange={setDay}
-        onCalendarTypeChange={onCalendarTypeChange}
-        language={language}
-      />
+    <div className="space-y-4 rounded-3xl p-6" style={{
+      background: 'linear-gradient(180deg, #fefcf8 0%, #faf5ff 50%, #fefcf8 100%)',
+    }}>
+      {/* 이름 표시 — DateSelector 박스와 동일 스타일 */}
+      <div className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-purple-400">
+        <h3 className="font-semibold text-purple-700 mb-1 text-sm">{t('profile.name')}</h3>
+        <p className="text-[#2d1b4e] font-bold text-base">{name || t('profile.emptyList')}</p>
+      </div>
+
+      {/* 생년월일 읽기 전용 표시 — DateSelector 박스와 동일 스타일 */}
+      <div className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-purple-400">
+        <h3 className="font-semibold text-purple-700 mb-3 text-sm">{t('date.select')}</h3>
+        <div className="grid grid-cols-3 gap-3">
+          <div>
+            <p className="text-gray-500 text-xs mb-1">{t('date.year')}</p>
+            <div className="h-10 bg-gray-50 rounded-xl flex items-center px-3 text-[#2d1b4e] font-semibold text-sm"
+              style={{ border: '1.5px solid #e5d4b8' }}>
+              {year}
+            </div>
+          </div>
+          <div>
+            <p className="text-gray-500 text-xs mb-1">{t('date.month')}</p>
+            <div className="h-10 bg-gray-50 rounded-xl flex items-center px-3 text-[#2d1b4e] font-semibold text-sm"
+              style={{ border: '1.5px solid #e5d4b8' }}>
+              {String(month).padStart(2, '0')}
+            </div>
+          </div>
+          <div>
+            <p className="text-gray-500 text-xs mb-1">{t('date.day')}</p>
+            <div className="h-10 bg-gray-50 rounded-xl flex items-center px-3 text-[#2d1b4e] font-semibold text-sm"
+              style={{ border: '1.5px solid #e5d4b8' }}>
+              {String(day).padStart(2, '0')}
+            </div>
+          </div>
+        </div>
+        <div className="mt-2 flex items-center gap-2">
+          <span className="text-xs text-purple-500 font-medium px-2 py-0.5 rounded-full"
+            style={{ background: '#f3e8ff', border: '1px solid #d8b4fe' }}>
+            {calendarType === 'lunar' ? t('profile.lunar') : t('profile.solar')}
+          </span>
+          {hour !== undefined && (
+            <span className="text-xs text-purple-500 font-medium px-2 py-0.5 rounded-full"
+              style={{ background: '#f3e8ff', border: '1px solid #d8b4fe' }}>
+              {String(hour).padStart(2, '0')}:00
+            </span>
+          )}
+          <span className="text-xs text-gray-400 ml-auto">{t('profile.readOnly')}</span>
+        </div>
+      </div>
 
       <Button
         onClick={handleGetFortune}

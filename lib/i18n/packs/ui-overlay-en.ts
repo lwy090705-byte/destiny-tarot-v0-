@@ -4,6 +4,7 @@ export const uiOverlayEn: Record<string, string> = {
   'profile.loading': 'Loading…',
   'profile.emptyList': 'No saved profiles yet',
   'profile.hourNotEntered': 'Time not set',
+  'profile.readOnly': 'Saved profile',
   'category.desc.myungli': 'Eastern classical wisdom',
   'category.desc.daily': "Today's hope",
   'category.desc.compatibility': 'Two hearts connected',
@@ -35,6 +36,9 @@ export const uiOverlayEn: Record<string, string> = {
   'support.piModalPayCtaGeneric': 'Pay with Pi',
   'support.piModalFooterHint':
     'Amounts must be greater than zero.\nYour balance updates immediately after payment.',
+  'support.piModalComingSoonTitle': 'Pi checkout coming soon',
+  'support.piModalComingSoonBody':
+    'Pi payments will be available soon. No real payment is processed at this time.',
   'share.footerCopy': 'Copy your code or share below • +{referrer}P per successful referral',
   'share.enterReferralCodeTitle': 'Enter referral code',
   'share.enterReferralHint':
@@ -54,6 +58,11 @@ export const uiOverlayEn: Record<string, string> = {
   'share.socialTweet': 'Try this free fortune & tarot app!',
   'share.socialRecommend': 'I recommend this fortune & tarot app! ',
   'share.myInvitesCount': 'My invites: {count}',
+  'share.platform.kakao': 'KakaoTalk',
+  'share.platform.telegram': 'Telegram',
+  'share.platform.facebook': 'Facebook',
+  'share.platform.line': 'LINE',
+  'share.platform.whatsapp': 'WhatsApp',
   'premium.titlePage': 'Premium subscription',
   'premium.heroTitle': 'Premium membership',
   'premium.heroSubtitle': 'Enjoy all fortune features without limits',
@@ -94,7 +103,7 @@ export const uiOverlayEn: Record<string, string> = {
   'terms.bodySection6':
     '• We may change these terms with notice.\n• Updated terms are posted on the site and effective from the posted date.\n• If you disagree with changes, you may stop using the service.',
   'terms.bodySection7':
-    'In-app currencies\n• The service uses Pi and points (P) only.\n• Pi is a premium currency you can top up with real payment.\n• Points are earned free via attendance, events, roulette, etc.\n• No other currency or crypto is used in the app.\n\nHow to earn points\n• Daily check-in: 20P\n• Watch ads: 10P\n• Refer a friend: 30P\n• Bonus roulette (once/day): 10P–20P\n\nWhere to spend Pi/points\n• Premium fortune analyses\n• Special tarot readings\n• Deep compatibility reports\n\nExpiry\n• Points expire 1 year after they are earned.\n• Pi expires 5 years after top-up.\n• Balances are forfeited on account deletion and cannot be restored.\n• Fraudulently obtained balances may be revoked.',
+    'In-app currencies\n• The service uses Pi and points (P) only.\n• Pi is a premium currency you can top up with real payment.\n• Points are earned free via attendance, events, roulette, etc.\n• No other currency or crypto is used in the app.\n\nHow to earn points\n• Daily check-in: 20P\n• Watch ads: 10P\n• Refer a friend: 30P\n• Bonus roulette (once/day): 10P–50P\n\nWhere to spend Pi/points\n• Premium fortune analyses\n• Special tarot readings\n• Deep compatibility reports\n\nExpiry\n• Points expire 1 year after they are earned.\n• Pi expires 5 years after top-up.\n• Balances are forfeited on account deletion and cannot be restored.\n• Fraudulently obtained balances may be revoked.',
   'terms.bodySection8':
     'Advertising principles\n• Ads are shown without ruining the user experience.\n• Ads follow applicable law; false or misleading ads are not allowed.\n\nProhibited ads and partners\n• Illegal gambling: online casinos, illegal betting, games of chance, etc.\n• Illegal finance: illegal loans, pyramid schemes, fraud, etc.\n• Adult/obscene content\n• Illegal drugs or unapproved medicines\n• Scams/phishing\n• Hate or discrimination\n\nPartnerships\n• For healthy ads or partnerships, email lwy2016@naver.com.\n• Proposals in the prohibited categories are rejected without review.',
   'privacy.bodySection1Extra': '• Email, nickname\n• Service usage and access logs\n• Device information (model, OS, etc.)',
@@ -133,6 +142,12 @@ export const uiOverlayEn: Record<string, string> = {
   'tarot.pickThree': 'Draw three cards',
   'tarot.hintSelectOneCard': 'Select one card',
   'tarot.hintSelectThreeOrdered': 'Select three cards in order',
+  'tarot.reading': 'Your reading',
+  'tarot.card': 'Card',
+  'tarot.subtitle.love': 'Love & Relationships',
+  'tarot.subtitle.wealth': 'Money & Wealth',
+  'tarot.subtitle.career': 'Career & Future',
+  'tarot.subtitle.health': 'Body & Mind',
   'mbti.featurePersonality': 'Personality',
   'mbti.featureLoveStyle': 'Love style',
   'mbti.featureCareer': 'Career fit',
@@ -178,6 +193,7 @@ export const uiOverlayEn: Record<string, string> = {
   'mbti.scoreUnit': ' pts',
   'mbti.compatPremiumLockedTitle': 'Full analysis is premium content',
   'mbti.strengthsTogetherTitle': 'Strengths together',
+  'mbti.strengthsTogetherLead': 'You can complement each other’s differences and grow together.',
   'mbti.conflictRiskTitle': 'Friction risks',
   'mbti.conflictRiskBody':
     'Different values can clash. Aim to understand their view and talk calmly when tension rises.',

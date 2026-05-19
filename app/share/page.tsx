@@ -26,19 +26,53 @@ export default function SharePage() {
   const referralCode = user?.referralCode ?? '------'
   const shareUrl = `https://fortune-tarot.vercel.app/invite/${referralCode}`
 
+  // 카카오톡 공유 — Kakao SDK 사용 (JavaScript 키), 미설치 시 KakaoStory 웹 fallback
+  const handleKakaoShare = () => {
+    const kakao = (window as any).Kakao
+    if (typeof kakao === 'undefined') {
+      // SDK 미로드 — KakaoStory 웹 공유로 fallback
+      window.open(`https://story.kakao.com/share?url=${encodeURIComponent(shareUrl)}`, '_blank')
+      return
+    }
+    if (!kakao.isInitialized()) {
+      kakao.init(process.env.NEXT_PUBLIC_KAKAO_JS_KEY ?? '')
+    }
+    kakao.Share.sendDefault({
+      objectType: 'feed',
+      content: {
+        title: t('share.appName'),
+        description: t('share.socialTweet'),
+        imageUrl: 'https://fortune-tarot.vercel.app/icons/header-logo.jpg',
+        link: {
+          mobileWebUrl: shareUrl,
+          webUrl: shareUrl,
+        },
+      },
+      buttons: [
+        {
+          title: t('share.kakaoButton'),
+          link: {
+            mobileWebUrl: shareUrl,
+            webUrl: shareUrl,
+          },
+        },
+      ],
+    })
+  }
+
   const socialPlatforms = useMemo(
     () => [
       {
         id: 'kakao',
-        name: '카카오톡',
+        name: t('share.platform.kakao'),
         color: 'bg-yellow-400 hover:bg-yellow-500',
         textColor: 'text-gray-900',
         fallbackIcon: '💬',
-        shareUrl: `https://sharer.kakao.com/talk/friends/picker/link?app_key=YOUR_KAKAO_KEY&url=${encodeURIComponent(shareUrl)}`,
+        shareUrl: '',  // 카카오는 handleKakaoShare로 별도 처리
       },
       {
         id: 'twitter',
-        name: 'X (Twitter)',
+        name: t('share.platform.twitter'),
         color: 'bg-black hover:bg-gray-800',
         textColor: 'text-white',
         fallbackIcon: '𝕏',
@@ -46,7 +80,7 @@ export default function SharePage() {
       },
       {
         id: 'telegram',
-        name: '텔레그램',
+        name: t('share.platform.telegram'),
         color: 'bg-blue-500 hover:bg-blue-600',
         textColor: 'text-white',
         fallbackIcon: '✈',
@@ -54,7 +88,7 @@ export default function SharePage() {
       },
       {
         id: 'facebook',
-        name: '페이스북',
+        name: t('share.platform.facebook'),
         color: 'bg-blue-600 hover:bg-blue-700',
         textColor: 'text-white',
         fallbackIcon: 'f',
@@ -62,7 +96,7 @@ export default function SharePage() {
       },
       {
         id: 'line',
-        name: '라인',
+        name: t('share.platform.line'),
         color: 'bg-green-500 hover:bg-green-600',
         textColor: 'text-white',
         fallbackIcon: '📱',
@@ -70,7 +104,7 @@ export default function SharePage() {
       },
       {
         id: 'whatsapp',
-        name: '왓츠앱',
+        name: t('share.platform.whatsapp'),
         color: 'bg-green-600 hover:bg-green-700',
         textColor: 'text-white',
         fallbackIcon: '📞',
@@ -132,7 +166,7 @@ export default function SharePage() {
   const earnedPoints = currentReferrals * REFERRER_REWARD
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-900 to-purple-800 pb-24">
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-900 to-purple-800 pb-12">
       <header className="sticky top-0 bg-white/10 backdrop-blur-md border-b border-white/20 z-40">
         <div className="max-w-lg mx-auto px-4 py-4 flex items-center gap-3">
           <Link href="/" className="text-white hover:text-purple-200 transition">
@@ -142,7 +176,7 @@ export default function SharePage() {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 py-6 space-y-5">
+      <main className="max-w-lg mx-auto px-4 py-3 space-y-4">
 
         {/* 추천 혜택 배너 */}
         <div className="bg-gradient-to-r from-amber-400 to-orange-500 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
@@ -214,7 +248,13 @@ export default function SharePage() {
             {socialPlatforms.map((platform) => (
               <button
                 key={platform.id}
-                onClick={() => window.open(platform.shareUrl, '_blank', 'width=600,height=400')}
+                onClick={() => {
+                  if (platform.id === 'kakao') {
+                    handleKakaoShare()
+                  } else {
+                    window.open(platform.shareUrl, '_blank', 'width=600,height=400')
+                  }
+                }}
                 className={`${platform.color} ${platform.textColor} rounded-xl p-4 flex flex-col items-center gap-2 transition-all transform hover:scale-105 shadow-md`}
               >
                 <span className="text-2xl">{platform.fallbackIcon}</span>

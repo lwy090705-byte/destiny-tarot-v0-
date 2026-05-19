@@ -52,25 +52,15 @@ export function PiPaymentModal({ isOpen, onClose, onPayment, title }: PiPaymentM
     setCustomAmount("")
   }, [])
 
-  // 결제 처리
-  const handlePayment = useCallback(async () => {
+  // 결제 처리 — 현재는 실제 결제 실행 없이 안내 메시지만 표시
+  const [showComingSoon, setShowComingSoon] = useState(false)
+
+  const handlePayment = useCallback(() => {
     const finalAmount = getFinalAmount()
     if (!finalAmount) return
-
-    setIsProcessing(true)
-    try {
-      // 결제 처리 로직
-      await new Promise(resolve => setTimeout(resolve, 500)) // 시뮬레이션
-      onPayment(finalAmount)
-      
-      // 모달 닫기 및 상태 초기화
-      setSelectedAmount(1)
-      setCustomAmount("")
-      onClose()
-    } finally {
-      setIsProcessing(false)
-    }
-  }, [getFinalAmount, onPayment, onClose])
+    // Pi SDK 결제 / blockchain 호출 금지 — 추후 지원 예정
+    setShowComingSoon(true)
+  }, [getFinalAmount])
 
   if (!isOpen) return null
 
@@ -158,15 +148,28 @@ export function PiPaymentModal({ isOpen, onClose, onPayment, title }: PiPaymentM
         {/* 결제 버튼 */}
         <Button
           onClick={handlePayment}
-          disabled={!finalAmount || isProcessing}
+          disabled={!finalAmount}
           className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl transition-all"
         >
-          {(() => {
-            if (isProcessing) return t('support.piModalProcessing')
-            if (finalAmount) return t('support.piModalPayCta').replace('{amount}', String(finalAmount))
-            return t('support.piModalPayCtaGeneric')
-          })()}
+          {finalAmount
+            ? t('support.piModalPayCta').replace('{amount}', String(finalAmount))
+            : t('support.piModalPayCtaGeneric')}
         </Button>
+
+        {/* 추후 지원 예정 안내 — 결제 버튼 클릭 후 표시 */}
+        {showComingSoon && (
+          <div className="mt-3 p-4 bg-amber-50 rounded-xl border border-amber-300 flex items-start gap-3">
+            <span className="text-amber-500 text-lg leading-none mt-0.5">ℹ</span>
+            <div>
+              <p className="text-sm font-semibold text-amber-800 mb-1">
+                {t('support.piModalComingSoonTitle')}
+              </p>
+              <p className="text-xs text-amber-700 leading-relaxed">
+                {t('support.piModalComingSoonBody')}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* 안내 문구 */}
         <div className="mt-4 p-3 bg-blue-50 rounded-xl border border-blue-200">

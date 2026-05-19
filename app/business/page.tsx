@@ -1,11 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Building2, Mail, Phone, User, MessageSquare, Send, CheckCircle, UserCircle2 } from "lucide-react"
 import Link from "next/link"
+import { useLanguage } from "@/lib/language-context"
 
 export default function BusinessPage() {
+  const { t } = useLanguage()
   const [formData, setFormData] = useState({
     companyName: '',
     contactName: '',
@@ -17,14 +19,17 @@ export default function BusinessPage() {
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  const businessTypes = [
-    '광고/마케팅',
-    '앱 개발/기술 협력',
-    '콘텐츠 제휴',
-    '투자 문의',
-    'Pi Network 관련',
-    '기타',
-  ]
+  const businessTypes = useMemo(
+    () => [
+      { value: 'ad', label: t('business.type.ad') },
+      { value: 'dev', label: t('business.type.dev') },
+      { value: 'content', label: t('business.type.content') },
+      { value: 'invest', label: t('business.type.invest') },
+      { value: 'pi', label: t('business.type.pi') },
+      { value: 'other', label: t('business.type.other') },
+    ],
+    [t]
+  )
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -38,10 +43,10 @@ export default function BusinessPage() {
       if (response.ok) {
         setIsSubmitted(true)
       } else {
-        alert('문의 접수 중 오류가 발생했습니다. 다시 시도해주세요.')
+        alert(t('business.errorSubmit'))
       }
     } catch {
-      alert('네트워크 오류가 발생했습니다. 다시 시도해주세요.')
+      alert(t('business.errorNetwork'))
     } finally {
       setIsLoading(false)
     }
@@ -54,14 +59,11 @@ export default function BusinessPage() {
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="h-8 w-8 text-green-600" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">문의가 접수되었습니다</h2>
-          <p className="text-gray-600 mb-6">
-            빠른 시일 내에 담당자가 연락드리겠습니다.
-            <br />감사합니다.
-          </p>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">{t('business.submittedTitle')}</h2>
+          <p className="text-gray-600 mb-6 whitespace-pre-line">{t('business.submittedDesc')}</p>
           <Link href="/">
             <Button className="bg-purple-600 hover:bg-purple-700 text-white">
-              홈으로 돌아가기
+              {t('business.home')}
             </Button>
           </Link>
         </div>
@@ -76,62 +78,59 @@ export default function BusinessPage() {
           <Link href="/" className="text-white hover:text-purple-200 transition">
             <ArrowLeft className="h-6 w-6" />
           </Link>
-          <h1 className="text-xl font-bold text-white">사업 협력 문의</h1>
+          <h1 className="text-xl font-bold text-white">{t('business.title')}</h1>
         </div>
       </header>
 
       <main className="max-w-lg mx-auto px-4 py-6">
         <div className="bg-gradient-to-r from-amber-500 to-orange-600 rounded-2xl p-6 mb-6 text-white shadow-lg">
-          <h2 className="text-xl font-bold mb-2">함께 성장할 파트너를 찾습니다</h2>
-          <p className="text-amber-100 text-sm leading-relaxed">
-            Fortune &amp; Tarot 앱과 함께 새로운 비즈니스 기회를 만들어가실 파트너사를 환영합니다.
-            광고, 콘텐츠 제휴, 기술 협력 등 다양한 형태의 협업이 가능합니다.
-          </p>
+          <h2 className="text-xl font-bold mb-2">{t('business.heroTitle')}</h2>
+          <p className="text-amber-100 text-sm leading-relaxed">{t('business.heroDesc')}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-6 shadow-lg space-y-5">
-          <h3 className="text-lg font-bold text-gray-800 border-b pb-3">협력 문의서</h3>
+          <h3 className="text-lg font-bold text-gray-800 border-b pb-3">{t('business.formTitle')}</h3>
 
           <div>
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
               <Building2 className="h-4 w-4" />
-              사업체명 / 회사명
+              {t('business.companyName')}
             </label>
             <input
               type="text"
               required
               value={formData.companyName}
-              onChange={(e) => setFormData({...formData, companyName: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
-              placeholder="회사명을 입력해주세요"
+              placeholder={t('business.placeholder.company')}
             />
           </div>
 
           <div>
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
               <User className="h-4 w-4" />
-              담당자명
+              {t('business.contactName')}
             </label>
             <input
               type="text"
               required
               value={formData.contactName}
-              onChange={(e) => setFormData({...formData, contactName: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
-              placeholder="담당자 성함"
+              placeholder={t('business.placeholder.contact')}
             />
           </div>
 
           <div>
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
               <Mail className="h-4 w-4" />
-              이메일
+              {t('business.email')}
             </label>
             <input
               type="email"
               required
               value={formData.email}
-              onChange={(e) => setFormData({...formData, email: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
               placeholder="example@company.com"
             />
@@ -140,13 +139,13 @@ export default function BusinessPage() {
           <div>
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
               <Phone className="h-4 w-4" />
-              연락처
+              {t('business.phone')}
             </label>
             <input
               type="tel"
               required
               value={formData.phone}
-              onChange={(e) => setFormData({...formData, phone: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
               placeholder="010-0000-0000"
             />
@@ -155,17 +154,19 @@ export default function BusinessPage() {
           <div>
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
               <UserCircle2 className="h-4 w-4" />
-              협력 유형
+              {t('business.type')}
             </label>
             <select
               required
               value={formData.businessType}
-              onChange={(e) => setFormData({...formData, businessType: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, businessType: e.target.value })}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition bg-white"
             >
-              <option value="">협력 유형을 선택해주세요</option>
+              <option value="">{t('business.selectType')}</option>
               {businessTypes.map((type) => (
-                <option key={type} value={type}>{type}</option>
+                <option key={type.value} value={type.label}>
+                  {type.label}
+                </option>
               ))}
             </select>
           </div>
@@ -173,15 +174,15 @@ export default function BusinessPage() {
           <div>
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
               <MessageSquare className="h-4 w-4" />
-              문의 내용
+              {t('business.message')}
             </label>
             <textarea
               required
               value={formData.message}
-              onChange={(e) => setFormData({...formData, message: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, message: e.target.value })}
               rows={5}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition resize-none"
-              placeholder="협력하고 싶은 내용을 자세히 적어주세요"
+              placeholder={t('business.placeholder.message')}
             />
           </div>
 
@@ -193,19 +194,17 @@ export default function BusinessPage() {
             {isLoading ? (
               <span className="flex items-center gap-2">
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                제출 중...
+                {t('business.submitting')}
               </span>
             ) : (
               <span className="flex items-center gap-2">
                 <Send className="h-5 w-5" />
-                문의 제출하기
+                {t('business.submit')}
               </span>
             )}
           </Button>
 
-          <p className="text-xs text-gray-500 text-center">
-            제출하신 정보는 협력 검토 목적으로만 사용됩니다.
-          </p>
+          <p className="text-xs text-gray-500 text-center">{t('business.privacyNote')}</p>
         </form>
       </main>
     </div>

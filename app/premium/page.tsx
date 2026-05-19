@@ -5,6 +5,7 @@ import { ArrowLeft, Star, Crown, Zap, Check, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { useLanguage } from "@/lib/language-context"
+import { PiPaymentModal } from "@/components/pi-payment-modal"
 
 type PlanId = "monthly" | "quarterly" | "yearly"
 
@@ -57,7 +58,7 @@ const PLAN_LAYOUT: PlanDef[] = [
 export default function PremiumPage() {
   const { t } = useLanguage()
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
-  const [showConfirm, setShowConfirm] = useState(false)
+  const [showPiModal, setShowPiModal] = useState(false)
 
   const plans = useMemo(() => {
     return PLAN_LAYOUT.map((p) => {
@@ -79,7 +80,7 @@ export default function PremiumPage() {
 
   const handleSelectPlan = (planId: string) => {
     setSelectedPlan(planId)
-    setShowConfirm(true)
+    setShowPiModal(true)
   }
 
   const selectedPlanData = plans.find((p) => p.id === selectedPlan)
@@ -185,38 +186,16 @@ export default function PremiumPage() {
         </div>
       </div>
 
-      {/* 결제 확인 모달 */}
-      {showConfirm && selectedPlanData && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full">
-            <h3 className="text-xl font-bold text-center text-gray-800 mb-4">{t("premium.modalPayTitle")}</h3>
-            <div className="bg-gray-50 rounded-xl p-4 mb-4">
-              <div className="flex justify-between mb-2">
-                <span className="text-gray-600">{t("premium.labelPlan")}</span>
-                <span className="font-bold text-gray-800">{selectedPlanData.name}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">{t("premium.labelAmount")}</span>
-                <span className="font-bold text-purple-600 text-lg">{selectedPlanData.price}</span>
-              </div>
-            </div>
-            <p className="text-gray-500 text-sm text-center mb-5 whitespace-pre-line">{t("premium.modalPayBody")}</p>
-            <div className="flex gap-3">
-              <Button variant="outline" className="flex-1" onClick={() => setShowConfirm(false)}>
-                {t("premium.cancel")}
-              </Button>
-              <Button
-                className={`flex-1 bg-gradient-to-r ${selectedPlanData.color} text-white border-0`}
-                onClick={() => {
-                  alert(t("premium.alertComingSoon"))
-                  setShowConfirm(false)
-                }}
-              >
-                {t("premium.payNow")}
-              </Button>
-            </div>
-          </div>
-        </div>
+      {/* Pi 결제 모달 — 후원 페이지와 동일한 UI 재사용, 실제 결제 비활성화 */}
+      {showPiModal && selectedPlanData && (
+        <PiPaymentModal
+          isOpen={showPiModal}
+          onClose={() => setShowPiModal(false)}
+          onPayment={() => {
+            // 실제 결제 실행 금지 — pi-payment-modal 내부에서 "추후 지원 예정" 안내 표시
+          }}
+          defaultAmount={selectedPlanData.priceNum}
+        />
       )}
     </div>
   )

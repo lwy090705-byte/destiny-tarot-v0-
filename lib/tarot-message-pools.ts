@@ -1,16 +1,18 @@
 import type { Language } from './i18n'
 import type { FortuneContentLanguage } from './fortune-generator'
-import { getFortuneContentLanguage } from './fortune-generator'
+import { pickFortunePool } from './fortune-generator'
+import { attachEsIdToRecord } from './fortune-lang-extend'
+import { tarotPoolsEsId } from './fortune-pools-es-id'
 
-export type TarotMessagePools = Record<FortuneContentLanguage, string[]>
+export type TarotMessagePools = Partial<Record<FortuneContentLanguage, string[]>>
 
 export function pickTarotParagraph(pools: TarotMessagePools, language: Language, index: number): string {
-  const L = getFortuneContentLanguage(language)
-  const chosen = pools[L]?.length ? pools[L] : pools.en?.length ? pools.en : pools.ko
+  const chosen = pickFortunePool(pools, language, 'tarot')
+  if (!chosen.length) return ''
   return chosen[index % chosen.length] ?? ''
 }
 
-const totalPools: TarotMessagePools = {
+export const totalPools: TarotMessagePools = {
   ko: [
     '지금은 당신의 직관이 그 어느 때보다 예민한 시기입니다. 다가오는 중요한 결정에서 머리보다 마음의 소리에 귀 기울이세요. 당신 안에 이미 답이 있습니다. 외부의 조언도 좋지만, 최종 결정은 당신의 내면에서 나와야 합니다.',
     '새로운 기회의 문이 활짝 열리고 있습니다. 지금까지의 노력이 결실을 맺을 때가 다가오고 있으니, 두려워하지 말고 그 문을 향해 한 발짝 내딛으세요. 변화는 때로 두렵지만, 그 안에 당신이 원하던 것이 숨어 있습니다.',
@@ -53,7 +55,7 @@ const totalPools: TarotMessagePools = {
   ],
 }
 
-const wealthPools: TarotMessagePools = {
+export const wealthPools: TarotMessagePools = {
   ko: [
     '재정적으로 중요한 분기점에 서 있습니다. 지출을 관리하면서도 가치 있는 투자에는 과감해지세요. 너무 보수적이면 기회를 놓치고, 너무 공격적이면 위험에 노출됩니다. 균형 잡힌 재정 전략이 필요한 때입니다.',
     '예상치 못한 곳에서 재정적 기회가 찾아올 수 있습니다. 평소 관심 있던 분야나 인맥을 통해 좋은 소식이 올 수 있으니, 열린 마음으로 새로운 제안을 검토해보세요. 단, 충분한 검토 없이 서두르지 마세요.',
@@ -96,7 +98,7 @@ const wealthPools: TarotMessagePools = {
   ],
 }
 
-const luckPools: TarotMessagePools = {
+export const luckPools: TarotMessagePools = {
   ko: [
     '당신의 긍정적인 에너지가 행운을 끌어당기고 있습니다. 좋은 일이 생기면 주변과 나누세요. 나눔은 행운을 더욱 증폭시킵니다. 작은 친절이 예상치 못한 큰 행운으로 돌아올 수 있습니다.',
     '우연한 만남이나 대화가 인생의 전환점이 될 수 있습니다. 새로운 사람들에게 마음을 열고, 평소 가지 않던 장소도 방문해 보세요. 운명적인 인연이 당신을 기다리고 있을 수 있습니다.',
@@ -139,7 +141,7 @@ const luckPools: TarotMessagePools = {
   ],
 }
 
-const cautionPools: TarotMessagePools = {
+export const cautionPools: TarotMessagePools = {
   ko: [
     '충동적인 결정은 나중에 후회를 불러옵니다. 중요한 선택을 앞두고 있다면 최소 24시간의 생각 시간을 가지세요. 급하게 결정해야 한다고 압박받더라도, 당신의 페이스를 유지하는 것이 중요합니다.',
     '건강에 더욱 신경 쓸 시기입니다. 무리한 스케줄이나 과도한 업무로 몸에 무리가 가지 않도록 하세요. 작은 증상도 무시하지 말고, 정기 검진을 받아보는 것이 좋습니다. 건강이 가장 큰 재산입니다.',
@@ -182,7 +184,7 @@ const cautionPools: TarotMessagePools = {
   ],
 }
 
-const lovePools: TarotMessagePools = {
+export const lovePools: TarotMessagePools = {
   ko: [
     '감정 표현이 조심스러워 보입니다. 당신의 진심이 상대방에게 닿지 않을까봐 두렵지 마세요. 용기 내어 마음을 전해보세요. 진정한 감정은 반드시 누군가의 마음에 닿게 됩니다.',
     '연애에서는 지나친 기대와 집착이 독이 될 수 있습니다. 상대방을 그대로 받아들이고, 서로 성장할 수 있는 관계를 만들어가세요. 완벽한 사람보다는 함께 성장하는 사람이 더 소중합니다.',
@@ -225,7 +227,7 @@ const lovePools: TarotMessagePools = {
   ],
 }
 
-const careerPools: TarotMessagePools = {
+export const careerPools: TarotMessagePools = {
   ko: [
     '새로운 프로젝트나 기회가 당신의 앞에 나타나고 있습니다. 두려워하지 말고 도전해보세요. 당신의 능력은 생각보다 훨씬 크며, 이 기회는 당신을 위해 준비된 것입니다.',
     '현재의 직업이나 업무에서 일시적인 정체기를 느낄 수 있습니다. 하지만 이 시간도 당신을 성장시키고 있습니다. 기초를 다지면서 다음 단계를 준비하세요.',
@@ -268,7 +270,7 @@ const careerPools: TarotMessagePools = {
   ],
 }
 
-const healthPools: TarotMessagePools = {
+export const healthPools: TarotMessagePools = {
   ko: [
     '신체 건강도 중요하지만, 정신 건강이 더욱 중요한 시기입니다. 명상, 요가, 또는 심리 상담 등을 통해 마음을 돌봐보세요. 건강한 마음이 건강한 몸을 만듭니다.',
     '생활 습관을 되돌아볼 시기입니다. 충분한 수면, 규칙적인 운동, 균형 잡힌 식단이 당신의 건강을 지탱합니다. 작은 습관의 변화가 큰 건강 변화를 만듭니다.',
@@ -329,3 +331,16 @@ export function getTarotParagraphPools(category: string): TarotMessagePools {
       return totalPools
   }
 }
+
+attachEsIdToRecord(
+  {
+    total: totalPools,
+    wealth: wealthPools,
+    luck: luckPools,
+    caution: cautionPools,
+    love: lovePools,
+    career: careerPools,
+    health: healthPools,
+  },
+  tarotPoolsEsId
+)
