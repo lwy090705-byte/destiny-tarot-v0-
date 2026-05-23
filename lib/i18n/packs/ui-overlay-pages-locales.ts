@@ -47,6 +47,8 @@ const pagesBaseEs: Record<string, string> = {
   'share.completed': '¡Hecho!',
   'share.progressRatio': '{current} / {required} personas',
   'share.socialTweet': '¡Prueba esta app gratis de fortuna y tarot!',
+  'share.kakaoLinkCopied':
+    'Enlace de referido copiado. Pégalo en KakaoTalk para compartir.',
   'share.socialRecommend': '¡Te recomiendo esta app de fortuna y tarot! ',
   'share.myInvitesCount': 'Mis invitaciones: {count}',
   'premium.titlePage': 'Suscripción Premium',
@@ -136,6 +138,8 @@ const pagesBaseDe: Record<string, string> = {
   'share.completed': 'Erledigt!',
   'share.progressRatio': '{current} / {required} Personen',
   'share.socialTweet': 'Probieren Sie diese kostenlose Glücks- & Tarot-App!',
+  'share.kakaoLinkCopied':
+    'Empfehlungslink kopiert. In KakaoTalk einfügen, um zu teilen.',
   'share.socialRecommend': 'Ich empfehle diese Glücks- & Tarot-App! ',
   'share.myInvitesCount': 'Meine Einladungen: {count}',
   'premium.titlePage': 'Premium-Abo',
@@ -225,6 +229,8 @@ const pagesBasePt: Record<string, string> = {
   'share.completed': 'Concluído!',
   'share.progressRatio': '{current} / {required} pessoas',
   'share.socialTweet': 'Experimente este app grátis de sorte e tarô!',
+  'share.kakaoLinkCopied':
+    'Link de indicação copiado. Cole no KakaoTalk para compartilhar.',
   'share.socialRecommend': 'Recomendo este app de sorte e tarô! ',
   'share.myInvitesCount': 'Meus convites: {count}',
   'premium.titlePage': 'Assinatura Premium',
@@ -314,6 +320,8 @@ const pagesBaseHi: Record<string, string> = {
   'share.completed': 'पूर्ण!',
   'share.progressRatio': '{current} / {required} लोग',
   'share.socialTweet': 'यह मुफ़्त भाग्य और टैरो ऐप आज़माएँ!',
+  'share.kakaoLinkCopied':
+    'रेफरल लिंक कॉपी हो गया। KakaoTalk में चिपकाकर साझा करें।',
   'share.socialRecommend': 'मैं इस भाग्य और टैरो ऐप की सिफारिश करता/करती हूँ! ',
   'share.myInvitesCount': 'मेरे निमंत्रण: {count}',
   'premium.titlePage': 'प्रीमियम सदस्यता',

@@ -30,6 +30,7 @@ function ShareInviteViewInner({ pathReferralSegment }: ShareInviteViewProps) {
 
   const [copied, setCopied] = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)
+  const [kakaoCopied, setKakaoCopied] = useState(false)
 
   const [inputCode, setInputCode] = useState("")
   const [codeResult, setCodeResult] = useState<
@@ -81,37 +82,48 @@ function ShareInviteViewInner({ pathReferralSegment }: ShareInviteViewProps) {
     }
   }, [isHydrated, user?.referredBy, user?.referralCode, urlDerivedCode])
 
-  const handleKakaoShare = () => {
-    const url = buildInviteShareUrl(isHydrated ? referralCode : "------")
-    const kakao = (window as any).Kakao
-    if (typeof kakao === "undefined") {
-      window.open(`https://story.kakao.com/share?url=${encodeURIComponent(url)}`, "_blank")
-      return
+  const copyTextToClipboard = async (text: string): Promise<boolean> => {
+    try {
+      await navigator.clipboard.writeText(text)
+      return true
+    } catch {
+      try {
+        const textArea = document.createElement("textarea")
+        textArea.value = text
+        textArea.style.position = "fixed"
+        textArea.style.left = "-9999px"
+        document.body.appendChild(textArea)
+        textArea.focus()
+        textArea.select()
+        const ok = document.execCommand("copy")
+        document.body.removeChild(textArea)
+        return ok
+      } catch {
+        return false
+      }
     }
-    if (!kakao.isInitialized()) {
-      kakao.init(process.env.NEXT_PUBLIC_KAKAO_JS_KEY ?? "")
+  }
+
+  const tryOpenKakaoTalkApp = () => {
+    if (typeof window === "undefined") return
+    const isMobile = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    )
+    if (!isMobile) return
+
+    try {
+      window.location.href = "kakaotalk://"
+    } catch {
+      /* custom scheme may fail on some browsers — link is already copied */
     }
-    kakao.Share.sendDefault({
-      objectType: "feed",
-      content: {
-        title: t("share.appName"),
-        description: t("share.socialTweet"),
-        imageUrl: "https://fortune-tarot.vercel.app/icons/header-logo.jpg",
-        link: {
-          mobileWebUrl: url,
-          webUrl: url,
-        },
-      },
-      buttons: [
-        {
-          title: t("share.kakaoButton"),
-          link: {
-            mobileWebUrl: url,
-            webUrl: url,
-          },
-        },
-      ],
-    })
+  }
+
+  const handleKakaoShare = async () => {
+    const url = shareUrl || buildInviteShareUrl(referralCode)
+    await copyTextToClipboard(url)
+    setKakaoCopied(true)
+    setTimeout(() => setKakaoCopied(false), 4000)
+    tryOpenKakaoTalkApp()
   }
 
   const socialPlatforms = useMemo(() => {
@@ -324,7 +336,7 @@ function ShareInviteViewInner({ pathReferralSegment }: ShareInviteViewProps) {
                 type="button"
                 onClick={() => {
                   if (platform.id === "kakao") {
-                    handleKakaoShare()
+                    void handleKakaoShare()
                   } else {
                     window.open(platform.shareUrl, "_blank", "width=600,height=400")
                   }
@@ -336,6 +348,11 @@ function ShareInviteViewInner({ pathReferralSegment }: ShareInviteViewProps) {
               </button>
             ))}
           </div>
+          {kakaoCopied && (
+            <p className="mt-3 text-sm text-center text-green-600 font-medium break-words">
+              {t("share.kakaoLinkCopied")}
+            </p>
+          )}
         </div>
 
         <div className="bg-white rounded-2xl p-6 shadow-lg space-y-3">

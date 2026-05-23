@@ -46,6 +46,8 @@ export const uiOverlayViExtra: Record<string, string> = {
   'share.completed': 'Hoàn thành!',
   'share.progressRatio': '{current} / {required} người',
   'share.socialTweet': 'Thử ứng dụng vận mệnh & tarot miễn phí này!',
+  'share.kakaoLinkCopied':
+    'Đã sao chép liên kết giới thiệu. Dán vào KakaoTalk để chia sẻ.',
   'share.socialRecommend': 'Tôi giới thiệu ứng dụng vận mệnh & tarot này! ',
   'share.myInvitesCount': 'Lời mời của tôi: {count}',
   'premium.titlePage': 'Đăng ký Premium',

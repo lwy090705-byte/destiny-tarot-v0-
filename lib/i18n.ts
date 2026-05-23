@@ -583,6 +583,8 @@ export const koTranslations: Record<string, string> = {
     'share.completed': '완료!',
     'share.progressRatio': '{current}명 / {required}명',
     'share.socialTweet': '운세와 타로를 무료로 확인해보세요!',
+    'share.kakaoLinkCopied':
+      '추천 링크가 복사되었습니다. 카카오톡에 붙여넣어 공유해주세요.',
     'share.socialRecommend': '운세와 타로 앱을 추천합니다! ',
     'share.myInvitesCount': '내 추천: {count}명',
     'premium.titlePage': '프리미엄 구독',

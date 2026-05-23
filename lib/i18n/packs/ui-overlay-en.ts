@@ -56,6 +56,8 @@ export const uiOverlayEn: Record<string, string> = {
   'share.completed': 'Done!',
   'share.progressRatio': '{current} / {required} people',
   'share.socialTweet': 'Try this free fortune & tarot app!',
+  'share.kakaoLinkCopied':
+    'Referral link copied. Paste it in KakaoTalk to share.',
   'share.socialRecommend': 'I recommend this fortune & tarot app! ',
   'share.myInvitesCount': 'My invites: {count}',
   'share.platform.kakao': 'KakaoTalk',

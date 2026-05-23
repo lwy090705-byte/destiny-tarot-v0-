@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from 'next'
-import Script from 'next/script'
 import { Noto_Sans_KR } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { OnboardingGate } from '@/components/onboarding-gate'
@@ -57,11 +56,6 @@ export default function RootLayout({
   return (
     <html lang="ko" suppressHydrationWarning className="bg-[#1e0a3c]">
       <body className={`${notoSansKR.variable} font-sans antialiased`} suppressHydrationWarning>
-        {/* Kakao SDK — strategy="lazyOnload" 으로 페이지 로드 블로킹 없이 로드 */}
-        <Script
-          src="https://developers.kakao.com/sdk/js/kakao.min.js"
-          strategy="lazyOnload"
-        />
         <LanguageProvider>
           <UserProvider>
             <VisitLogTracker />

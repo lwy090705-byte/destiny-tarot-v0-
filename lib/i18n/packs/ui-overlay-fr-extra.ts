@@ -55,6 +55,8 @@ export const uiOverlayFrExtra: Record<string, string> = {
   'share.completed': 'Terminé !',
   'share.progressRatio': '{current} / {required} personnes',
   'share.socialTweet': 'Essayez cette app gratuite de fortune et tarot !',
+  'share.kakaoLinkCopied':
+    'Lien de parrainage copié. Collez-le dans KakaoTalk pour partager.',
   'share.socialRecommend': 'Je recommande cette app de fortune et tarot ! ',
   'share.myInvitesCount': 'Mes invitations : {count}',
   'premium.titlePage': 'Abonnement premium',

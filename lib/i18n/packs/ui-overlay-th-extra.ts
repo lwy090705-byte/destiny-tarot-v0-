@@ -37,6 +37,8 @@ export const uiOverlayThExtra: Record<string, string> = {
   'share.completed': 'เสร็จแล้ว!',
   'share.progressRatio': '{current} / {required} คน',
   'share.socialTweet': 'ลองแอปดูดวงและทาโรต์ฟรีนี้!',
+  'share.kakaoLinkCopied':
+    'คัดลอกลิงก์แนะนำแล้ว วางใน KakaoTalk เพื่อแชร์',
   'share.socialRecommend': 'แนะนำแอปดูดวงและทาโรต์นี้! ',
   'share.myInvitesCount': 'การเชิญของฉัน: {count} คน',
   'support.helperLines':

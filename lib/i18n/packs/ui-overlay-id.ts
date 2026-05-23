@@ -53,6 +53,8 @@ export const uiOverlayId: Record<string, string> = {
   'share.completed': 'Selesai!',
   'share.progressRatio': '{current} / {required} orang',
   'share.socialTweet': 'Coba aplikasi ramalan & tarot gratis ini!',
+  'share.kakaoLinkCopied':
+    'Tautan referral disalin. Tempel di KakaoTalk untuk berbagi.',
   'share.socialRecommend': 'Saya merekomendasikan aplikasi ramalan & tarot ini! ',
   'share.myInvitesCount': 'Undangan saya: {count}',
   'premium.titlePage': 'Langganan premium',
