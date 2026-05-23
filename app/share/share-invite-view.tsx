@@ -104,26 +104,28 @@ function ShareInviteViewInner({ pathReferralSegment }: ShareInviteViewProps) {
     }
   }
 
-  const tryOpenKakaoTalkApp = () => {
-    if (typeof window === "undefined") return
-    const isMobile = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent
-    )
-    if (!isMobile) return
-
-    try {
-      window.location.href = "kakaotalk://"
-    } catch {
-      /* custom scheme may fail on some browsers — link is already copied */
-    }
-  }
-
   const handleKakaoShare = async () => {
-    const url = shareUrl || buildInviteShareUrl(referralCode)
-    await copyTextToClipboard(url)
+    const inviteUrl = shareUrl || buildInviteShareUrl(referralCode)
+    const sharePayload = {
+      title: t("share.webShareTitle"),
+      text: t("share.webShareText"),
+      url: inviteUrl,
+    }
+
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+      try {
+        await navigator.share(sharePayload)
+        return
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") {
+          return
+        }
+      }
+    }
+
+    await copyTextToClipboard(inviteUrl)
     setKakaoCopied(true)
     setTimeout(() => setKakaoCopied(false), 4000)
-    tryOpenKakaoTalkApp()
   }
 
   const socialPlatforms = useMemo(() => {

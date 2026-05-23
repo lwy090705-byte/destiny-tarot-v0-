@@ -585,6 +585,8 @@ export const koTranslations: Record<string, string> = {
     'share.socialTweet': '운세와 타로를 무료로 확인해보세요!',
     'share.kakaoLinkCopied':
       '추천 링크가 복사되었습니다. 카카오톡에 붙여넣어 공유해주세요.',
+    'share.webShareTitle': '운명과 타로 - Destiny & Tarot',
+    'share.webShareText': '운명과 타로 앱을 확인해보세요.',
     'share.socialRecommend': '운세와 타로 앱을 추천합니다! ',
     'share.myInvitesCount': '내 추천: {count}명',
     'premium.titlePage': '프리미엄 구독',

@@ -51,6 +51,8 @@ export const uiOverlayZh: Record<string, string> = {
   'share.progressRatio': '{current} / {required} 人',
   'share.socialTweet': '免费体验运势与塔罗！',
   'share.kakaoLinkCopied': '推荐链接已复制。请粘贴到 KakaoTalk 分享。',
+  'share.webShareTitle': '命运与塔罗 - Destiny & Tarot',
+  'share.webShareText': '快来体验命运与塔罗应用。',
   'share.socialRecommend': '推荐这款运势与塔罗应用！',
   'share.myInvitesCount': '我的邀请：{count} 人',
   'share.platform.kakao': 'KakaoTalk',

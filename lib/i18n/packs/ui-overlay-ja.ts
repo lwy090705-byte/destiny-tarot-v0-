@@ -54,6 +54,8 @@ export const uiOverlayJa: Record<string, string> = {
   'share.socialTweet': '無料で運勢とタロットを試そう！',
   'share.kakaoLinkCopied':
     '紹介リンクをコピーしました。カカオトークに貼り付けて共有してください。',
+  'share.webShareTitle': '運命とタロット - Destiny & Tarot',
+  'share.webShareText': '運命とタロットアプリをチェックしてみてください。',
   'share.socialRecommend': 'この運勢＆タロットアプリをおすすめします！ ',
   'share.myInvitesCount': '自分の紹介: {count}人',
   'share.platform.kakao': 'カカオトーク',

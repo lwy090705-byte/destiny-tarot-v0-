@@ -58,6 +58,8 @@ export const uiOverlayEn: Record<string, string> = {
   'share.socialTweet': 'Try this free fortune & tarot app!',
   'share.kakaoLinkCopied':
     'Referral link copied. Paste it in KakaoTalk to share.',
+  'share.webShareTitle': 'Destiny & Tarot - Fortune & Tarot',
+  'share.webShareText': 'Check out the Destiny & Tarot app.',
   'share.socialRecommend': 'I recommend this fortune & tarot app! ',
   'share.myInvitesCount': 'My invites: {count}',
   'share.platform.kakao': 'KakaoTalk',
