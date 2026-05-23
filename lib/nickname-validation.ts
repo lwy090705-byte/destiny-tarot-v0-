@@ -39,6 +39,7 @@ function escapeIlikeExact(value: string): string {
 /**
  * Case-insensitive duplicate check via profiles.nickname (ilike).
  * `excludeNickname`: allow re-saving the same user's current nickname.
+ * Returns false when Supabase is unreachable or RLS denies read — creation must not be blocked.
  */
 export async function isNicknameTakenInProfiles(
   nickname: string,
@@ -58,13 +59,13 @@ export async function isNicknameTakenInProfiles(
 
     if (error) {
       console.error('[nickname] duplicate check failed', error)
-      return true
+      return false
     }
 
     const rows = (data ?? []) as { nickname?: string }[]
     const conflicting = rows.filter((row) => {
       const rowNorm = String(row.nickname ?? '').trim().toLowerCase()
-      if (rowNorm !== targetNorm) return false
+      if (!rowNorm || rowNorm !== targetNorm) return false
       if (excludeNorm && rowNorm === excludeNorm) return false
       return true
     })
@@ -72,7 +73,7 @@ export async function isNicknameTakenInProfiles(
     return conflicting.length > 0
   } catch (err) {
     console.error('[nickname] duplicate check error', err)
-    return true
+    return false
   }
 }
 

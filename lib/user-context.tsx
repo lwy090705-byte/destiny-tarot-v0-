@@ -167,7 +167,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (isMasterNickname(trimmed)) {
-      void ensureMasterProfileFields(trimmed)
+      await ensureMasterProfileFields(trimmed)
     }
 
     return null
