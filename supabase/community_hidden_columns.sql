@@ -1,0 +1,9 @@
+-- Run in Supabase SQL editor if columns are missing:
+--
+-- alter table community_posts add column if not exists is_hidden boolean default false;
+-- alter table community_posts add column if not exists hidden_by text;
+-- alter table community_posts add column if not exists hidden_at timestamptz;
+--
+-- alter table community_comments add column if not exists is_hidden boolean default false;
+-- alter table community_comments add column if not exists hidden_by text;
+-- alter table community_comments add column if not exists hidden_at timestamptz;

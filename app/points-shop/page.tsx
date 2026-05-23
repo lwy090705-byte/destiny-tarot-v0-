@@ -76,7 +76,10 @@ export default function PointsShopPage() {
   const handlePaymentConfirm = () => {
     if (selectedPackageData) {
       // 실제 결제 처리 후 포인트 추가
-      addPoints(selectedPackageData.points + selectedPackageData.bonus)
+      addPoints(selectedPackageData.points + selectedPackageData.bonus, {
+        point_type: "purchase",
+        description: `Points package purchase (+${selectedPackageData.points + selectedPackageData.bonus}P)`,
+      })
       
       // 구매 기록 추가
       const newPurchase: Purchase = {
@@ -115,7 +118,10 @@ export default function PointsShopPage() {
       
       setTimeout(() => {
         setIsWatchingAd(false)
-        addPoints(selectedAdData.reward)
+        addPoints(selectedAdData.reward, {
+          point_type: "ad_shop",
+          description: `Points shop ad reward (+${selectedAdData.reward}P)`,
+        })
         
         // 구매 기록 추가
         const newPurchase: Purchase = {

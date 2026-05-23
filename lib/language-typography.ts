@@ -1,14 +1,34 @@
 import type { Language } from "./i18n"
 
-const koTypography = {
+type TypographyStyle = {
+  fontSize: string
+  lineHeight: string
+  letterSpacing: string
+  wordBreak: string
+  fontFamily: string
+  direction: "ltr" | "rtl"
+}
+
+const koTypography: TypographyStyle = {
   fontSize: "clamp(13px, 0.95vw, 16px)",
   lineHeight: "1.4",
   letterSpacing: "-0.3px",
   wordBreak: "keep-all",
   fontFamily: "'Noto Sans KR', 'Noto Sans', sans-serif",
-} as const
+  direction: "ltr",
+}
 
-export const languageTypography: Record<Language, typeof koTypography> = {
+/** Arabic font/word-break; layout stays LTR — use dir="rtl" on text nodes only. */
+const arTypography: TypographyStyle = {
+  fontSize: "clamp(13px, 0.95vw, 16px)",
+  lineHeight: "1.5",
+  letterSpacing: "0",
+  wordBreak: "break-word",
+  fontFamily: "'Noto Sans Arabic', 'Noto Sans', sans-serif",
+  direction: "ltr",
+}
+
+export const languageTypography: Record<Language, TypographyStyle> = {
   ko: koTypography,
   en: koTypography,
   ja: koTypography,
@@ -18,9 +38,20 @@ export const languageTypography: Record<Language, typeof koTypography> = {
   fr: koTypography,
   de: koTypography,
   pt: koTypography,
+  ru: koTypography,
+  ar: arTypography,
   hi: koTypography,
   vi: koTypography,
   th: koTypography,
+}
+
+export function isRtlLanguage(language: Language): boolean {
+  return language === 'ar'
+}
+
+/** Apply on labels, paragraphs, buttons — not on modal/card shells. */
+export function getLocalizedTextDir(language: Language): 'rtl' | 'ltr' {
+  return isRtlLanguage(language) ? 'rtl' : 'ltr'
 }
 
 export function getLanguageTypographyClass(language: Language): string {
@@ -40,7 +71,13 @@ export function injectLanguageTypographyStyles(language: Language): void {
   // Create and inject new style
   const style = document.createElement("style")
   style.id = "language-typography-style"
+  const dir = typo.direction ?? 'ltr'
   style.textContent = `
+    .${className} [dir="rtl"] {
+      direction: rtl;
+      unicode-bidi: isolate;
+    }
+
     .${className} {
       font-size: ${typo.fontSize};
       line-height: ${typo.lineHeight};
@@ -49,6 +86,7 @@ export function injectLanguageTypographyStyles(language: Language): void {
       font-family: ${typo.fontFamily};
       overflow-wrap: break-word;
       white-space: normal;
+      direction: ${dir};
     }
     
     .${className} button {

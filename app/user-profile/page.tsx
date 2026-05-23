@@ -1,19 +1,44 @@
 ﻿"use client"
 // Build: 20260403-v11-force-reload
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Star, Coins, Trophy, Target, Flame, Award, Crown, Sparkles, ChevronRight, Gift, Play, X, Check, CalendarCheck, FileText, Zap } from "lucide-react"
 import Link from "next/link"
 import { useLanguage } from "@/lib/language-context"
 import { usePoints } from "@/lib/points-context"
 import { useUser } from "@/lib/user-context"
+import { useMasterAccess } from "@/lib/use-master-access"
+import { MasterPointGrantPanel } from "@/components/master-point-grant-panel"
+import {
+  getMasterPointsDisplay,
+  getMasterPointsLabel,
+  isMasterNickname,
+  MASTER_LEVEL_TITLE,
+} from "@/lib/master-role"
+import { fetchVisitStats, type VisitStats } from "@/lib/supabase-visit-logs"
+import { LevelSystemCards } from "@/components/level-system-cards"
+import { ProfileLevelAvatar, ProfileLevelDisplay } from "@/components/profile-level-display"
+import type { AuthorProfileFields } from "@/lib/community-author-display"
+import { resolveProfileEmblemVariant } from "@/lib/profile-level-emblem"
+import { OPERATOR_LEVEL } from "@/lib/level-system"
+import { fetchProfileMasterFields } from "@/lib/supabase-profile-master"
 import {
   canWatchAdReward,
   DAILY_AD_REWARD_LIMIT,
   incrementAdRewardWatch,
   loadAdRewardState,
 } from "@/lib/ad-reward-storage"
+import {
+  computeAchievements,
+  computeLevelFromPoints,
+  createDefaultProgress,
+  loadAttendanceDates,
+  recordAttendanceCheck,
+  recordProfileVisit,
+  syncProgressWeekStreak,
+  type UserProgressData,
+} from "@/lib/user-progress"
 
 interface UserStats {
   points: number
@@ -39,86 +64,97 @@ interface Achievement {
 
 export default function UserProfilePage() {
   const { t, language } = useLanguage()
-  const { points: contextPoints, addPoints } = usePoints()
+  const { points: contextPoints, addPoints, isUnlimitedPoints } = usePoints()
   const { user } = useUser()
+  const showMasterUi = isMasterNickname(user?.nickname)
+  const [profileFields, setProfileFields] = useState<AuthorProfileFields | null>(null)
+  const [visitStats, setVisitStats] = useState<VisitStats>({
+    daily: 0,
+    weekly: 0,
+    monthly: 0,
+    total: 0,
+  })
+  const [userProgress, setUserProgress] = useState<UserProgressData>(createDefaultProgress)
   const [stats, setStats] = useState<UserStats>({
-    points: 0, // Will be synced with context
-    visitCount: 47,
-    consecutiveDays: 5,
-    totalReadings: 32,
-    memberSince: '2026-01-15',
-    level: 4,
-    levelName: t('level.4'),
-    nextLevelPoints: 2000,
+    points: 0,
+    visitCount: 0,
+    consecutiveDays: 0,
+    totalReadings: 0,
+    memberSince: createDefaultProgress().memberSince,
+    level: 6,
+    levelName: t('level.6'),
+    nextLevelPoints: 500,
   })
 
-  const achievements = useMemo<Achievement[]>(() => [
-    {
-      id: '1',
-      title: t('achievement.1.title'),
-      description: t('achievement.1.desc'),
-      icon: '🌟',
-      progress: 1,
-      maxProgress: 1,
-      completed: true,
-      reward: '50P',
-    },
-    {
-      id: '2',
-      title: t('achievement.2.title'),
-      description: t('achievement.2.desc'),
-      icon: '🃏',
-      progress: 5,
-      maxProgress: 5,
-      completed: true,
-      reward: '100P',
-    },
-    {
-      id: '3',
-      title: t('achievement.3.title'),
-      description: t('achievement.3.desc'),
-      icon: '🔥',
-      progress: 5,
-      maxProgress: 7,
-      completed: false,
-      reward: '200P',
-    },
-    {
-      id: '4',
-      title: t('achievement.4.title'),
-      description: t('achievement.4.desc'),
-      icon: '🏆',
-      progress: 32,
-      maxProgress: 50,
-      completed: false,
-      reward: '500P',
-    },
-    {
-      id: '5',
-      title: t('achievement.5.title'),
-      description: t('achievement.5.desc'),
-      icon: '👥',
-      progress: 3,
-      maxProgress: 10,
-      completed: false,
-      reward: t('achievement.5.reward'),
-    },
-    {
-      id: '6',
-      title: t('achievement.6.title'),
-      description: t('achievement.6.desc'),
-      icon: '🌈',
-      progress: 3,
-      maxProgress: 5,
-      completed: false,
-      reward: '150P',
-    },
-  ], [t])
+  const achievements = useMemo<Achievement[]>(() => {
+    const states = computeAchievements(userProgress, user?.referralCount ?? 0)
+    const defs: Omit<Achievement, 'progress' | 'maxProgress' | 'completed'>[] = [
+      { id: '1', title: t('achievement.1.title'), description: t('achievement.1.desc'), icon: '🌟', reward: '50P' },
+      { id: '2', title: t('achievement.2.title'), description: t('achievement.2.desc'), icon: '🃏', reward: '100P' },
+      { id: '3', title: t('achievement.3.title'), description: t('achievement.3.desc'), icon: '🔥', reward: '200P' },
+      { id: '4', title: t('achievement.4.title'), description: t('achievement.4.desc'), icon: '🏆', reward: '500P' },
+      { id: '5', title: t('achievement.5.title'), description: t('achievement.5.desc'), icon: '👥', reward: t('achievement.5.reward') },
+      { id: '6', title: t('achievement.6.title'), description: t('achievement.6.desc'), icon: '🌈', reward: '150P' },
+    ]
+    return defs.map((def) => {
+      const state = states.find((s) => s.id === def.id)!
+      return { ...def, ...state }
+    })
+  }, [t, userProgress, user?.referralCount])
 
-  // Sync stats.points with context points
   useEffect(() => {
-    setStats(prev => ({ ...prev, points: contextPoints }))
-  }, [contextPoints])
+    const levelInfo = computeLevelFromPoints(contextPoints)
+    setStats({
+      points: contextPoints,
+      visitCount: userProgress.visitCount,
+      consecutiveDays: userProgress.weekStreak,
+      totalReadings: userProgress.totalReadings,
+      memberSince: userProgress.memberSince,
+      level: showMasterUi ? OPERATOR_LEVEL : levelInfo.level,
+      levelName: showMasterUi ? MASTER_LEVEL_TITLE : t(`level.${levelInfo.level}`),
+      nextLevelPoints: showMasterUi ? 0 : levelInfo.nextLevelPoints,
+    })
+  }, [contextPoints, userProgress, t, showMasterUi])
+
+  const loadProfileFields = useCallback(async () => {
+    const nick = user?.nickname?.trim()
+    if (!nick) {
+      setProfileFields(null)
+      return
+    }
+    const { ok, profile } = await fetchProfileMasterFields(nick)
+    if (ok && profile) {
+      setProfileFields({
+        level_title: profile.level_title,
+        role: profile.role,
+        is_master: profile.is_master,
+        total_points: profile.total_points,
+      })
+    } else {
+      setProfileFields(null)
+    }
+  }, [user?.nickname])
+
+  useEffect(() => {
+    void loadProfileFields()
+  }, [loadProfileFields, contextPoints])
+
+  const profileEmblemVariant = useMemo(
+    () =>
+      resolveProfileEmblemVariant({
+        nickname: user?.nickname ?? '',
+        level: stats.level,
+        levelTitle: stats.levelName,
+        isOperatorNickname: showMasterUi,
+        profile: profileFields,
+      }),
+    [user?.nickname, stats.level, stats.levelName, showMasterUi, profileFields]
+  )
+
+  useEffect(() => {
+    if (!showMasterUi) return
+    void fetchVisitStats().then(setVisitStats)
+  }, [showMasterUi])
 
   const [showRoulette, setShowRoulette] = useState(false)
   const [showPickDraw, setShowPickDraw] = useState(false)
@@ -178,14 +214,17 @@ export default function UserProfilePage() {
     setDailyRewardCount(adState.watchCount)
     setLastRewardDate(adState.date)
 
-    const savedAttendance = localStorage.getItem('attendanceData')
-    if (savedAttendance) {
-      const data = JSON.parse(savedAttendance)
-      setAttendanceData(data)
+    if (user?.referralCode) {
+      let progress = recordProfileVisit(user.referralCode)
+      progress = syncProgressWeekStreak(user.referralCode)
+      setUserProgress(progress)
+
+      const dates = loadAttendanceDates(user.referralCode)
+      setAttendanceData(dates)
       const todayStr = new Date().toDateString()
-      setTodayChecked(data.includes(todayStr))
+      setTodayChecked(dates.includes(todayStr))
     }
-  }, [])
+  }, [user?.referralCode])
 
   // URL 해시에 따라 보너스 카드 화면 중앙 스크롤 (#bonus 앵커 사용)
   useEffect(() => {
@@ -219,18 +258,14 @@ export default function UserProfilePage() {
 
   // 출석체크 함수
   const handleAttendanceCheck = () => {
-    const today = new Date().toDateString()
-    if (todayChecked) return
-    
-    const newData = [...attendanceData, today]
-    // 최근 7일만 유지
-    const recentData = newData.slice(-7)
-    setAttendanceData(recentData)
+    if (todayChecked || !user?.referralCode) return
+
+    const { dates, progress } = recordAttendanceCheck(user.referralCode)
+    setAttendanceData(dates)
     setTodayChecked(true)
-    localStorage.setItem('attendanceData', JSON.stringify(recentData))
-    
-    // 출석 보상 20포인트 - addPoints will update context and localStorage
-    addPoints(20)
+    setUserProgress(progress)
+
+    addPoints(20, { point_type: "attendance", description: "Daily check-in reward (+20P)" })
   }
 
   // 이번 주 날짜 배열 생성
@@ -262,7 +297,10 @@ export default function UserProfilePage() {
     if (!next) return
     setDailyRewardCount(next.watchCount)
     setLastRewardDate(next.date)
-    addPoints(rewardPoints)
+    addPoints(rewardPoints, {
+      point_type: "ad_reward",
+      description: `Ad bonus reward (+${rewardPoints}P)`,
+    })
   }
 
   const spinRoulette = () => {
@@ -316,16 +354,21 @@ export default function UserProfilePage() {
     }, 800)
   }
 
-  const levelProgress = (stats.points / stats.nextLevelPoints) * 100
+  const levelProgress = showMasterUi
+    ? 100
+    : Math.min(
+        100,
+        stats.nextLevelPoints > 0
+          ? (stats.points / stats.nextLevelPoints) * 100
+          : 0
+      )
 
-  const levels = useMemo(() => [
-    { level: 1, name: t('level.1'), minPoints: 10000 },
-    { level: 2, name: t('level.2'), minPoints: 5000 },
-    { level: 3, name: t('level.3'), minPoints: 2000 },
-    { level: 4, name: t('level.4'), minPoints: 1000 },
-    { level: 5, name: t('level.5'), minPoints: 500 },
-    { level: 6, name: t('level.6'), minPoints: 0 },
-  ], [language])
+  const pointsDisplay = isUnlimitedPoints
+    ? getMasterPointsDisplay(language)
+    : stats.points.toLocaleString()
+  const pointsProgressLabel = showMasterUi
+    ? getMasterPointsLabel(language)
+    : `${stats.points} / ${stats.nextLevelPoints} P`
 
   const menuItems = useMemo(() => [
     { icon: Star, label: t('userProfile.premium'), href: '/premium' },
@@ -353,18 +396,18 @@ export default function UserProfilePage() {
           <div className="absolute -right-12 -top-12 w-40 h-40 bg-purple-100 rounded-full opacity-50" />
           <div className="relative z-10">
             <div className="flex items-center gap-4 mb-6">
-              {/* 아바타 */}
-              <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center shadow-lg">
-                <span className="text-3xl">🔮</span>
-              </div>
+              <ProfileLevelAvatar variant={profileEmblemVariant} levelName={stats.levelName} />
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <h2 className="text-xl font-bold text-gray-800">{user?.nickname || t('userProfile.user')}</h2>
-                  <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
-                    Lv.{stats.level}
-                  </span>
+                  <ProfileLevelDisplay
+                    level={stats.level}
+                    levelName={stats.levelName}
+                    isOperator={showMasterUi}
+                    mode="badge"
+                  />
                 </div>
-                <p className="text-gray-500 text-sm">{t(`level.${stats.level}`)}</p>
+                <p className="text-gray-500 text-sm">{stats.levelName}</p>
                 <p className="text-gray-400 text-xs">{t('userProfile.memberSince')}: {stats.memberSince}</p>
               </div>
             </div>
@@ -372,8 +415,13 @@ export default function UserProfilePage() {
             {/* 레벨 진행바 */}
             <div className="mb-2">
               <div className="flex justify-between text-xs text-gray-500 mb-1">
-                <span>Lv.{stats.level} {stats.levelName}</span>
-                <span>{stats.points} / {stats.nextLevelPoints} P</span>
+                <ProfileLevelDisplay
+                  level={stats.level}
+                  levelName={stats.levelName}
+                  isOperator={showMasterUi}
+                  mode="label"
+                />
+                <span>{pointsProgressLabel}</span>
               </div>
               <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
                 <div 
@@ -387,35 +435,85 @@ export default function UserProfilePage() {
 
         {/* 통계 카드 - 축소 버전 */}
         <div className="grid grid-cols-4 gap-2">
-          <div className="bg-white rounded-xl p-2 shadow-lg text-center">
-            <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-1">
-              <Coins className="h-4 w-4 text-amber-600" />
-            </div>
-            <div className="text-sm font-bold text-gray-800" suppressHydrationWarning>{stats.points.toLocaleString()}</div>
-            <div className="text-xs text-gray-500">{t('userProfile.points')}</div>
-          </div>
-          <div className="bg-white rounded-xl p-2 shadow-lg text-center">
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-1">
-              <CalendarCheck className="h-4 w-4 text-blue-600" />
-            </div>
-            <div className="text-sm font-bold text-gray-800" suppressHydrationWarning>{stats.visitCount}</div>
-            <div className="text-xs text-gray-500">{t('userProfile.visits')}</div>
-          </div>
-          <div className="bg-white rounded-xl p-2 shadow-lg text-center">
-            <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-1">
-              <Flame className="h-4 w-4 text-orange-600" />
-            </div>
-            <div className="text-sm font-bold text-gray-800" suppressHydrationWarning>{stats.consecutiveDays}{t('userProfile.day')}</div>
-            <div className="text-xs text-gray-500">{t('userProfile.consecutive')}</div>
-          </div>
-          <div className="bg-white rounded-xl p-2 shadow-lg text-center">
-            <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-1">
-              <Sparkles className="h-4 w-4 text-purple-600" />
-            </div>
-            <div className="text-sm font-bold text-gray-800" suppressHydrationWarning>{stats.totalReadings}</div>
-            <div className="text-xs text-gray-500">{t('userProfile.fortunes')}</div>
-          </div>
+          {showMasterUi ? (
+            <>
+              <div className="bg-white rounded-xl p-2 shadow-lg text-center">
+                <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-1">
+                  <Coins className="h-4 w-4 text-amber-600" />
+                </div>
+                <div className="text-sm font-bold text-gray-800" suppressHydrationWarning>
+                  {visitStats.daily.toLocaleString()}
+                </div>
+                <div className="text-xs text-gray-500">일간</div>
+              </div>
+              <div className="bg-white rounded-xl p-2 shadow-lg text-center">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-1">
+                  <CalendarCheck className="h-4 w-4 text-blue-600" />
+                </div>
+                <div className="text-sm font-bold text-gray-800" suppressHydrationWarning>
+                  {visitStats.weekly.toLocaleString()}
+                </div>
+                <div className="text-xs text-gray-500">주간</div>
+              </div>
+              <div className="bg-white rounded-xl p-2 shadow-lg text-center">
+                <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-1">
+                  <Flame className="h-4 w-4 text-orange-600" />
+                </div>
+                <div className="text-sm font-bold text-gray-800" suppressHydrationWarning>
+                  {visitStats.monthly.toLocaleString()}
+                </div>
+                <div className="text-xs text-gray-500">월간</div>
+              </div>
+              <div className="bg-white rounded-xl p-2 shadow-lg text-center">
+                <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-1">
+                  <Sparkles className="h-4 w-4 text-purple-600" />
+                </div>
+                <div className="text-sm font-bold text-gray-800" suppressHydrationWarning>
+                  {visitStats.total.toLocaleString()}
+                </div>
+                <div className="text-xs text-gray-500">총누계</div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="bg-white rounded-xl p-2 shadow-lg text-center">
+                <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-1">
+                  <Coins className="h-4 w-4 text-amber-600" />
+                </div>
+                <div className="text-sm font-bold text-gray-800" suppressHydrationWarning>{pointsDisplay}</div>
+                <div className="text-xs text-gray-500">{t('userProfile.points')}</div>
+              </div>
+              <div className="bg-white rounded-xl p-2 shadow-lg text-center">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-1">
+                  <CalendarCheck className="h-4 w-4 text-blue-600" />
+                </div>
+                <div className="text-sm font-bold text-gray-800" suppressHydrationWarning>{stats.visitCount}</div>
+                <div className="text-xs text-gray-500">{t('userProfile.visits')}</div>
+              </div>
+              <div className="bg-white rounded-xl p-2 shadow-lg text-center">
+                <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-1">
+                  <Flame className="h-4 w-4 text-orange-600" />
+                </div>
+                <div className="text-sm font-bold text-gray-800" suppressHydrationWarning>
+                  {stats.consecutiveDays}
+                  {t('userProfile.day')}
+                </div>
+                <div className="text-xs text-gray-500">{t('userProfile.consecutive')}</div>
+              </div>
+              <div className="bg-white rounded-xl p-2 shadow-lg text-center">
+                <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-1">
+                  <Sparkles className="h-4 w-4 text-purple-600" />
+                </div>
+                <div className="text-sm font-bold text-gray-800" suppressHydrationWarning>{stats.totalReadings}</div>
+                <div className="text-xs text-gray-500">{t('userProfile.fortunes')}</div>
+              </div>
+            </>
+          )}
         </div>
+
+        {showMasterUi && user?.nickname && (
+          <MasterPointGrantPanel grantedBy={user.nickname.trim()} />
+        )}
 
         {/* 출석체크 · 보너스 받기 섹션 — flex-col gap-4로 완전 독립 분리 */}
         <div className="flex flex-col gap-4">
@@ -702,39 +800,18 @@ export default function UserProfilePage() {
         </div>
 
         {/* 레벨 안내 */}
-        <div className="bg-white rounded-2xl p-6 shadow-lg">
-          <h3 className="font-bold text-gray-800 flex items-center gap-2 mb-4">
-            <Crown className="h-5 w-5 text-purple-500" />
+        <div className="rounded-2xl p-4 sm:p-6 shadow-xl bg-gradient-to-br from-[#1a1040] via-[#2d1b69] to-[#1e1145] border border-white/10">
+          <h3 className="font-bold text-white flex items-center gap-2 mb-4">
+            <Crown className="h-5 w-5 text-purple-300 drop-shadow-[0_0_10px_rgba(168,85,247,0.75)]" />
             {t('userProfile.levelSystem')}
           </h3>
-          <div className="space-y-2">
-            {levels.map((lvl) => (
-              <div 
-                key={lvl.level}
-                className={`flex items-center justify-between p-3 rounded-xl ${
-                  lvl.level === stats.level 
-                    ? 'bg-purple-100 border-2 border-purple-300' 
-                    : lvl.level > stats.level
-                    ? 'bg-gray-50 opacity-60'
-                    : 'bg-gray-50'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                    lvl.level >= stats.level 
-                      ? 'bg-purple-500 text-white' 
-                      : 'bg-gray-300 text-gray-600'
-                  }`}>
-                    {lvl.level}
-                  </span>
-                  <span className={`font-medium ${lvl.level === stats.level ? 'text-purple-700' : 'text-gray-700'}`}>
-                    {lvl.name}
-                  </span>
-                </div>
-                <span className="text-sm text-gray-500">{lvl.minPoints.toLocaleString()}P</span>
-              </div>
-            ))}
-          </div>
+          <LevelSystemCards
+            currentLevel={
+              showMasterUi ? OPERATOR_LEVEL : computeLevelFromPoints(contextPoints).level
+            }
+            guideOnly={showMasterUi}
+            t={t}
+          />
         </div>
 
         {/* 메뉴 */}

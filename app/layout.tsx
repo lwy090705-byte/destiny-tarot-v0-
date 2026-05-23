@@ -2,10 +2,12 @@ import type { Metadata, Viewport } from 'next'
 import Script from 'next/script'
 import { Noto_Sans_KR } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { OnboardingGate } from '@/components/onboarding-gate'
 import { LanguageProvider } from '@/lib/language-context'
 import { PointsProvider } from '@/lib/points-context'
 import { AnnouncementProvider } from '@/lib/announcement-context'
 import { UserProvider } from '@/lib/user-context'
+import { VisitLogTracker } from '@/components/visit-log-tracker'
 import './globals.css'
 
 const notoSansKR = Noto_Sans_KR({ 
@@ -61,14 +63,17 @@ export default function RootLayout({
           strategy="lazyOnload"
         />
         <LanguageProvider>
-          <PointsProvider>
-            <UserProvider>
+          <UserProvider>
+            <VisitLogTracker />
+            <PointsProvider>
               <AnnouncementProvider>
-                {children}
+                <OnboardingGate>
+                  {children}
+                </OnboardingGate>
                 <Analytics />
               </AnnouncementProvider>
-            </UserProvider>
-          </PointsProvider>
+            </PointsProvider>
+          </UserProvider>
         </LanguageProvider>
       </body>
     </html>

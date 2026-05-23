@@ -1,0 +1,27 @@
+-- Run in Supabase SQL editor:
+--
+-- create table if not exists fortune_results (
+--   id uuid primary key default gen_random_uuid(),
+--   created_at timestamptz default now(),
+--   user_code text,
+--   profile_id text,
+--   fortune_type text not null,
+--   category text,
+--   period_key text,
+--   seed_key text not null unique,
+--   result jsonb not null
+-- );
+--
+-- create index if not exists fortune_results_profile_id_idx
+--   on fortune_results (profile_id);
+--
+-- create index if not exists fortune_results_user_code_idx
+--   on fortune_results (user_code);
+--
+-- alter table fortune_results enable row level security;
+--
+-- create policy "fortune_results_anon_insert" on fortune_results
+--   for insert to anon with check (true);
+--
+-- create policy "fortune_results_anon_select" on fortune_results
+--   for select to anon using (true);

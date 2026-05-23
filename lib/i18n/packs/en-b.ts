@@ -76,6 +76,13 @@ export const enPackB: Record<string, string> = {
   'community.likes': 'Likes',
   'community.comments': 'Comments',
   'community.empty': 'No posts yet.',
+  'community.guidelineWarning':
+    'Posts with profanity, harassment, or personal information may be removed without notice.',
+  'community.searchByTitle': 'Title',
+  'community.searchByAuthor': 'Author',
+  'community.deletePost': 'Delete post',
+  'community.deleteComment': 'Delete',
+  'community.alreadyLiked': 'You already liked this post.',
   'share.title': 'Invite friends',
   'share.inviteFriends': 'Invite friends and earn rewards',
   'share.inviteDescription': 'Refer friends to earn points and premium perks!',

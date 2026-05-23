@@ -14,8 +14,8 @@ import { BottomNav } from "@/components/bottom-nav"
 import { MysticalBackground } from "@/components/mystical-background"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { AnnouncementModal } from "@/components/announcement-modal"
-import { NicknameModal } from "@/components/nickname-modal"
 import { safeStorage } from "@/lib/safe-storage"
+import { insertProfileToSupabase, userProfileToSupabaseRow } from "@/lib/save-profile-supabase"
 import { useAnnouncement } from "@/lib/announcement-context"
 import { useUser } from "@/lib/user-context"
 import type { UserProfile, Category } from "@/lib/types"
@@ -29,31 +29,28 @@ export default function Home() {
   const [isHydrated, setIsHydrated] = useState(false)
   const [showAnnouncement, setShowAnnouncement] = useState(false)
 
-  const { language, t } = useLanguage()
+  const { language, t, isLanguageReady, hasCompletedLanguageOnboarding } = useLanguage()
   const { shouldShowAnnouncement } = useAnnouncement()
-  const { isHydrated: userHydrated, needsNickname, saveNickname } = useUser()
+  const { user, isHydrated: userHydrated, needsNickname } = useUser()
 
   useEffect(() => {
     setIsHydrated(true)
   }, [])
 
-  // 닉네임 미입력 시 닉네임 모달 먼저 표시, 이후 공지사항 표시
-  const [showNickname, setShowNickname] = useState(false)
-
+  // 언어·닉네임 온보딩 완료 후 공지사항 표시
   useEffect(() => {
-    if (!userHydrated) return
-    if (needsNickname) {
-      setShowNickname(true)
-    } else if (shouldShowAnnouncement) {
+    if (!isLanguageReady || !userHydrated) return
+    if (!hasCompletedLanguageOnboarding || needsNickname) return
+    if (shouldShowAnnouncement) {
       setShowAnnouncement(true)
     }
-  }, [userHydrated, needsNickname, shouldShowAnnouncement])
-
-  const handleNicknameSave = (nickname: string) => {
-    saveNickname(nickname)
-    setShowNickname(false)
-    // 닉네임 저장 후 공지사항은 shouldShowAnnouncement state 변화로 자동 처리
-  }
+  }, [
+    isLanguageReady,
+    userHydrated,
+    hasCompletedLanguageOnboarding,
+    needsNickname,
+    shouldShowAnnouncement,
+  ])
 
   useEffect(() => {
     if (!isHydrated) return
@@ -70,7 +67,8 @@ export default function Home() {
     }
   }, [profiles, isHydrated])
 
-  const handleAddProfile = (profile: UserProfile) => {
+  const handleAddProfile = async (profile: UserProfile) => {
+    await insertProfileToSupabase(userProfileToSupabaseRow(profile))
     const newProfiles = [...profiles, { ...profile }]
     setProfiles(newProfiles)
     setSelectedProfile(profile)
@@ -103,12 +101,6 @@ export default function Home() {
       <MysticalBackground />
       
       <Header />
-
-      {/* 닉네임 입력 팝업 - 최초 1회 */}
-      <NicknameModal
-        isOpen={showNickname}
-        onSave={handleNicknameSave}
-      />
 
       <AnnouncementModal
         isOpen={showAnnouncement}
@@ -161,7 +153,10 @@ export default function Home() {
           <ErrorBoundary>
             {activeCategory === 'myungli' && (
               <MyungliSection
-                key={`${language}-${selectedProfile?.name || 'default'}`}
+                key={`${language}-${selectedProfile?.id || 'default'}`}
+                profileId={selectedProfile?.id}
+                userCode={user?.referralCode}
+                nickname={user?.nickname}
                 initialYear={selectedProfile?.birthYear}
                 initialMonth={selectedProfile?.birthMonth}
                 initialDay={selectedProfile?.birthDay}
@@ -175,7 +170,10 @@ export default function Home() {
 
             {activeCategory === 'daily' && (
               <DailyFortuneSection
-                key={language}
+                key={`${language}-${selectedProfile?.id ?? 'default'}`}
+                profileId={selectedProfile?.id}
+                userCode={user?.referralCode}
+                nickname={user?.nickname}
                 initialYear={selectedProfile?.birthYear}
                 initialMonth={selectedProfile?.birthMonth}
                 initialDay={selectedProfile?.birthDay}
@@ -188,7 +186,12 @@ export default function Home() {
             )}
 
             {activeCategory === 'tarot' && (
-              <TarotSection key={language} />
+              <TarotSection
+                key={`${language}-${selectedProfile?.id ?? 'guest'}`}
+                selectedProfile={selectedProfile}
+                userCode={user?.referralCode}
+                nickname={user?.nickname}
+              />
             )}
 
             {activeCategory === 'compatibility' && (
@@ -196,6 +199,7 @@ export default function Home() {
                 key={language}
                 profiles={profiles}
                 selectedProfile={selectedProfile}
+                userCode={user?.referralCode}
               />
             )}
 

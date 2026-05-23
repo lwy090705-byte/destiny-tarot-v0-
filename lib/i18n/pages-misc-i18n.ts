@@ -7,6 +7,16 @@ const KO: Record<string, string> = {
   'community.category.compatibility': '궁합',
   'community.category.fortune': '운세',
   'community.category.other': '기타',
+  'community.guidelineWarning':
+    '욕설, 비방, 개인정보 노출 게시글은 사전 안내 없이 삭제될 수 있습니다.',
+  'community.searchByTitle': '제목',
+  'community.searchByAuthor': '작성자',
+  'community.deletePost': '게시글 삭제',
+  'community.deleteComment': '삭제',
+  'community.hidePost': '숨기기',
+  'community.hideComment': '숨기기',
+  'community.hiddenBadge': '숨김',
+  'community.alreadyLiked': '이미 추천한 글입니다.',
   'adSponsor.adSlotPlaceholder': '광고 영역 {n}',
   'adSponsor.expiresUntil': '~{date} 까지',
   'adSponsor.guideBody':
@@ -248,6 +258,8 @@ const FR: Record<string, string> = {
   'community.category.compatibility': 'Compatibilité',
   'community.category.fortune': 'Fortune',
   'community.category.other': 'Autre',
+  'share.appName': 'Fortune et Tarot',
+  'share.kakaoButton': 'Ouvrir',
   'common.confirm': 'OK',
   'pointsShop.title': 'Acheter des points',
   'announcements.title': 'Annonces',
@@ -319,6 +331,8 @@ const TH: Record<string, string> = {
   'community.category.compatibility': 'ความเข้ากัน',
   'community.category.fortune': 'ดวง',
   'community.category.other': 'อื่นๆ',
+  'share.appName': 'โชคชะตาและทาโรต์',
+  'share.kakaoButton': 'เปิดเลย',
   'pointsShop.title': 'เติมพอยต์',
   'announcements.title': 'ประกาศ',
   'business.title': 'ติดต่อธุรกิจ',
@@ -337,6 +351,8 @@ const BY_LANG: Record<Language, Record<string, string>> = {
   hi: HI,
   vi: VI,
   th: TH,
+  ru: EN,
+  ar: EN,
 }
 
 export function getPagesMisc(language: Language): Record<string, string> {

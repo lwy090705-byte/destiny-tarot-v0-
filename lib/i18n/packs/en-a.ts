@@ -1,6 +1,20 @@
 /** English UI strings — part A (keys alphabetically / file order) */
 export const enPackA: Record<string, string> = {
   'app.title': 'Destiny & Tarot',
+  'onboarding.selectLanguage': 'Select your language',
+  'onboarding.selectLanguageHint': 'Choose the language for the app',
+  'onboarding.continue': 'Continue',
+  'nickname.welcome': 'Welcome!',
+  'nickname.subtitle': 'Enter your nickname',
+  'nickname.label': 'Nickname',
+  'nickname.placeholder': 'Enter nickname (2–10 characters)',
+  'nickname.hint':
+    'Your nickname cannot be changed later. Please choose carefully.',
+  'nickname.start': 'Get started',
+  'nickname.error.empty': 'Please enter a nickname.',
+  'nickname.error.tooShort': 'Nickname must be at least 2 characters.',
+  'nickname.error.tooLong': 'Nickname can be up to 10 characters.',
+  'nickname.error.duplicate': 'This nickname is already taken.',
   'profile.title': 'Saved birth date list',
   'profile.name': 'Name',
   'profile.namePlaceholder': 'Enter name',

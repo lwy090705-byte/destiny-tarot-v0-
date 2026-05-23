@@ -194,19 +194,30 @@ export function getTarotMessage(language: Language, category: string, index: num
   return pickTarotParagraph(pools, language, index)
 }
 
+export function tarotMessageIndex(
+  cardId: number,
+  positionIndex: number,
+  seedNumber: number
+): number {
+  return Math.abs(seedNumber + cardId * 17 + positionIndex * 100) % 8
+}
+
 export function generateTarotReading(
   selectedCards: { id: number; nameKr: string }[],
   language: Language,
-  category: string = 'total'
+  category: string = 'total',
+  seedNumber?: number
 ): TarotReading {
   const cards = selectedCards.map((card) => ({
     id: card.id,
     name: getCardName(card.id, language),
   }))
-  
-  // 카드 조합에 따른 다양한 메시지 생성
+
   const cardSum = selectedCards.reduce((acc, card) => acc + card.id, 0)
-  const messageIndex = cardSum % 8
+  const messageIndex =
+    seedNumber !== undefined
+      ? tarotMessageIndex(cardSum, 0, seedNumber)
+      : cardSum % 8
 
   return {
     cards,

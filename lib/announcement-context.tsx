@@ -1,6 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import { WELCOME_ANNOUNCEMENT_ID } from '@/lib/update-announcement-content'
 
 export interface Announcement {
   id: string
@@ -46,24 +47,9 @@ export function AnnouncementProvider({ children }: { children: React.ReactNode }
     } else {
       // 기본 공지사항 초기화
       const defaultAnnouncement: Announcement = {
-        id: 'welcome-2026-01',
-        title: '더 강력해진 Destiny & Tarot 앱으로 새롭게 찾아왔습니다!',
-        content: `새롭게 추가된 기능
-
-- AI 기반 운세 & 타로 해석 강화
-- MBTI 성격 분석 추가
-- 궁합 콘텐츠 추가
-- 출석 체크 및 보너스 포인트 시스템 추가
-- 광고 시청 및 Pi 결제 기능 지원
-
-새로운 Pi 결제 시스템
-
-이제 앱 내 다양한 기능을
-Pi 결제를 통해 더욱 편리하게 이용하실 수 있습니다.
-
-앞으로도 더 좋은 서비스와 새로운 기능으로 보답하겠습니다.
-
-감사합니다`,
+        id: WELCOME_ANNOUNCEMENT_ID,
+        title: '',
+        content: '',
         isNew: true,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),

@@ -10,6 +10,8 @@ function announcementDateLocale(language: Language): string {
   if (language === 'ko') return 'ko-KR'
   if (language === 'ja') return 'ja-JP'
   if (language === 'zh') return 'zh-CN'
+  if (language === 'ar') return 'ar-SA'
+  if (language === 'ru') return 'ru-RU'
   return language
 }
 

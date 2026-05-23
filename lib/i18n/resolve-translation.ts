@@ -3,8 +3,8 @@ import { enMessages } from './packs/en'
 import { getPagesMisc } from './pages-misc-i18n'
 
 /**
- * Resolves a UI string without leaking Korean from the koTranslations spread.
- * Order: localized pack (if distinct from Korean) → English pack → key.
+ * Resolves a UI string without leaking Korean or English incorrectly.
+ * Order (non-ko): localized pack (≠ Korean) → language misc → English pack → key.
  */
 export function resolveTranslation(
   language: Language,
@@ -19,19 +19,19 @@ export function resolveTranslation(
   }
 
   const koVal = koPack[key]
-  const localized = pack?.[key]
-  if (localized != null && localized !== '' && localized !== koVal) {
-    return localized
-  }
-
-  const enVal = enMessages[key]
-  if (enVal != null && enVal !== '') {
-    return enVal
+  const fromPack = pack?.[key]
+  if (fromPack != null && fromPack !== '' && fromPack !== koVal) {
+    return fromPack
   }
 
   const miscVal = getPagesMisc(language)[key]
   if (miscVal != null && miscVal !== '' && miscVal !== koVal) {
     return miscVal
+  }
+
+  const enVal = enMessages[key]
+  if (enVal != null && enVal !== '') {
+    return enVal
   }
 
   if (language !== 'en') {

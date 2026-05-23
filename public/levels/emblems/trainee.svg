@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 170" shape-rendering="geometricPrecision">
+
+  <defs>
+    <radialGradient id="trainee-bloom" cx="50%" cy="42%" r="50%">
+      <stop offset="0%" stop-color="#ec4899" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#ec4899" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="trainee-leaf-left" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbcfe8"/><stop offset="50%" stop-color="#ec4899"/><stop offset="100%" stop-color="#be185d"/>
+    </linearGradient>
+    <linearGradient id="trainee-leaf-right" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fbcfe8"/><stop offset="50%" stop-color="#ec4899"/><stop offset="100%" stop-color="#be185d"/>
+    </linearGradient>
+    <linearGradient id="trainee-metal" x1="10%" y1="5%" x2="90%" y2="95%">
+      <stop offset="0%" stop-color="#fff"/><stop offset="25%" stop-color="#fbcfe8"/><stop offset="55%" stop-color="#ec4899"/><stop offset="100%" stop-color="#be185d"/>
+    </linearGradient>
+    <radialGradient id="trainee-face" cx="38%" cy="28%" r="72%">
+      <stop offset="0%" stop-color="#fff"/><stop offset="35%" stop-color="#fbcfe8"/><stop offset="70%" stop-color="#ec4899"/><stop offset="100%" stop-color="#be185d"/>
+    </radialGradient>
+    <linearGradient id="trainee-shine" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff" stop-opacity="0.95"/><stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="trainee-cA" x1="20%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#fff" stop-opacity="0.95"/><stop offset="40%" stop-color="#fbcfe8"/><stop offset="100%" stop-color="#be185d"/>
+    </linearGradient>
+    <linearGradient id="trainee-cB" x1="80%" y1="0%" x2="20%" y2="100%">
+      <stop offset="0%" stop-color="#fbcfe8"/><stop offset="100%" stop-color="#ec4899"/>
+    </linearGradient>
+    <linearGradient id="trainee-cC" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#fff" stop-opacity="0.85"/><stop offset="50%" stop-color="#ec4899" stop-opacity="0.75"/><stop offset="100%" stop-color="#be185d"/>
+    </linearGradient>
+    <filter id="trainee-fx" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#000" flood-opacity="0.35"/>
+      <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#ec4899" flood-opacity="0.55"/>
+    </filter>
+    <filter id="trainee-soft" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="10" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+<ellipse cx="100" cy="55" rx="55" ry="48" fill="url(#trainee-bloom)" filter="url(#trainee-soft)" opacity="0.85"/>
+
+      <g transform="translate(60.5,185.8) rotate(54.6) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-left)" stroke="#be185d" stroke-width="0.35" opacity="0.92"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+      <g transform="translate(55.9,181.6) rotate(60.4) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-left)" stroke="#be185d" stroke-width="0.35" opacity="0.90"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+      <g transform="translate(51.7,176.9) rotate(66.1) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-left)" stroke="#be185d" stroke-width="0.35" opacity="0.88"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+      <g transform="translate(48.1,171.9) rotate(71.9) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-left)" stroke="#be185d" stroke-width="0.35" opacity="0.86"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+      <g transform="translate(44.9,166.5) rotate(77.6) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-left)" stroke="#be185d" stroke-width="0.35" opacity="0.84"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+      <g transform="translate(42.4,160.8) rotate(83.4) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-left)" stroke="#be185d" stroke-width="0.35" opacity="0.82"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+      <g transform="translate(40.4,154.9) rotate(89.2) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-left)" stroke="#be185d" stroke-width="0.35" opacity="0.80"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+      <g transform="translate(39.0,148.9) rotate(94.9) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-left)" stroke="#be185d" stroke-width="0.35" opacity="0.78"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+      <g transform="translate(38.2,142.7) rotate(100.7) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-left)" stroke="#be185d" stroke-width="0.35" opacity="0.76"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+      <g transform="translate(38.0,136.4) rotate(106.4) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-left)" stroke="#be185d" stroke-width="0.35" opacity="0.74"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+      <g transform="translate(38.5,130.2) rotate(112.2) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-left)" stroke="#be185d" stroke-width="0.35" opacity="0.72"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+      <g transform="translate(39.6,124.1) rotate(118.0) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-left)" stroke="#be185d" stroke-width="0.35" opacity="0.70"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+      <g transform="translate(41.3,118.1) rotate(123.7) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-left)" stroke="#be185d" stroke-width="0.35" opacity="0.68"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+      <g transform="translate(43.6,112.3) rotate(129.5) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-left)" stroke="#be185d" stroke-width="0.35" opacity="0.66"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+      <g transform="translate(46.4,106.8) rotate(135.2) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-left)" stroke="#be185d" stroke-width="0.35" opacity="0.64"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+      <g transform="translate(49.8,101.6) rotate(141.0) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-left)" stroke="#be185d" stroke-width="0.35" opacity="0.62"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+
+      <g transform="translate(139.5,185.8) rotate(125.4) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-right)" stroke="#fbcfe8" stroke-width="0.35" opacity="0.92"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+      <g transform="translate(144.1,181.6) rotate(119.6) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-right)" stroke="#fbcfe8" stroke-width="0.35" opacity="0.90"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+      <g transform="translate(148.3,176.9) rotate(113.9) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-right)" stroke="#fbcfe8" stroke-width="0.35" opacity="0.88"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+      <g transform="translate(151.9,171.9) rotate(108.1) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-right)" stroke="#fbcfe8" stroke-width="0.35" opacity="0.86"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+      <g transform="translate(155.1,166.5) rotate(102.4) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-right)" stroke="#fbcfe8" stroke-width="0.35" opacity="0.84"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+      <g transform="translate(157.6,160.8) rotate(96.6) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-right)" stroke="#fbcfe8" stroke-width="0.35" opacity="0.82"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+      <g transform="translate(159.6,154.9) rotate(90.8) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-right)" stroke="#fbcfe8" stroke-width="0.35" opacity="0.80"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+      <g transform="translate(161.0,148.9) rotate(85.1) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-right)" stroke="#fbcfe8" stroke-width="0.35" opacity="0.78"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+      <g transform="translate(161.8,142.7) rotate(79.3) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-right)" stroke="#fbcfe8" stroke-width="0.35" opacity="0.76"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+      <g transform="translate(162.0,136.4) rotate(73.6) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-right)" stroke="#fbcfe8" stroke-width="0.35" opacity="0.74"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+      <g transform="translate(161.5,130.2) rotate(67.8) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-right)" stroke="#fbcfe8" stroke-width="0.35" opacity="0.72"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+      <g transform="translate(160.4,124.1) rotate(62.0) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-right)" stroke="#fbcfe8" stroke-width="0.35" opacity="0.70"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+      <g transform="translate(158.7,118.1) rotate(56.3) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-right)" stroke="#fbcfe8" stroke-width="0.35" opacity="0.68"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+      <g transform="translate(156.4,112.3) rotate(50.5) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-right)" stroke="#fbcfe8" stroke-width="0.35" opacity="0.66"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+      <g transform="translate(153.6,106.8) rotate(44.8) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-right)" stroke="#fbcfe8" stroke-width="0.35" opacity="0.64"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+      <g transform="translate(150.2,101.6) rotate(39.0) scale(1.15)">
+        <path d="M0,0 C-5,6 -6,14 -4,20 C-2,24 0,26 2,24 C4,20 5,12 3,6 C2,2 0,0 0,0 Z" fill="url(#trainee-leaf-right)" stroke="#fbcfe8" stroke-width="0.35" opacity="0.62"/>
+        <path d="M0,2 C-2,8 -2,14 0,18" fill="none" stroke="#fff" stroke-width="0.6" opacity="0.35"/>
+      </g>
+
+    <g filter="url(#trainee-fx)" transform="translate(100,50) scale(1.18) translate(-100,-50)">
+      <polygon points="100,8 66,72 100,88" fill="url(#trainee-cA)" stroke="#be185d" stroke-width="1.2"/>
+      <polygon points="100,8 134,72 100,88" fill="url(#trainee-cB)" stroke="#be185d" stroke-width="1.2"/>
+      <polygon points="83,20 117,20 112.92,74 87.08,74" fill="url(#trainee-cC)" opacity="0.9"/>
+      <polygon points="78.92,26 100,10 121.08,26 100,36" fill="#fff" opacity="0.82"/>
+      <path d="M92 24 L100 14 L110 32 L100 58 L88 40 Z" fill="#fff" opacity="0.38"/>
+      <line x1="100" y1="8" x2="100" y2="88" stroke="#fff" stroke-width="0.9" opacity="0.35"/>
+      <line x1="66" y1="72" x2="134" y2="72" stroke="#fff" stroke-width="0.7" opacity="0.28"/>
+      <polygon points="90,66 100,78 110,66" fill="#fff" opacity="0.4"/>
+      <ellipse cx="100" cy="18" rx="13.600000000000001" ry="7" fill="url(#trainee-shine)" opacity="0.85"/>
+      <ellipse cx="94" cy="48" rx="5" ry="14" fill="#fff" opacity="0.22"/>
+    </g>
+
+  <g>
+    <path d="M72 148 Q100 132 128 148 L100 162 Z" fill="url(#trainee-leaf-left)" opacity="0.85"/>
+    <polygon points="100,150 108,156 100,162 92,156" fill="#d946ef" stroke="#fff" stroke-width="0.8"/>
+    <polygon points="100,151 105,155 100,159 95,155" fill="#fff" opacity="0.45"/>
+    <ellipse cx="100" cy="154" rx="5" ry="3" fill="#fff" opacity="0.35"/>
+  </g>
+</svg>

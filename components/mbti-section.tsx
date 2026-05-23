@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/lib/language-context"
 import {
@@ -20,14 +20,18 @@ import {
   mbtiPersonalityCommStyle,
   mbtiResultCompatScoreLine,
 } from "@/components/mbti/mbti-inline-labels"
-import { usePoints } from "@/lib/points-context"
+import { usePoints, type PointTransactionMeta } from "@/lib/points-context"
+import { usePointsExemption } from "@/lib/use-points-exemption"
 import { PointsInsufficientModal } from "./points-insufficient-modal"
 import { Brain, Heart, Briefcase, Users, Lock, Sparkles, ChevronRight, Check } from "lucide-react"
 
 export function MbtiSection() {
   const { t, language } = useLanguage()
-  const { deductPoints, hasEnoughPoints, points, isHydrated } = usePoints()
+  const { deductPoints, hasEnoughPoints, points } = usePoints()
+  const isPointsExempt = usePointsExemption()
   const ANALYSIS_COST = 10
+  const FEATURE_COST = 10
+  const PREMIUM_COST = 10
   const [step, setStep] = useState<'start' | 'test' | 'result' | 'personality' | 'love' | 'career' | 'compatibility'>('start')
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [answers, setAnswers] = useState<Record<number, 'A' | 'B'>>({})
@@ -39,6 +43,46 @@ export function MbtiSection() {
   const [showPointsModal, setShowPointsModal] = useState(false)
 
   const questions = useMemo(() => getMbtiQuestions(language), [language])
+
+  const canUsePoints = useCallback(
+    (cost: number): boolean => {
+      if (isPointsExempt) return true
+      if (!hasEnoughPoints(cost)) {
+        setShowPointsModal(true)
+        return false
+      }
+      return true
+    },
+    [isPointsExempt, hasEnoughPoints]
+  )
+
+  const chargePoints = useCallback(
+    (cost: number, meta: PointTransactionMeta): boolean => {
+      if (isPointsExempt) return true
+      if (!hasEnoughPoints(cost)) {
+        setShowPointsModal(true)
+        return false
+      }
+      return deductPoints(cost, meta)
+    },
+    [isPointsExempt, hasEnoughPoints, deductPoints]
+  )
+
+  const pointsModal = !isPointsExempt ? (
+    <PointsInsufficientModal
+      isOpen={showPointsModal}
+      onClose={() => setShowPointsModal(false)}
+      currentPoints={points}
+      requiredPoints={ANALYSIS_COST}
+      onWatchAd={() => {
+        setShowPointsModal(false)
+        window.location.href = '/user-profile#bonus'
+      }}
+      onBuyPi={() => {
+        setShowPointsModal(false)
+      }}
+    />
+  ) : null
 
   // Load saved result from localStorage on mount
   useEffect(() => {
@@ -63,14 +107,12 @@ export function MbtiSection() {
   }
 
   const calculateResult = () => {
-    // 포인트 검사 - 최상단에서 먼저 실행
-    if ((points ?? 0) < ANALYSIS_COST) {
-      setShowPointsModal(true)
-      return
-    }
-    
-    // 포인트 차감
-    if (!deductPoints(ANALYSIS_COST)) {
+    if (
+      !chargePoints(ANALYSIS_COST, {
+        point_type: 'fortune_mbti',
+        description: 'MBTI analysis',
+      })
+    ) {
       return
     }
 
@@ -119,35 +161,29 @@ export function MbtiSection() {
       return
     }
     
-    // 프리미엄 기능에 대한 포인트 검사
-    const FEATURE_COST = 10
-    if ((points ?? 0) < FEATURE_COST) {
-      setShowPointsModal(true)
+    // 프리미엄 기능에 대한 포인트 검사·차감
+    if (
+      !chargePoints(FEATURE_COST, {
+        point_type: 'fortune_mbti_feature',
+        description: 'MBTI feature unlock',
+      })
+    ) {
       return
     }
-    
-    // 포인트 차감
-    if (!deductPoints(FEATURE_COST)) {
-      return
-    }
-    
-    setStep(feature as any)
+
+    setStep(feature as 'personality' | 'love' | 'career' | 'compatibility')
   }
 
   const unlockPremium = (section: string) => {
-    const PREMIUM_COST = 10
-    
-    // 포인트 검사 - 최상단에서 먼저 실행
-    if ((points ?? 0) < PREMIUM_COST) {
-      setShowPointsModal(true)
+    if (
+      !chargePoints(PREMIUM_COST, {
+        point_type: 'fortune_mbti_premium',
+        description: 'MBTI premium unlock',
+      })
+    ) {
       return
     }
-    
-    // 포인트 차감
-    if (!deductPoints(PREMIUM_COST)) {
-      return
-    }
-    
+
     const updated = [...unlockedSections, section]
     setUnlockedSections(updated)
     localStorage.setItem('mbtiUnlocked', JSON.stringify(updated))
@@ -180,12 +216,7 @@ export function MbtiSection() {
               <button
                 key={idx}
                 onClick={() => {
-                  // 포인트 검사 - 최상단에서 먼저 실행
-                  if ((points ?? 0) < ANALYSIS_COST) {
-                    setShowPointsModal(true)
-                    return
-                  }
-                  // 포인트 검사 완료 후 기존 로직 실행
+                  if (!canUsePoints(ANALYSIS_COST)) return
                   handleFeatureClick(item.action)
                 }}
                 className="bg-white rounded-xl p-4 shadow-sm flex flex-col items-center gap-2 hover:shadow-md hover:bg-gray-50 transition-all"
@@ -198,12 +229,7 @@ export function MbtiSection() {
 
           <Button
             onClick={() => {
-              // 포인트 검사 - 최상단에서 먼저 실행
-              if ((points ?? 0) < ANALYSIS_COST) {
-                setShowPointsModal(true)
-                return
-              }
-              // 포인트 검사 완료 후 테스트 시작
+              if (!canUsePoints(ANALYSIS_COST)) return
               setStep('test')
             }}
             className="w-full bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:from-violet-600 hover:to-fuchsia-600 text-white py-6 rounded-xl text-lg font-bold"
@@ -213,20 +239,7 @@ export function MbtiSection() {
           </Button>
         </div>
 
-        {/* Points Insufficient Modal */}
-        <PointsInsufficientModal
-          isOpen={showPointsModal}
-          onClose={() => setShowPointsModal(false)}
-          currentPoints={points}
-          requiredPoints={ANALYSIS_COST}
-          onWatchAd={() => {
-            setShowPointsModal(false)
-            window.location.href = '/user-profile#bonus'
-          }}
-          onBuyPi={() => {
-            setShowPointsModal(false)
-          }}
-        />
+        {pointsModal}
       </>
     )
   }
@@ -278,20 +291,7 @@ export function MbtiSection() {
           </div>
         </div>
 
-        {/* Points Insufficient Modal */}
-        <PointsInsufficientModal
-          isOpen={showPointsModal}
-          onClose={() => setShowPointsModal(false)}
-          currentPoints={points}
-          requiredPoints={ANALYSIS_COST}
-          onWatchAd={() => {
-            setShowPointsModal(false)
-            window.location.href = '/user-profile#bonus'
-          }}
-          onBuyPi={() => {
-            setShowPointsModal(false)
-          }}
-        />
+        {pointsModal}
       </>
     )
   }
@@ -515,20 +515,7 @@ export function MbtiSection() {
         </Button>
         </div>
 
-        {/* Points Insufficient Modal */}
-        <PointsInsufficientModal
-          isOpen={showPointsModal}
-          onClose={() => setShowPointsModal(false)}
-          currentPoints={points}
-          requiredPoints={ANALYSIS_COST}
-          onWatchAd={() => {
-            setShowPointsModal(false)
-            window.location.href = '/user-profile#bonus'
-          }}
-          onBuyPi={() => {
-            setShowPointsModal(false)
-          }}
-        />
+        {pointsModal}
       </>
     )
   }
@@ -596,20 +583,7 @@ export function MbtiSection() {
         </div>
         </div>
 
-        {/* Points Insufficient Modal */}
-        <PointsInsufficientModal
-          isOpen={showPointsModal}
-          onClose={() => setShowPointsModal(false)}
-          currentPoints={points}
-          requiredPoints={ANALYSIS_COST}
-          onWatchAd={() => {
-            setShowPointsModal(false)
-            window.location.href = '/user-profile#bonus'
-          }}
-          onBuyPi={() => {
-            setShowPointsModal(false)
-          }}
-        />
+        {pointsModal}
       </>
     )
   }
@@ -665,20 +639,7 @@ export function MbtiSection() {
         </div>
         </div>
 
-        {/* Points Insufficient Modal */}
-        <PointsInsufficientModal
-          isOpen={showPointsModal}
-          onClose={() => setShowPointsModal(false)}
-          currentPoints={points}
-          requiredPoints={ANALYSIS_COST}
-          onWatchAd={() => {
-            setShowPointsModal(false)
-            window.location.href = '/user-profile#bonus'
-          }}
-          onBuyPi={() => {
-            setShowPointsModal(false)
-          }}
-        />
+        {pointsModal}
       </>
     )
   }
@@ -738,20 +699,7 @@ export function MbtiSection() {
         </div>
         </div>
 
-        {/* Points Insufficient Modal */}
-        <PointsInsufficientModal
-          isOpen={showPointsModal}
-          onClose={() => setShowPointsModal(false)}
-          currentPoints={points}
-          requiredPoints={ANALYSIS_COST}
-          onWatchAd={() => {
-            setShowPointsModal(false)
-            window.location.href = '/user-profile#bonus'
-          }}
-          onBuyPi={() => {
-            setShowPointsModal(false)
-          }}
-        />
+        {pointsModal}
       </>
     )
   }
@@ -870,20 +818,7 @@ export function MbtiSection() {
         </div>
         </div>
 
-        {/* Points Insufficient Modal */}
-        <PointsInsufficientModal
-          isOpen={showPointsModal}
-          onClose={() => setShowPointsModal(false)}
-          currentPoints={points}
-          requiredPoints={ANALYSIS_COST}
-          onWatchAd={() => {
-            setShowPointsModal(false)
-            window.location.href = '/user-profile#bonus'
-          }}
-          onBuyPi={() => {
-            setShowPointsModal(false)
-          }}
-        />
+        {pointsModal}
       </>
     )
   }

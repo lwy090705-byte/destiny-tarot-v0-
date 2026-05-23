@@ -4,7 +4,10 @@
 import { useState, useEffect, useMemo } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { tarotCards, generateTarotReading, getTarotMessage } from "@/lib/tarot"
+import { tarotCards } from "@/lib/tarot"
+import { loadTarotReading, type TarotCachedPayload } from "@/lib/fortune-tarot-bundle"
+import { userProfileToFortuneContext } from "@/lib/fortune"
+import type { UserProfile } from "@/lib/types"
 import { useLanguage } from "@/lib/language-context"
 import { usePoints } from "@/lib/points-context"
 import { PointsInsufficientModal } from "./points-insufficient-modal"
@@ -63,8 +66,14 @@ const TAROT_CATEGORY_STYLES: Record<
   },
 }
 
+interface TarotSectionProps {
+  selectedProfile?: UserProfile | null
+  userCode?: string
+  nickname?: string
+}
+
 // v10-rebuild-trigger
-export function TarotSection() {
+export function TarotSection({ selectedProfile, userCode, nickname }: TarotSectionProps) {
   const { language, t } = useLanguage()
   const { deductPoints, hasEnoughPoints } = usePoints()
   const ANALYSIS_COST = 10
@@ -74,7 +83,26 @@ export function TarotSection() {
   const [selectedCards, setSelectedCards] = useState<typeof tarotCards>([])
   const [showResult, setShowResult] = useState(false)
   const [showPointsModal, setShowPointsModal] = useState(false)
+  const [tarotPayload, setTarotPayload] = useState<TarotCachedPayload | null>(null)
   const { points } = usePoints()
+
+  const profileSeed = useMemo(() => {
+    if (selectedProfile) {
+      return userProfileToFortuneContext(selectedProfile, { userCode, nickname })
+    }
+    return userProfileToFortuneContext(
+      {
+        id: 'tarot-guest',
+        name: 'guest',
+        birthYear: 2000,
+        birthMonth: 1,
+        birthDay: 1,
+        calendarType: 'solar',
+        gender: 'male',
+      },
+      { userCode, nickname }
+    )
+  }, [selectedProfile, userCode, nickname])
 
   // 언어 변경 시 결과 리셋
   useEffect(() => {
@@ -82,6 +110,7 @@ export function TarotSection() {
     setSelectedCards([])
     setTarotMode(null)
     setTarotType(null)
+    setTarotPayload(null)
   }, [language])
 
   const requiredCount = tarotMode === 'one' ? 1 : tarotMode === 'three' ? 3 : 0
@@ -209,21 +238,45 @@ export function TarotSection() {
     }
   }
 
-  const handleReveal = () => {
-    // Check and deduct points
+  const handleReveal = async () => {
+    if (!tarotType || !tarotMode || selectedCards.length < requiredCount) return
+
     if (!hasEnoughPoints(ANALYSIS_COST)) {
       setShowPointsModal(true)
       return
     }
-    if (!deductPoints(ANALYSIS_COST)) {
+    if (
+      !deductPoints(ANALYSIS_COST, {
+        point_type: 'fortune_tarot',
+        description: 'Tarot analysis',
+      })
+    ) {
       return
     }
+
+    const positionLabels =
+      tarotMode === 'three'
+        ? [t('tarot.past'), t('tarot.present'), t('tarot.future')]
+        : []
+
+    const payload = await loadTarotReading({
+      profile: profileSeed,
+      tarotKind: tarotType,
+      cardIds: selectedCards.map((c) => c.id),
+      mode: tarotMode,
+      language,
+      userCode: userCode ?? null,
+      positionLabels,
+    })
+
+    setTarotPayload(payload)
     setShowResult(true)
   }
 
   const handleReset = () => {
     setSelectedCards([])
     setShowResult(false)
+    setTarotPayload(null)
   }
 
   const getPositionLabel = (index: number): string => {
@@ -235,19 +288,9 @@ export function TarotSection() {
   }
 
   // 리딩 결과 화면
-  if (showResult) {
-    const reading = generateTarotReading(selectedCards, language, tarotType)
-    
-    // 세 장 뽑기인 경우 카드별 해석 생성
-    const cardInterpretations = tarotMode === 'three' ? selectedCards.map((card, idx) => {
-      const seed = card.id + (idx * 100)
-      const msgIndex = seed % 8
-      const positions = [t('tarot.past'), t('tarot.present'), t('tarot.future')]
-      return {
-        position: positions[idx],
-        message: getTarotMessage(language, tarotType, msgIndex)
-      }
-    }) : []
+  if (showResult && tarotPayload) {
+    const reading = tarotPayload.reading
+    const cardInterpretations = tarotPayload.cardInterpretations
 
     return (
       <div className="space-y-4">

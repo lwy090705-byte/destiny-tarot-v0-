@@ -9,7 +9,7 @@ import { usePoints } from "@/lib/points-context"
 
 export function Header() {
   const { language, setLanguage, t } = useLanguage()
-  const { points, isHydrated } = usePoints()
+  const { displayPoints, isHydrated } = usePoints()
   const [open, setOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -75,7 +75,7 @@ export function Header() {
                 }}
               >
                 <span style={{ fontSize: 11 }}>✦</span>
-                {points}P
+                {displayPoints}
               </div>
             )}
           </div>

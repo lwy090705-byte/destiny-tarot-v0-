@@ -1,0 +1,17 @@
+-- Run in Supabase SQL editor:
+--
+-- create table if not exists visit_logs (
+--   id uuid primary key default gen_random_uuid(),
+--   created_at timestamptz default now(),
+--   nickname text,
+--   user_code text,
+--   visit_date date not null
+-- );
+--
+-- create unique index if not exists visit_logs_user_code_date
+--   on visit_logs (visit_date, user_code)
+--   where user_code is not null and user_code <> '';
+--
+-- create unique index if not exists visit_logs_nickname_date_no_code
+--   on visit_logs (visit_date, nickname)
+--   where user_code is null or user_code = '';

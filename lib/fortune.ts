@@ -19,6 +19,7 @@ import { templatePoolsVi } from './fortune-pools-vi'
 import { templatePoolsTh } from './fortune-pools-th'
 import { templatePoolsHi } from './fortune-pools-hi'
 import { getPersonalizationVariant, createPersonalization, type FortunePersonalization } from './myeongrihak'
+import { resolveProfileNumericSeed } from './fortune-seed'
 import { getMonthlyFortune } from './monthly-fortunes'
 import { 
   loveFortuneTemplates, 
@@ -628,6 +629,9 @@ function generateCustomFortune(
 
 // ─── Fortune Profile Context (프로필 컨텍스트) ─────────────────────────────────
 export interface FortuneProfileContext {
+  profileId?: string
+  userCode?: string
+  nickname?: string
   name: string
   birthYear: number
   birthMonth: number
@@ -638,6 +642,19 @@ export interface FortuneProfileContext {
   profileHash?: number
   personalization?: FortunePersonalization
 }
+
+export type { FortuneProfileSeedInput } from '@/lib/fortune-seed'
+export {
+  buildSajuSeedKey,
+  buildCompatibilitySeedKey,
+  buildTarotSeedKey,
+  formatTodayKey,
+  formatMonthPeriodKey,
+  formatYearPeriodKey,
+  hashSeedKeyToNumber,
+  resolveProfileNumericSeed,
+  userProfileToFortuneContext,
+} from '@/lib/fortune-seed'
 
 // ─── 다국어 운세 텍스트 ────────────────────────────────────────────────────
 
@@ -1362,19 +1379,39 @@ export function generateEnhancedFortuneWithProfile(
       profile.birthHour, profile.gender, profile.isLunar
     )
 
-    // 각 종류의 운세마다 다른 시드 생성
-    let seed = profileHash
-    if (type === 'daily') {
-      seed += new Date().getDate() * 73 + new Date().getMonth() * 137
-    } else if (type === 'yearly') {
-      seed += new Date().getFullYear() * 241
-    } else if (type === 'monthly' && month) {
-      seed += month * 181 + profile.birthMonth * 97
-    }
-
-    // 카테고리별 다른 계수 추가
-    if (primaryCategory.length > 0) {
-      seed += primaryCategory.charCodeAt(0) * 1009 + (primaryCategory.charCodeAt(primaryCategory.length - 1) || 0) * 503
+    const now = new Date()
+    let seed: number
+    if (profile.profileId) {
+      if (type === 'daily') {
+        seed = resolveProfileNumericSeed(profile, 'daily', { category: primaryCategory })
+      } else if (type === 'yearly') {
+        seed = resolveProfileNumericSeed(profile, 'yearly', {
+          year: now.getFullYear(),
+          category: primaryCategory,
+        })
+      } else if (type === 'monthly' && month) {
+        seed = resolveProfileNumericSeed(profile, 'monthly', {
+          year: now.getFullYear(),
+          month,
+          category: primaryCategory,
+        })
+      } else {
+        seed = resolveProfileNumericSeed(profile, 'lifetime', { category: primaryCategory })
+      }
+    } else {
+      seed = profileHash
+      if (type === 'daily') {
+        seed += now.getDate() * 73 + now.getMonth() * 137
+      } else if (type === 'yearly') {
+        seed += now.getFullYear() * 241
+      } else if (type === 'monthly' && month) {
+        seed += month * 181 + profile.birthMonth * 97
+      }
+      if (primaryCategory.length > 0) {
+        seed +=
+          primaryCategory.charCodeAt(0) * 1009 +
+          (primaryCategory.charCodeAt(primaryCategory.length - 1) || 0) * 503
+      }
     }
 
     const rng = new SeededRandom(seed)
@@ -1518,11 +1555,24 @@ export function generateEnhancedMonthlyFortunesWithProfile(
       }))
     }
 
+    const calendarYear = new Date().getFullYear()
+
     return Array.from({ length: 12 }, (_, monthIndex) => {
       try {
         const month = monthIndex + 1
-        const currentMonth = new Date().getMonth() + 1
-        const personalSeed = createPersonalSeed(profileHash, 'monthly', undefined, currentMonth, month)
+        const personalSeed = profile.profileId
+          ? resolveProfileNumericSeed(profile, 'monthly', {
+              year: calendarYear,
+              month,
+              category: primaryCategory,
+            })
+          : createPersonalSeed(
+              profileHash,
+              'monthly',
+              undefined,
+              new Date().getMonth() + 1,
+              month
+            )
         const rng = new SeededRandom(personalSeed)
         
         // Use category-specific pools for monthly fortune
@@ -1619,11 +1669,13 @@ export function generateLifetimeFortuneWithProfile(
       }
     }
     
-    // Use personal seed to generate unique descriptions for each life phase
-    // Each phase gets a completely different seed to ensure variety
-    const earlyPersonalSeed = createPersonalSeed(profileHash, 'lifetime', undefined, undefined)
-    const midPersonalSeed = earlyPersonalSeed ^ 0xAAAAAAAA
-    const latePersonalSeed = earlyPersonalSeed ^ 0x55555555
+    const lifetimeBase = profile.profileId
+      ? resolveProfileNumericSeed(profile, 'lifetime', { category })
+      : createPersonalSeed(profileHash, 'lifetime', undefined, undefined)
+
+    const earlyPersonalSeed = lifetimeBase
+    const midPersonalSeed = lifetimeBase ^ 0xAAAAAAAA
+    const latePersonalSeed = lifetimeBase ^ 0x55555555
     
     // Generate custom fortunes using category-specific pools for detailed analysis
     // 각 생명 단계마다 카테고리별 전문 pool 사용하여 4-5줄 이상 생성

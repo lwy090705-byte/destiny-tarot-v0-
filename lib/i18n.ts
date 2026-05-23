@@ -12,10 +12,26 @@ import { zhMessages } from './i18n/packs/zh'
 import { getCopyrightBodies } from './i18n/copyright-bodies'
 import { getPagesMisc } from './i18n/pages-misc-i18n'
 import { resolveTranslation } from './i18n/resolve-translation'
+import { getModalOverlay } from './i18n/packs/modal-overlay'
 
 export { resolveTranslation } from './i18n/resolve-translation'
 
-export const ALL_LANGUAGES = ['ko', 'en', 'ja', 'zh', 'es', 'id', 'fr', 'de', 'pt', 'hi', 'vi', 'th'] as const
+export const ALL_LANGUAGES = [
+  'ko',
+  'en',
+  'ja',
+  'zh',
+  'es',
+  'id',
+  'fr',
+  'de',
+  'pt',
+  'ru',
+  'ar',
+  'hi',
+  'vi',
+  'th',
+] as const
 export type Language = (typeof ALL_LANGUAGES)[number]
 
 export const languages: { id: Language; label: string; flag: string }[] = [
@@ -31,6 +47,8 @@ export const languages: { id: Language; label: string; flag: string }[] = [
   { id: 'hi', label: 'हिन्दी', flag: '🇮🇳' },
   { id: 'vi', label: 'Tiếng Việt', flag: '🇻🇳' },
   { id: 'th', label: 'ไทย', flag: '🇹🇭' },
+  { id: 'ru', label: 'Русский', flag: '🇷🇺' },
+  { id: 'ar', label: 'العربية', flag: '🇸🇦' },
 ]
 
 export const koTranslations: Record<string, string> = {
@@ -422,8 +440,19 @@ export const koTranslations: Record<string, string> = {
     'common.close': '닫기',
 
     // Level names (1=lowest, 6=highest)
-    'level.1': '마스터', 'level.2': '현자', 'level.3': '해석자',
-    'level.4': '탐구자', 'level.5': '수련생', 'level.6': '입문자',
+    'level.1': '마스터',
+    'level.2': '현자',
+    'level.3': '해석자',
+    'level.4': '탐구자',
+    'level.5': '수련생',
+    'level.6': '입문자',
+    'level.1.desc': '최고 등급의 운명 지배자',
+    'level.2.desc': '깊은 통찰을 지닌 현자',
+    'level.3.desc': '운명과 타로를 해석하는 자',
+    'level.4.desc': '진리를 탐구하는 여정의 동반자',
+    'level.5.desc': '꾸준히 수련하는 성장형',
+    'level.6.desc': '운명의 문을 연 입문자',
+    'level.operator.desc': '앱 운영 및 커뮤니티 관리 권한',
 
     // Achievement titles & descriptions
     'achievement.1.title': '첫 운세', 'achievement.1.desc': '첫 번째 운세를 확인했습니다',
@@ -637,11 +666,22 @@ export const koTranslations: Record<string, string> = {
 }
 
 function buildLangPack(language: Language, pack: Record<string, string>): Record<string, string> {
-  return { ...koTranslations, ...pack, ...getCopyrightBodies(language), ...getPagesMisc(language) }
+  return {
+    ...koTranslations,
+    ...pack,
+    ...getCopyrightBodies(language),
+    ...getPagesMisc(language),
+    ...getModalOverlay(language),
+  }
 }
 
 export const translations: Record<Language, Record<string, string>> = {
-  ko: { ...koTranslations, ...getCopyrightBodies('ko'), ...getPagesMisc('ko') },
+  ko: {
+    ...koTranslations,
+    ...getCopyrightBodies('ko'),
+    ...getPagesMisc('ko'),
+    ...getModalOverlay('ko'),
+  },
   en: buildLangPack('en', enMessages),
   ja: buildLangPack('ja', jaMessages),
   zh: buildLangPack('zh', zhMessages),
@@ -650,12 +690,14 @@ export const translations: Record<Language, Record<string, string>> = {
   fr: buildLangPack('fr', frMessages),
   de: buildLangPack('de', deMessages),
   pt: buildLangPack('pt', ptMessages),
+  ru: buildLangPack('ru', enMessages),
+  ar: buildLangPack('ar', enMessages),
   hi: buildLangPack('hi', hiMessages),
   vi: buildLangPack('vi', viMessages),
   th: buildLangPack('th', thMessages),
 }
 
-/** UI strings: localized pack → English → key (never Korean for non-ko). */
+/** UI strings: localized pack (≠ ko) → language misc → English → key. */
 export function useTranslation(language: Language) {
   return (key: string) => resolveTranslation(language, translations[language], koTranslations, key)
 }

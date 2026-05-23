@@ -6,25 +6,17 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { SajuResult } from "./saju-result"
 import { calculateSaju, elementColors, getElementInfo } from "@/lib/saju"
-import { 
-  generateFortune, 
-  generateMonthlyFortunes, 
-  generateLifetimeFortune, 
-  generateYearlyFortune,
-  generateFortuneWithProfile,
-  generateMonthlyFortunesWithProfile,
-  generateLifetimeFortuneWithProfile,
-  generateYearlyFortuneWithProfile,
-  generateEnhancedFortuneWithProfile,
-  generateEnhancedMonthlyFortunesWithProfile,
-  type FortuneProfileContext
-} from "@/lib/fortune"
+import type { FortuneProfileContext } from "@/lib/fortune"
+import { loadMyungliFortuneBundle } from "@/lib/fortune-myungli-bundle"
 import type { FortuneType, FortuneCategory, SajuResult as SajuResultType, FortuneResult, LifetimeFortune } from "@/lib/types"
 import { useLanguage } from "@/lib/language-context"
 import { usePoints } from "@/lib/points-context"
 import { PointsInsufficientModal } from "./points-insufficient-modal"
 
 interface MyungliSectionProps {
+  profileId?: string
+  userCode?: string
+  nickname?: string
   initialYear?: number
   initialMonth?: number
   initialDay?: number
@@ -37,6 +29,9 @@ interface MyungliSectionProps {
 
 // v4 - uses useLanguage() context with language variable
 export function MyungliSection({
+  profileId,
+  userCode,
+  nickname,
   initialYear = 2000,
   initialMonth = 1,
   initialDay = 1,
@@ -85,6 +80,9 @@ export function MyungliSection({
   
   // Create profile context for personalized fortune generation - memoized to prevent recreations
   const profileContext: FortuneProfileContext = useMemo(() => ({
+    profileId,
+    userCode,
+    nickname,
     name,
     birthYear: year || 2000,
     birthMonth: month || 1,
@@ -92,7 +90,7 @@ export function MyungliSection({
     birthHour: hour,
     gender: gender || 'male',
     isLunar: calendarType === 'lunar',
-  }), [name, year, month, day, hour, gender, calendarType, t])
+  }), [profileId, userCode, nickname, name, year, month, day, hour, gender, calendarType])
   
   const [fortuneType, setFortuneType] = useState<FortuneType>('yearly')
   const [fortuneCategory, setFortuneCategory] = useState<FortuneCategory>('total')
@@ -101,7 +99,6 @@ export function MyungliSection({
   const [fortuneResults, setFortuneResults] = useState<FortuneResult[]>([])
   const [lifetimeFortune, setLifetimeFortune] = useState<LifetimeFortune | null>(null)
   const [showPointsModal, setShowPointsModal] = useState(false)
-
   // Reset result-related state when language changes (Very Important)
   useEffect(() => {
     setShowResult(false)
@@ -110,55 +107,51 @@ export function MyungliSection({
     setLifetimeFortune(null)
   }, [language])
 
-  // Cache fortune generation based on profile and settings - only regenerate when needed
-  const cachedFortune = useMemo(() => {
-    if (!showResult || !sajuResult) return null
-    
-    try {
-      // Use enhanced profile-based fortune generation for personalized results
-      if (fortuneType === 'lifetime') {
-        return {
-          lifetime: generateLifetimeFortuneWithProfile(fortuneCategory, profileContext, language),
-          results: [],
-        }
-      } else if (fortuneType === 'yearly') {
-        return {
-          lifetime: null,
-          results: [generateEnhancedFortuneWithProfile('yearly', fortuneCategory, profileContext, undefined, language)],
-        }
-      } else if (fortuneType === 'monthly') {
-        return {
-          lifetime: null,
-          results: generateEnhancedMonthlyFortunesWithProfile(fortuneCategory, profileContext, language),
-        }
-      } else {
-        return {
-          lifetime: null,
-          results: [generateFortuneWithProfile(fortuneType, fortuneCategory, profileContext, undefined, language)],
-        }
-      }
-    } catch (error) {
-      console.log('[v0] Error generating fortune in useMemo:', error)
-      return {
-        lifetime: null,
-        results: [{
-          type: fortuneType,
-          category: fortuneCategory,
-          score: 7,
-          description: t('fortune.generateError'),
-          luckyColor: '#9C27B0',
-          luckyNumber: 7,
-        }],
-      }
-    }
-  }, [showResult, sajuResult, fortuneType, fortuneCategory, profileContext, language, t])
-
-  // Apply cached fortune to state only when it changes
   useEffect(() => {
-    if (!cachedFortune) return
-    setLifetimeFortune(cachedFortune.lifetime)
-    setFortuneResults(cachedFortune.results)
-  }, [cachedFortune])
+    if (!showResult || !sajuResult) return
+
+    let cancelled = false
+
+    loadMyungliFortuneBundle({
+      profile: profileContext,
+      fortuneType,
+      fortuneCategory,
+      language,
+      userCode: userCode ?? null,
+    })
+      .then((bundle) => {
+        if (cancelled) return
+        setLifetimeFortune(bundle.lifetime)
+        setFortuneResults(bundle.results)
+      })
+      .catch((error) => {
+        console.error('[myungli] fortune load failed', error)
+        if (cancelled) return
+        setLifetimeFortune(null)
+        setFortuneResults([
+          {
+            type: fortuneType,
+            category: fortuneCategory,
+            score: 7,
+            description: t('fortune.generateError'),
+            luckyColor: '#9C27B0',
+            luckyNumber: '7',
+          },
+        ])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [
+    showResult,
+    sajuResult,
+    fortuneType,
+    fortuneCategory,
+    profileContext,
+    language,
+    userCode,
+    t,
+  ])
 
   const fortuneTypes: { id: FortuneType; label: string }[] = [
     { id: 'lifetime', label: t('fortune.lifetime') },
@@ -181,7 +174,7 @@ export function MyungliSection({
       setShowPointsModal(true)
       return
     }
-    if (!deductPoints(ANALYSIS_COST)) {
+    if (!deductPoints(ANALYSIS_COST, { point_type: "fortune_myungli", description: "Myungli analysis" })) {
       return
     }
 

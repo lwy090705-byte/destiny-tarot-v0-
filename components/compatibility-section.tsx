@@ -14,6 +14,12 @@ import type { UserProfile } from "@/lib/types"
 import type { Language } from "@/lib/i18n"
 import { pickLabel, type FullLabelRow } from "@/lib/fortune-generator"
 import { buildCompatibilityNarrative, compatibilityElementLabel } from "@/lib/compatibility-result-text"
+import {
+  loadCompatibilityResult,
+  personInputToCompatPerson,
+  type CompatibilityCachedResult,
+} from "@/lib/fortune-compatibility"
+import { hashSeedKeyToNumber, buildCompatibilitySeedKey } from "@/lib/fortune-seed"
 import { useLanguage } from "@/lib/language-context"
 import { usePoints } from "@/lib/points-context"
 import { PointsInsufficientModal } from "./points-insufficient-modal"
@@ -21,29 +27,21 @@ import { PointsInsufficientModal } from "./points-insufficient-modal"
 interface CompatibilitySectionProps {
   profiles: UserProfile[]
   selectedProfile: UserProfile | null
+  userCode?: string
 }
 
 interface PersonInput {
+  profileId?: string
   name: string
   birthYear: number
   birthMonth: number
   birthDay: number
+  birthHour?: number
+  gender?: 'male' | 'female'
   calendarType: 'solar' | 'lunar'
 }
 
-interface CompatibilityResult {
-  overall: number
-  love: number
-  work: number
-  trust: number
-  summary: string
-  advice: string
-  element1: string
-  element2: string
-  personalityMatch: string
-  strengths: string
-  cautions: string
-}
+type CompatibilityResult = CompatibilityCachedResult
 
 // 오행 계산 (생년 기준)
 function getElement(year: number): 'wood' | 'fire' | 'earth' | 'metal' | 'water' {
@@ -113,7 +111,27 @@ function calcCompatibility(el1: string, el2: string, seed: number): Compatibilit
 function generateResult(p1: PersonInput, p2: PersonInput, language: Language): CompatibilityResult {
   const el1 = getElement(p1.birthYear)
   const el2 = getElement(p2.birthYear)
-  const seed = (p1.birthYear + p1.birthMonth * 3 + p1.birthDay * 7 + p2.birthYear + p2.birthMonth * 5 + p2.birthDay * 11) % 100
+  const idA = p1.profileId ?? `anon-${p1.birthYear}-${p1.birthMonth}-${p1.birthDay}`
+  const idB = p2.profileId ?? `anon-${p2.birthYear}-${p2.birthMonth}-${p2.birthDay}`
+  const seedKey = buildCompatibilitySeedKey(
+    {
+      id: idA,
+      birthYear: p1.birthYear,
+      birthMonth: p1.birthMonth,
+      birthDay: p1.birthDay,
+      birthHour: p1.birthHour,
+      gender: p1.gender,
+    },
+    {
+      id: idB,
+      birthYear: p2.birthYear,
+      birthMonth: p2.birthMonth,
+      birthDay: p2.birthDay,
+      birthHour: p2.birthHour,
+      gender: p2.gender,
+    }
+  )
+  const seed = hashSeedKeyToNumber(seedKey) % 100
 
   const base = calcCompatibility(el1, el2, seed)
   const narrative = buildCompatibilityNarrative(language, p1, p2, el1, el2, seed)
@@ -195,10 +213,13 @@ function PersonForm({
             onValueChange={(id) => {
               const found = profiles.find(p => p.id === id)
               if (found) onChange({
+                profileId: found.id,
                 name: found.name,
                 birthYear: found.birthYear,
                 birthMonth: found.birthMonth,
                 birthDay: found.birthDay,
+                birthHour: found.birthHour,
+                gender: found.gender,
                 calendarType: found.calendarType,
               })
             }}
@@ -274,7 +295,7 @@ function PersonForm({
 }
 
 // v3 - uses useLanguage() context, no language prop
-export function CompatibilitySection({ profiles, selectedProfile }: CompatibilitySectionProps) {
+export function CompatibilitySection({ profiles, selectedProfile, userCode }: CompatibilitySectionProps) {
   const { language, t } = useLanguage()
   const { deductPoints, hasEnoughPoints, points } = usePoints()
   const ANALYSIS_COST = 10
@@ -284,7 +305,16 @@ export function CompatibilitySection({ profiles, selectedProfile }: Compatibilit
   const days   = useMemo(() => Array.from({ length: 31 },  (_, i) => i + 1), [])
   const [person1, setPerson1] = useState<PersonInput>(() =>
     selectedProfile
-      ? { name: selectedProfile.name, birthYear: selectedProfile.birthYear, birthMonth: selectedProfile.birthMonth, birthDay: selectedProfile.birthDay, calendarType: selectedProfile.calendarType }
+      ? {
+          profileId: selectedProfile.id,
+          name: selectedProfile.name,
+          birthYear: selectedProfile.birthYear,
+          birthMonth: selectedProfile.birthMonth,
+          birthDay: selectedProfile.birthDay,
+          birthHour: selectedProfile.birthHour,
+          gender: selectedProfile.gender,
+          calendarType: selectedProfile.calendarType,
+        }
       : defaultPerson()
   )
   const [person2, setPerson2] = useState<PersonInput>(defaultPerson)
@@ -305,19 +335,32 @@ export function CompatibilitySection({ profiles, selectedProfile }: Compatibilit
     setResult(newResult)
   }, [language])
 
-  const handleCalculate = () => {
+  const handleCalculate = async () => {
     if (!person1.name.trim() || !person2.name.trim()) return
-    
-    // Check and deduct points
+
     if (!hasEnoughPoints(ANALYSIS_COST)) {
       setShowPointsModal(true)
       return
     }
-    if (!deductPoints(ANALYSIS_COST)) {
+    if (
+      !deductPoints(ANALYSIS_COST, {
+        point_type: 'fortune_compatibility',
+        description: 'Compatibility analysis',
+      })
+    ) {
       return
     }
-    
-    setResult(generateResult(person1, person2, language))
+
+    const compatA = personInputToCompatPerson(person1, 'person-1')
+    const compatB = personInputToCompatPerson(person2, 'person-2')
+    const data = await loadCompatibilityResult({
+      personA: compatA,
+      personB: compatB,
+      language,
+      userCode: userCode ?? null,
+      generate: () => generateResult(person1, person2, language),
+    })
+    setResult(data)
   }
 
   const handleReset = () => setResult(null)

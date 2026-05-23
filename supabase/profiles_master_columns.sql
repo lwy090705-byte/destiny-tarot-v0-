@@ -1,0 +1,10 @@
+-- Run in Supabase SQL editor if columns are missing on `profiles`:
+--
+-- alter table profiles add column if not exists role text default 'user';
+-- alter table profiles add column if not exists is_master boolean default false;
+-- alter table profiles add column if not exists level_title text;
+-- alter table profiles add column if not exists total_points int4 default 0;
+--
+-- update profiles
+-- set role = 'master', is_master = true, level_title = '운영자'
+-- where trim(nickname) = '대질주';

@@ -3,14 +3,18 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react"
 import { Button } from "@/components/ui/button"
-import { generateFortune } from "@/lib/fortune"
 import type { FortuneResult } from "@/lib/types"
 import { useLanguage } from "@/lib/language-context"
 import { usePoints } from "@/lib/points-context"
 import { PointsInsufficientModal } from "./points-insufficient-modal"
-import { createPersonalization, generateUniqueSeed, getPersonalizationVariant } from "@/lib/myeongrihak"
+import { loadDailyFortuneBundle } from "@/lib/fortune-daily-bundle"
+import { peekFortuneResult } from "@/lib/fortune-cache"
+import { buildSajuSeedKey, formatTodayKey, userProfileToFortuneContext } from "@/lib/fortune"
 
 interface DailyFortuneSectionProps {
+  profileId?: string
+  userCode?: string
+  nickname?: string
   initialYear?: number
   initialMonth?: number
   initialDay?: number
@@ -21,38 +25,11 @@ interface DailyFortuneSectionProps {
   onCalendarTypeChange: (type: 'solar' | 'lunar') => void
 }
 
-// 오늘 날짜를 YYYY-MM-DD 형식으로
-function getTodayKey(): string {
-  const today = new Date()
-  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
-}
-
-// 생년월일 + 시간 + 성별 + 오늘 날짜 기반 개인화 시드 생성
-function generatePersonalizedSeed(
-  birthYear: number,
-  birthMonth: number,
-  birthDay: number,
-  birthHour: number | undefined,
-  gender: 'male' | 'female',
-  categoryIndex: number
-): number {
-  const personalization = createPersonalization(birthYear, birthMonth, birthDay, birthHour, gender)
-  const today = new Date()
-  const seed = generateUniqueSeed(personalization, today.getFullYear(), today.getMonth() + 1, today.getDate(), categoryIndex)
-  return seed
-}
-
-// 시드 기반 의사 난수 생성기
-function seededRandom(seed: number): () => number {
-  let s = seed
-  return () => {
-    s = (s * 9301 + 49297) % 233280
-    return s / 233280
-  }
-}
-
 // v3 - uses useLanguage() context, no language prop
 export function DailyFortuneSection({
+  profileId,
+  userCode,
+  nickname,
   initialYear = 2000,
   initialMonth = 1,
   initialDay = 1,
@@ -82,6 +59,7 @@ export function DailyFortuneSection({
   const [gender, setGender] = useState(initialGender)
   const [name, setName] = useState(initialName)
   const [showResult, setShowResult] = useState(false)
+  const [fortuneResults, setFortuneResults] = useState<FortuneResult[]>([])
 
   // 프로필 선택 시 날짜 및 시간, 성별, 이름 동기화
   useEffect(() => {
@@ -101,110 +79,93 @@ export function DailyFortuneSection({
     setFortuneResults([])
   }, [language])
 
+  const profileSeedInput = useMemo(
+    () =>
+      userProfileToFortuneContext(
+        {
+          id: profileId ?? `legacy-${year}-${month}-${day}-${gender}`,
+          name: name || 'user',
+          birthYear: year,
+          birthMonth: month,
+          birthDay: day,
+          birthHour: hour,
+          calendarType,
+          gender,
+        },
+        { userCode, nickname }
+      ),
+    [profileId, userCode, nickname, name, year, month, day, hour, gender, calendarType]
+  )
+
   // 언어가 변경되고 결과가 표시 중이면 운세 재생성
   useEffect(() => {
     if (!showResult) return
-    
-    // handleGetFortune을 재실행하여 새 언어로 운세 재생성
-    const storageKey = `dailyFortune_${year}_${month}_${day}_${gender}`
-    const todayKey = getTodayKey()
-    const seed = generatePersonalizedSeed(year, month, day, hour, gender, 0)
-    
-    const results: FortuneResult[] = [
-      generateFortune('daily', 'total', seed, language),
-      generateFortune('daily', 'wealth', seed + 1, language),
-      generateFortune('daily', 'love', seed + 2, language),
-      generateFortune('daily', 'health', seed + 3, language),
-    ]
-    
-    // localStorage에 새로운 언어로 업데이트
-    try {
-      localStorage.setItem(storageKey, JSON.stringify({
-        date: todayKey,
-        language,
-        gender,
-        results
-      }))
-    } catch {
-      // 무시
+    let cancelled = false
+    loadDailyFortuneBundle({
+      profile: profileSeedInput,
+      language,
+      userCode: userCode ?? null,
+    }).then((results) => {
+      if (!cancelled) setFortuneResults(results)
+    })
+    return () => {
+      cancelled = true
     }
-    
-    setFortuneResults(results)
-  }, [language, showResult, gender])
-  
-  const [fortuneResults, setFortuneResults] = useState<FortuneResult[]>([])
+  }, [language, showResult, profileSeedInput, userCode])
 
-  // 컴포넌트 마운트 시 오늘 저장된 운세가 있으면 불러오기
+  const dailySeedKey = useMemo(
+    () =>
+      buildSajuSeedKey(profileSeedInput, 'daily', {
+        dayKey: formatTodayKey(),
+        category: 'total',
+        fortuneType: 'daily',
+      }),
+    [profileSeedInput]
+  )
+
   useEffect(() => {
-    const storageKey = `dailyFortune_${year}_${month}_${day}_${gender}`
-    const todayKey = getTodayKey()
-    try {
-      const saved = localStorage.getItem(storageKey)
-      if (saved) {
-        const parsed = JSON.parse(saved)
-        if (parsed.date === todayKey && parsed.language === language && parsed.gender === gender) {
-          setFortuneResults(parsed.results)
-          setShowResult(true)
-        }
+    let cancelled = false
+    peekFortuneResult<FortuneResult[]>({ seedKey: dailySeedKey, language }).then(
+      (cached) => {
+        if (cancelled || !cached?.length) return
+        setFortuneResults(cached)
+        setShowResult(true)
       }
-    } catch {
-      // localStorage 접근 실패 시 무시
+    )
+    return () => {
+      cancelled = true
     }
-  }, [year, month, day, language, gender])
+  }, [dailySeedKey, language])
 
-  const handleGetFortune = () => {
-    const storageKey = `dailyFortune_${year}_${month}_${day}_${gender}`
-    const todayKey = getTodayKey()
-
-    // 이미 오늘 운세가 저장되어 있으면 그대로 사용 (포인트 차감 안함)
-    try {
-      const saved = localStorage.getItem(storageKey)
-      if (saved) {
-        const parsed = JSON.parse(saved)
-        if (parsed.date === todayKey && parsed.language === language && parsed.gender === gender) {
-          setFortuneResults(parsed.results)
-          setShowResult(true)
-          return
-        }
-      }
-    } catch {
-      // 무시
+  const handleGetFortune = async () => {
+    const cached = await peekFortuneResult<FortuneResult[]>({
+      seedKey: dailySeedKey,
+      language,
+    })
+    if (cached?.length) {
+      setFortuneResults(cached)
+      setShowResult(true)
+      return
     }
 
-    // 새로운 운세 조회 시 포인트 차감
     if (!hasEnoughPoints(ANALYSIS_COST)) {
       setShowPointsModal(true)
       return
     }
-    if (!deductPoints(ANALYSIS_COST)) {
+    if (
+      !deductPoints(ANALYSIS_COST, {
+        point_type: 'fortune_daily',
+        description: 'Daily fortune analysis',
+      })
+    ) {
       return
     }
 
-    // 개인화 데이터 생성
-    const personalization = createPersonalization(year, month, day, hour, gender)
-    const variant = getPersonalizationVariant(personalization, 0, 8)
-
-    // 시드 기반으로 운세 생성 (같은 날 같은 생년월일이면 동일 결과)
-    const seed = generatePersonalizedSeed(year, month, day, hour, gender, 0)
-    const results: FortuneResult[] = [
-      generateFortune('daily', 'total', seed, language, variant),
-      generateFortune('daily', 'wealth', seed + 1, language, variant),
-      generateFortune('daily', 'love', seed + 2, language, variant),
-      generateFortune('daily', 'health', seed + 3, language, variant),
-    ]
-
-    // localStorage에 저장
-    try {
-      localStorage.setItem(storageKey, JSON.stringify({
-        date: todayKey,
-        language,
-        gender,
-        results
-      }))
-    } catch {
-      // 저장 실패 시 무시
-    }
-
+    const results = await loadDailyFortuneBundle({
+      profile: profileSeedInput,
+      language,
+      userCode: userCode ?? null,
+    })
     setFortuneResults(results)
     setShowResult(true)
   }
