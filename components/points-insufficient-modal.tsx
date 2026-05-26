@@ -12,6 +12,8 @@ interface PointsInsufficientModalProps {
   requiredPoints: number
   onWatchAd: () => void
   onBuyPi: () => void
+  /** Premium subscribers — hide ad reward CTA */
+  hideAdOptions?: boolean
 }
 
 export function PointsInsufficientModal({
@@ -21,6 +23,7 @@ export function PointsInsufficientModal({
   requiredPoints,
   onWatchAd,
   onBuyPi,
+  hideAdOptions = false,
 }: PointsInsufficientModalProps) {
   const { t } = useLanguage()
   const [isClosing, setIsClosing] = useState(false)
@@ -105,7 +108,7 @@ export function PointsInsufficientModal({
 
             {/* Buttons */}
             <div className="space-y-3">
-              {/* Watch Ad button */}
+              {!hideAdOptions && (
               <button
                 onClick={onWatchAd}
                 className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold rounded-xl transition-all duration-200 active:scale-95 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
@@ -131,6 +134,7 @@ export function PointsInsufficientModal({
                 </svg>
                 <span>{t('points.watchAd') || '광고 보기'}</span>
               </button>
+              )}
 
               {/* Buy Pi button */}
               <button

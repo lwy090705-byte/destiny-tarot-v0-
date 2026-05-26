@@ -18,35 +18,23 @@ const koTypography: TypographyStyle = {
   direction: "ltr",
 }
 
-/** Arabic font/word-break; layout stays LTR — use dir="rtl" on text nodes only. */
-const arTypography: TypographyStyle = {
-  fontSize: "clamp(13px, 0.95vw, 16px)",
-  lineHeight: "1.5",
-  letterSpacing: "0",
-  wordBreak: "break-word",
-  fontFamily: "'Noto Sans Arabic', 'Noto Sans', sans-serif",
-  direction: "ltr",
-}
-
 export const languageTypography: Record<Language, TypographyStyle> = {
   ko: koTypography,
   en: koTypography,
   ja: koTypography,
   zh: koTypography,
   es: koTypography,
-  id: koTypography,
   fr: koTypography,
   de: koTypography,
   pt: koTypography,
-  ru: koTypography,
-  ar: arTypography,
   hi: koTypography,
   vi: koTypography,
   th: koTypography,
+  id: koTypography,
 }
 
-export function isRtlLanguage(language: Language): boolean {
-  return language === 'ar'
+export function isRtlLanguage(_language: Language): boolean {
+  return false
 }
 
 /** Apply on labels, paragraphs, buttons — not on modal/card shells. */

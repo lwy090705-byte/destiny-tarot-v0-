@@ -11,6 +11,8 @@ import { loadMyungliFortuneBundle } from "@/lib/fortune-myungli-bundle"
 import type { FortuneType, FortuneCategory, SajuResult as SajuResultType, FortuneResult, LifetimeFortune } from "@/lib/types"
 import { useLanguage } from "@/lib/language-context"
 import { usePoints } from "@/lib/points-context"
+import { usePremium } from "@/lib/use-premium"
+import { shouldSkipFortunePointCharge } from "@/lib/premium-access"
 import { PointsInsufficientModal } from "./points-insufficient-modal"
 
 interface MyungliSectionProps {
@@ -43,7 +45,9 @@ export function MyungliSection({
 }: MyungliSectionProps) {
   const { language, t } = useLanguage()
   const { deductPoints, hasEnoughPoints, points } = usePoints()
+  const { premium } = usePremium()
   const ANALYSIS_COST = 10
+  const skipPointCharge = shouldSkipFortunePointCharge(premium, 'myungli')
   
   // 카테고리 이름을 현재 언어로 가져오기
   const getCategoryName = (category: FortuneCategory): string => {
@@ -169,13 +173,14 @@ export function MyungliSection({
   ]
 
   const handleViewFortune = useCallback(() => {
-    // Check and deduct points
-    if (!hasEnoughPoints(ANALYSIS_COST)) {
-      setShowPointsModal(true)
-      return
-    }
-    if (!deductPoints(ANALYSIS_COST, { point_type: "fortune_myungli", description: "Myungli analysis" })) {
-      return
+    if (!skipPointCharge) {
+      if (!hasEnoughPoints(ANALYSIS_COST)) {
+        setShowPointsModal(true)
+        return
+      }
+      if (!deductPoints(ANALYSIS_COST, { point_type: "fortune_myungli", description: "Myungli analysis" })) {
+        return
+      }
     }
 
     try {
@@ -193,7 +198,7 @@ export function MyungliSection({
       setSajuResult(null)
       setShowResult(false)
     }
-  }, [year, month, day, hour, hasEnoughPoints, deductPoints, ANALYSIS_COST])
+  }, [year, month, day, hour, hasEnoughPoints, deductPoints, ANALYSIS_COST, skipPointCharge])
 
   if (showResult && sajuResult) {
     return (
@@ -690,6 +695,7 @@ export function MyungliSection({
         onClose={() => setShowPointsModal(false)}
         currentPoints={points ?? 0}
         requiredPoints={ANALYSIS_COST}
+        hideAdOptions={skipPointCharge || premium.benefits.hideAds}
         onWatchAd={() => {
           setShowPointsModal(false)
           // Navigate to profile page and highlight bonus section

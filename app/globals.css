@@ -257,7 +257,6 @@
     word-break: keep-all;
   }
   
-  html[data-lang="ar"],
   html[data-lang="th"],
   html[data-lang="hi"] {
     font-size: 16px;
@@ -268,7 +267,6 @@
   html[data-lang="fr"],
   html[data-lang="es"],
   html[data-lang="pt"],
-  html[data-lang="ru"],
   html[data-lang="vi"],
   html[data-lang="id"] {
     font-size: 16px;

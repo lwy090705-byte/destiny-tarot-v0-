@@ -6,6 +6,7 @@ import { LanguageProvider } from '@/lib/language-context'
 import { PointsProvider } from '@/lib/points-context'
 import { AnnouncementProvider } from '@/lib/announcement-context'
 import { UserProvider } from '@/lib/user-context'
+import { PremiumProvider } from '@/lib/premium-context'
 import { VisitLogTracker } from '@/components/visit-log-tracker'
 import './globals.css'
 
@@ -58,6 +59,7 @@ export default function RootLayout({
       <body className={`${notoSansKR.variable} font-sans antialiased`} suppressHydrationWarning>
         <LanguageProvider>
           <UserProvider>
+            <PremiumProvider>
             <VisitLogTracker />
             <PointsProvider>
               <AnnouncementProvider>
@@ -67,6 +69,7 @@ export default function RootLayout({
                 <Analytics />
               </AnnouncementProvider>
             </PointsProvider>
+            </PremiumProvider>
           </UserProvider>
         </LanguageProvider>
       </body>

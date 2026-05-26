@@ -22,6 +22,8 @@ import {
 } from "@/components/mbti/mbti-inline-labels"
 import { usePoints, type PointTransactionMeta } from "@/lib/points-context"
 import { usePointsExemption } from "@/lib/use-points-exemption"
+import { usePremium } from "@/lib/use-premium"
+import { isMbtiSectionUnlocked, shouldSkipFortunePointCharge } from "@/lib/premium-access"
 import { PointsInsufficientModal } from "./points-insufficient-modal"
 import { Brain, Heart, Briefcase, Users, Lock, Sparkles, ChevronRight, Check } from "lucide-react"
 
@@ -29,6 +31,7 @@ export function MbtiSection() {
   const { t, language } = useLanguage()
   const { deductPoints, hasEnoughPoints, points } = usePoints()
   const isPointsExempt = usePointsExemption()
+  const { premium } = usePremium()
   const ANALYSIS_COST = 10
   const FEATURE_COST = 10
   const PREMIUM_COST = 10
@@ -44,28 +47,39 @@ export function MbtiSection() {
 
   const questions = useMemo(() => getMbtiQuestions(language), [language])
 
+  const skipMbtiPoints = shouldSkipFortunePointCharge(premium, 'mbti')
+  const skipMbtiFeaturePoints = shouldSkipFortunePointCharge(premium, 'mbti_feature')
+
+  const isSectionUnlocked = useCallback(
+    (section: string) =>
+      unlockedSections.includes(section) || isMbtiSectionUnlocked(premium, section),
+    [unlockedSections, premium]
+  )
+
   const canUsePoints = useCallback(
-    (cost: number): boolean => {
+    (cost: number, kind: 'mbti' | 'mbti_feature' = 'mbti'): boolean => {
       if (isPointsExempt) return true
+      if (kind === 'mbti_feature' ? skipMbtiFeaturePoints : skipMbtiPoints) return true
       if (!hasEnoughPoints(cost)) {
         setShowPointsModal(true)
         return false
       }
       return true
     },
-    [isPointsExempt, hasEnoughPoints]
+    [isPointsExempt, skipMbtiPoints, skipMbtiFeaturePoints, hasEnoughPoints]
   )
 
   const chargePoints = useCallback(
-    (cost: number, meta: PointTransactionMeta): boolean => {
+    (cost: number, meta: PointTransactionMeta, kind: 'mbti' | 'mbti_feature' = 'mbti'): boolean => {
       if (isPointsExempt) return true
+      if (kind === 'mbti_feature' ? skipMbtiFeaturePoints : skipMbtiPoints) return true
       if (!hasEnoughPoints(cost)) {
         setShowPointsModal(true)
         return false
       }
       return deductPoints(cost, meta)
     },
-    [isPointsExempt, hasEnoughPoints, deductPoints]
+    [isPointsExempt, skipMbtiPoints, skipMbtiFeaturePoints, hasEnoughPoints, deductPoints]
   )
 
   const pointsModal = !isPointsExempt ? (
@@ -74,6 +88,7 @@ export function MbtiSection() {
       onClose={() => setShowPointsModal(false)}
       currentPoints={points}
       requiredPoints={ANALYSIS_COST}
+      hideAdOptions={premium.benefits.hideAds}
       onWatchAd={() => {
         setShowPointsModal(false)
         window.location.href = '/user-profile#bonus'
@@ -163,10 +178,14 @@ export function MbtiSection() {
     
     // 프리미엄 기능에 대한 포인트 검사·차감
     if (
-      !chargePoints(FEATURE_COST, {
-        point_type: 'fortune_mbti_feature',
-        description: 'MBTI feature unlock',
-      })
+      !chargePoints(
+        FEATURE_COST,
+        {
+          point_type: 'fortune_mbti_feature',
+          description: 'MBTI feature unlock',
+        },
+        'mbti_feature'
+      )
     ) {
       return
     }
@@ -175,11 +194,22 @@ export function MbtiSection() {
   }
 
   const unlockPremium = (section: string) => {
+    if (isMbtiSectionUnlocked(premium, section)) {
+      const updated = [...new Set([...unlockedSections, section])]
+      setUnlockedSections(updated)
+      localStorage.setItem('mbtiUnlocked', JSON.stringify(updated))
+      return
+    }
+
     if (
-      !chargePoints(PREMIUM_COST, {
-        point_type: 'fortune_mbti_premium',
-        description: 'MBTI premium unlock',
-      })
+      !chargePoints(
+        PREMIUM_COST,
+        {
+          point_type: 'fortune_mbti_premium',
+          description: 'MBTI premium unlock',
+        },
+        'mbti_feature'
+      )
     ) {
       return
     }
@@ -399,7 +429,7 @@ export function MbtiSection() {
         </div>
 
         {/* Premium: Detailed Report */}
-        {!unlockedSections.includes('detailed') ? (
+        {!isSectionUnlocked('detailed') ? (
           <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-5 border-2 border-dashed border-gray-300">
             <div className="absolute inset-0 backdrop-blur-[1px] bg-white/50 rounded-2xl flex flex-col items-center justify-center">
               <Lock className="h-8 w-8 text-gray-400 mb-2" />
@@ -467,7 +497,7 @@ export function MbtiSection() {
                 <span className="text-2xl font-black text-fuchsia-600">{partnerType}</span>
               </div>
               
-              {!unlockedSections.includes(`compat-${partnerType}`) ? (
+              {!isSectionUnlocked(`compat-${partnerType}`) ? (
                 <div className="text-center">
                   <p className="text-gray-500 text-sm mb-3">{t('mbti.compatPremiumTeaser')}</p>
                   <Button 
@@ -775,7 +805,7 @@ export function MbtiSection() {
                 </div>
               </div>
 
-              {!unlockedSections.includes(`compat-${partnerType}`) ? (
+              {!isSectionUnlocked(`compat-${partnerType}`) ? (
                 <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-5 border border-amber-200 text-center">
                   <Lock className="h-8 w-8 text-amber-500 mx-auto mb-2" />
                   <p className="text-amber-700 font-semibold mb-3">{t('mbti.compatPremiumLockedTitle')}</p>

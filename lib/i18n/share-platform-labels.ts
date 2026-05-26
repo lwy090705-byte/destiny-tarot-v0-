@@ -93,20 +93,4 @@ export const sharePlatformLabels: Record<Language, Record<string, string>> = {
     'share.platform.line': 'LINE',
     'share.platform.whatsapp': 'WhatsApp',
   },
-  ru: {
-    'share.platform.kakao': 'KakaoTalk',
-    'share.platform.twitter': 'X (Twitter)',
-    'share.platform.telegram': 'Telegram',
-    'share.platform.facebook': 'Facebook',
-    'share.platform.line': 'LINE',
-    'share.platform.whatsapp': 'WhatsApp',
-  },
-  ar: {
-    'share.platform.kakao': 'KakaoTalk',
-    'share.platform.twitter': 'X (Twitter)',
-    'share.platform.telegram': 'Telegram',
-    'share.platform.facebook': 'Facebook',
-    'share.platform.line': 'LINE',
-    'share.platform.whatsapp': 'WhatsApp',
-  },
 }

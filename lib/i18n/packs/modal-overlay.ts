@@ -9,8 +9,6 @@ export type ModalOverlayLanguage =
   | 'fr'
   | 'de'
   | 'pt'
-  | 'ru'
-  | 'ar'
   | 'hi'
   | 'vi'
   | 'th'
@@ -290,66 +288,6 @@ const OVERLAY: Record<ModalOverlayLanguage, Record<ModalKey, string>> = {
     'nickname.error.tooShort': 'Mínimo 2 caracteres.',
     'nickname.error.tooLong': 'Máximo 10 caracteres.',
     'nickname.error.duplicate': 'Este apelido já está em uso.',
-  },
-  ru: {
-    'updatePopup.title': 'Destiny & Tarot снова с вами — ещё мощнее!',
-    'updatePopup.featuresTitle': 'Что нового',
-    'updatePopup.feature1': 'Улучшенные AI-гадания и таро',
-    'updatePopup.feature2': 'Анализ личности MBTI',
-    'updatePopup.feature3': 'Совместимость пар',
-    'updatePopup.feature4': 'Ежедневный вход и бонусные баллы',
-    'updatePopup.feature5': 'Реклама и оплата Pi',
-    'updatePopup.feature6': 'Новая система оплаты Pi',
-    'updatePopup.pointsNotice':
-      'Система баллов работает с учётом возможной связи с наградами сообщества в будущем.',
-    'updatePopup.closing': 'Мы продолжим улучшать сервис и добавлять функции.',
-    'updatePopup.thanks': 'Спасибо',
-    'updatePopup.dontShowAgain': 'Больше не показывать',
-    'updatePopup.confirm': 'OK',
-    'updatePopup.newBadge': 'NEW',
-    'onboarding.selectLanguage': 'Выберите язык',
-    'onboarding.selectLanguageHint': 'Язык приложения',
-    'onboarding.continue': 'Далее',
-    'nickname.welcome': 'Добро пожаловать!',
-    'nickname.subtitle': 'Введите никнейм',
-    'nickname.label': 'Никнейм',
-    'nickname.placeholder': 'Никнейм (2–10 симв.)',
-    'nickname.hint': 'Никнейм нельзя изменить позже. Выберите внимательно.',
-    'nickname.start': 'Начать',
-    'nickname.error.empty': 'Введите никнейм.',
-    'nickname.error.tooShort': 'Минимум 2 символа.',
-    'nickname.error.tooLong': 'Максимум 10 символов.',
-    'nickname.error.duplicate': 'Этот никнейм уже занят.',
-  },
-  ar: {
-    'updatePopup.title': 'عودة تطبيق Destiny & Tarot — أقوى من قبل!',
-    'updatePopup.featuresTitle': 'الميزات الجديدة',
-    'updatePopup.feature1': 'تقوية قراءات الحظ والتاروت بالذكاء الاصطناعي',
-    'updatePopup.feature2': 'إضافة تحليل شخصية MBTI',
-    'updatePopup.feature3': 'إضافة محتوى التوافق',
-    'updatePopup.feature4': 'تسجيل الحضور ونظام نقاط المكافآت',
-    'updatePopup.feature5': 'دعم مشاهدة الإعلانات والدفع بـ Pi',
-    'updatePopup.feature6': 'نظام دفع Pi الجديد',
-    'updatePopup.pointsNotice':
-      'يُدار نظام النقاط مع مراعاة إمكانية ربطه بميزات مكافآت المجتمع مستقبلًا.',
-    'updatePopup.closing': 'سنواصل تقديم خدمة أفضل وميزات جديدة.',
-    'updatePopup.thanks': 'شكرًا لك',
-    'updatePopup.dontShowAgain': 'عدم الإظهار مرة أخرى',
-    'updatePopup.confirm': 'موافق',
-    'updatePopup.newBadge': 'جديد',
-    'onboarding.selectLanguage': 'اختر اللغة',
-    'onboarding.selectLanguageHint': 'لغة التطبيق',
-    'onboarding.continue': 'متابعة',
-    'nickname.welcome': 'مرحبًا!',
-    'nickname.subtitle': 'أدخل اسم المستخدم',
-    'nickname.label': 'الاسم',
-    'nickname.placeholder': 'الاسم (2–10 أحرف)',
-    'nickname.hint': 'لا يمكن تغيير الاسم المستعار لاحقًا. يرجى الاختيار بعناية.',
-    'nickname.start': 'ابدأ',
-    'nickname.error.empty': 'يرجى إدخال الاسم.',
-    'nickname.error.tooShort': 'حرفان على الأقل.',
-    'nickname.error.tooLong': '10 أحرف كحد أقصى.',
-    'nickname.error.duplicate': 'هذا الاسم مستخدم بالفعل.',
   },
   hi: {
     'updatePopup.title': 'Destiny & Tarot और भी शक्तिशाली होकर वापस!',

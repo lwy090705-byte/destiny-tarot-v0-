@@ -10,6 +10,8 @@ import { userProfileToFortuneContext } from "@/lib/fortune"
 import type { UserProfile } from "@/lib/types"
 import { useLanguage } from "@/lib/language-context"
 import { usePoints } from "@/lib/points-context"
+import { usePremium } from "@/lib/use-premium"
+import { shouldSkipFortunePointCharge } from "@/lib/premium-access"
 import { PointsInsufficientModal } from "./points-insufficient-modal"
 import type { Language } from "@/lib/i18n"
 
@@ -76,7 +78,9 @@ interface TarotSectionProps {
 export function TarotSection({ selectedProfile, userCode, nickname }: TarotSectionProps) {
   const { language, t } = useLanguage()
   const { deductPoints, hasEnoughPoints } = usePoints()
+  const { premium } = usePremium()
   const ANALYSIS_COST = 10
+  const skipPointCharge = shouldSkipFortunePointCharge(premium, 'tarot')
 
   const [tarotType, setTarotType] = useState<TarotType | null>(null)
   const [tarotMode, setTarotMode] = useState<'one' | 'three' | null>(null)
@@ -241,17 +245,19 @@ export function TarotSection({ selectedProfile, userCode, nickname }: TarotSecti
   const handleReveal = async () => {
     if (!tarotType || !tarotMode || selectedCards.length < requiredCount) return
 
-    if (!hasEnoughPoints(ANALYSIS_COST)) {
-      setShowPointsModal(true)
-      return
-    }
-    if (
-      !deductPoints(ANALYSIS_COST, {
-        point_type: 'fortune_tarot',
-        description: 'Tarot analysis',
-      })
-    ) {
-      return
+    if (!skipPointCharge) {
+      if (!hasEnoughPoints(ANALYSIS_COST)) {
+        setShowPointsModal(true)
+        return
+      }
+      if (
+        !deductPoints(ANALYSIS_COST, {
+          point_type: 'fortune_tarot',
+          description: 'Tarot analysis',
+        })
+      ) {
+        return
+      }
     }
 
     const positionLabels =
@@ -610,6 +616,7 @@ export function TarotSection({ selectedProfile, userCode, nickname }: TarotSecti
         onClose={() => setShowPointsModal(false)}
         currentPoints={points}
         requiredPoints={ANALYSIS_COST}
+        hideAdOptions={skipPointCharge || premium.benefits.hideAds}
         onWatchAd={() => {
           setShowPointsModal(false)
           window.location.href = '/user-profile#bonus'

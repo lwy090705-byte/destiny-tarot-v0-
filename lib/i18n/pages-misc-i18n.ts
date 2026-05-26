@@ -351,8 +351,6 @@ const BY_LANG: Record<Language, Record<string, string>> = {
   hi: HI,
   vi: VI,
   th: TH,
-  ru: EN,
-  ar: EN,
 }
 
 export function getPagesMisc(language: Language): Record<string, string> {

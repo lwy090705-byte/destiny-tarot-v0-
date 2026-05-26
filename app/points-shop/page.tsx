@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { usePoints } from "@/lib/points-context"
 import { useLanguage } from "@/lib/language-context"
+import { usePremium } from "@/lib/use-premium"
 
 interface Purchase {
   id: string
@@ -26,6 +27,8 @@ const POINT_PACKAGES = [
 export default function PointsShopPage() {
   const { addPoints } = usePoints()
   const { t, language } = useLanguage()
+  const { premium } = usePremium()
+  const hideAds = premium.benefits.hideAds
 
   const AD_REWARDS = useMemo(
     () => [
@@ -180,7 +183,7 @@ export default function PointsShopPage() {
           </div>
         </div>
 
-        {/* 광고 시청 섹션 */}
+        {!hideAds && (
         <div className="space-y-3">
           <h2 className="text-white font-bold text-base flex items-center gap-2">
             <Play className="h-5 w-5 text-blue-400" />
@@ -199,6 +202,7 @@ export default function PointsShopPage() {
             </div>
           </button>
         </div>
+        )}
 
         {/* 거래 내역 섹션 */}
         <div className="space-y-3">

@@ -22,15 +22,13 @@ export const ALL_LANGUAGES = [
   'ja',
   'zh',
   'es',
-  'id',
   'fr',
   'de',
   'pt',
-  'ru',
-  'ar',
   'hi',
   'vi',
   'th',
+  'id',
 ] as const
 export type Language = (typeof ALL_LANGUAGES)[number]
 
@@ -40,15 +38,13 @@ export const languages: { id: Language; label: string; flag: string }[] = [
   { id: 'ja', label: '日本語', flag: '🇯🇵' },
   { id: 'zh', label: '中文', flag: '🇨🇳' },
   { id: 'es', label: 'Español', flag: '🇪🇸' },
-  { id: 'id', label: 'Indonesia', flag: '🇮🇩' },
   { id: 'fr', label: 'Français', flag: '🇫🇷' },
   { id: 'de', label: 'Deutsch', flag: '🇩🇪' },
   { id: 'pt', label: 'Português', flag: '🇵🇹' },
   { id: 'hi', label: 'हिन्दी', flag: '🇮🇳' },
   { id: 'vi', label: 'Tiếng Việt', flag: '🇻🇳' },
   { id: 'th', label: 'ไทย', flag: '🇹🇭' },
-  { id: 'ru', label: 'Русский', flag: '🇷🇺' },
-  { id: 'ar', label: 'العربية', flag: '🇸🇦' },
+  { id: 'id', label: 'Indonesia', flag: '🇮🇩' },
 ]
 
 export const koTranslations: Record<string, string> = {
@@ -400,6 +396,7 @@ export const koTranslations: Record<string, string> = {
     'userProfile.levelSystem': '레벨 시스템',
     'userProfile.settings': '설정',
     'userProfile.premium': '프리미엄 구독',
+    'userProfile.premiumBadge': '⭐ PREMIUM',
     'userProfile.history': '활동 기록',
     'userProfile.terms': '이용약관',
     'userProfile.privacy': '개인정보 방침',
@@ -607,6 +604,8 @@ export const koTranslations: Record<string, string> = {
   'premium.featuresYearly':
   '• 모든 프리미엄 운세 이용\n• 광고 없음\n• 타로 무제한\n• 궁합 분석 무제한\n• MBTI 프리미엄 리포트\n• MBTI 연애 스타일 분석\n• MBTI 궁합 프리미엄 결과\n• 우선 고객 지원',
     'premium.selectPlan': '이 플랜 선택',
+    'premium.checkoutDueLabel': '결제 예정 금액',
+    'premium.checkoutCta': '{amount} Pi 결제하기',
     'premium.paymentInfoTitle': '결제 안내',
     'premium.notePi': '• 결제는 Pi(파이) 암호화폐로 진행됩니다.',
     'premium.noteNoRenew': '• 구독 기간 만료 후 자동 갱신되지 않습니다.',
@@ -690,15 +689,13 @@ export const translations: Record<Language, Record<string, string>> = {
   ja: buildLangPack('ja', jaMessages),
   zh: buildLangPack('zh', zhMessages),
   es: buildLangPack('es', esMessages),
-  id: buildLangPack('id', idMessages),
   fr: buildLangPack('fr', frMessages),
   de: buildLangPack('de', deMessages),
   pt: buildLangPack('pt', ptMessages),
-  ru: buildLangPack('ru', enMessages),
-  ar: buildLangPack('ar', enMessages),
   hi: buildLangPack('hi', hiMessages),
   vi: buildLangPack('vi', viMessages),
   th: buildLangPack('th', thMessages),
+  id: buildLangPack('id', idMessages),
 }
 
 /** UI strings: localized pack (≠ ko) → language misc → English → key. */

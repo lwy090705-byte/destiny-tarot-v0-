@@ -85,6 +85,8 @@ export const uiOverlayEn: Record<string, string> = {
   'premium.featuresYearly':
     '• All premium fortunes\n• No ads\n• Unlimited tarot\n• Unlimited compatibility\n• MBTI premium report\n• MBTI love-style analysis\n• MBTI compatibility premium\n• Priority support\n• Exclusive content\n• Double points',
   'premium.selectPlan': 'Choose this plan',
+  'premium.checkoutDueLabel': 'Amount due',
+  'premium.checkoutCta': 'Pay {amount} Pi',
   'premium.paymentInfoTitle': 'Payment info',
   'premium.notePi': '• Payments are made in Pi cryptocurrency.',
   'premium.noteNoRenew': '• Subscriptions do not auto-renew after they end.',

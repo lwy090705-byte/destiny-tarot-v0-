@@ -18,15 +18,12 @@ function announcementDateLocale(language: string): string {
   if (language === 'ko') return 'ko-KR'
   if (language === 'ja') return 'ja-JP'
   if (language === 'zh') return 'zh-CN'
-  if (language === 'ar') return 'ar-SA'
-  if (language === 'ru') return 'ru-RU'
   return language
 }
 
 export function AnnouncementModal({ isOpen, onClose }: AnnouncementModalProps) {
   const { getLatestAnnouncement, markAnnouncementAsSeen } = useAnnouncement()
   const { t, language } = useLanguage()
-  const rtl = language === 'ar'
   const [isClosing, setIsClosing] = useState(false)
   const [doNotShow, setDoNotShow] = useState(false)
 
@@ -81,7 +78,7 @@ export function AnnouncementModal({ isOpen, onClose }: AnnouncementModalProps) {
             {announcement.isNew && (
               <span
                 className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full shrink-0"
-                dir={rtl ? 'rtl' : 'ltr'}
+                dir="ltr"
               >
                 {t('updatePopup.newBadge')}
               </span>
@@ -90,7 +87,7 @@ export function AnnouncementModal({ isOpen, onClose }: AnnouncementModalProps) {
 
           <h2
             className="text-lg sm:text-xl font-bold text-white break-words leading-snug"
-            dir={rtl ? 'rtl' : 'ltr'}
+            dir="ltr"
           >
             {title}
           </h2>
@@ -102,7 +99,7 @@ export function AnnouncementModal({ isOpen, onClose }: AnnouncementModalProps) {
         <div className="p-6">
           <div
             className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap break-words"
-            dir={rtl ? 'rtl' : 'ltr'}
+            dir="ltr"
           >
             {content}
           </div>
@@ -116,14 +113,14 @@ export function AnnouncementModal({ isOpen, onClose }: AnnouncementModalProps) {
               onChange={(e) => setDoNotShow(e.target.checked)}
               className="w-4 h-4 rounded border-gray-300 text-violet-600 accent-violet-600 cursor-pointer shrink-0"
             />
-            <span className="text-sm text-gray-500 break-words" dir={rtl ? 'rtl' : 'ltr'}>
+            <span className="text-sm text-gray-500 break-words" dir="ltr">
               {t('updatePopup.dontShowAgain')}
             </span>
           </label>
 
           <button
             onClick={handleClose}
-            dir={rtl ? 'rtl' : 'ltr'}
+            dir="ltr"
             className="w-full bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600 text-white font-semibold py-2.5 px-4 rounded-xl transition-all text-sm sm:text-base break-words"
           >
             {t('updatePopup.confirm')}

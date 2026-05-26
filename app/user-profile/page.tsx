@@ -8,6 +8,8 @@ import Link from "next/link"
 import { useLanguage } from "@/lib/language-context"
 import { usePoints } from "@/lib/points-context"
 import { useUser } from "@/lib/user-context"
+import { usePremium } from "@/lib/use-premium"
+import { PremiumBadge } from "@/components/premium-badge"
 import { useMasterAccess } from "@/lib/use-master-access"
 import { MasterPointGrantPanel } from "@/components/master-point-grant-panel"
 import {
@@ -66,7 +68,9 @@ export default function UserProfilePage() {
   const { t, language } = useLanguage()
   const { points: contextPoints, addPoints, isUnlimitedPoints } = usePoints()
   const { user } = useUser()
+  const { premium } = usePremium()
   const showMasterUi = isMasterNickname(user?.nickname)
+  const hideAds = premium.benefits.hideAds
   const [profileFields, setProfileFields] = useState<AuthorProfileFields | null>(null)
   const [visitStats, setVisitStats] = useState<VisitStats>({
     daily: 0,
@@ -398,7 +402,7 @@ export default function UserProfilePage() {
             <div className="flex items-center gap-4 mb-6">
               <ProfileLevelAvatar variant={profileEmblemVariant} levelName={stats.levelName} />
               <div className="flex-1">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <h2 className="text-xl font-bold text-gray-800">{user?.nickname || t('userProfile.user')}</h2>
                   <ProfileLevelDisplay
                     level={stats.level}
@@ -406,6 +410,7 @@ export default function UserProfilePage() {
                     isOperator={showMasterUi}
                     mode="badge"
                   />
+                  {premium.isActive && <PremiumBadge />}
                 </div>
                 <p className="text-gray-500 text-sm">{stats.levelName}</p>
                 <p className="text-gray-400 text-xs">{t('userProfile.memberSince')}: {stats.memberSince}</p>
@@ -642,7 +647,8 @@ export default function UserProfilePage() {
           </div>
           </button>
 
-          {/* 보너스 받기 카드 */}
+          {/* 보너스 받기 카드 — 프리미엄 구독 시 광고 보상 숨김 */}
+          {!hideAds && (
           <button
             id="bonus-card"
             onClick={() => canClaimReward() ? setShowRoulette(true) : null}
@@ -757,6 +763,7 @@ export default function UserProfilePage() {
             </div>
           </div>
           </button>
+          )}
 
         </div>{/* end flex-col gap-4 wrapper */}
 

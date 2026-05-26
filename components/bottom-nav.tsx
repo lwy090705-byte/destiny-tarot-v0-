@@ -111,31 +111,31 @@ function IconProfile({ active }: { active: boolean }) {
 const NAV_ITEMS = [
   {
     id: 'home', href: '/', Icon: IconHome,
-    label: { ko: '홈화면', en: 'Home', ja: 'ホーム', zh: '主页', es: 'Inicio', fr: 'Accueil', de: 'Startseite', pt: 'Início', ru: 'Главная', ar: 'الرئيسية', hi: 'होम', vi: 'Trang chủ', th: 'หน้าแรก', id: 'Beranda' },
+    label: { ko: '홈화면', en: 'Home', ja: 'ホーム', zh: '主页', es: 'Inicio', fr: 'Accueil', de: 'Startseite', pt: 'Início', hi: 'होम', vi: 'Trang chủ', th: 'หน้าแรก', id: 'Beranda' },
     activeColor: '#fdba74',   // light orange
     glowColor: 'rgba(253,186,116,0.32)',
   },
   {
     id: 'community', href: '/community', Icon: IconCommunity,
-    label: { ko: '커뮤니티', en: 'Community', ja: 'コミュニティ', zh: '社区', es: 'Comunidad', fr: 'Communauté', de: 'Community', pt: 'Comunidade', ru: 'Сообщество', ar: 'مجتمع', hi: 'समुदाय', vi: 'Cộng đồng', th: 'ชุมชน', id: 'Komunitas' },
+    label: { ko: '커뮤니티', en: 'Community', ja: 'コミュニティ', zh: '社区', es: 'Comunidad', fr: 'Communauté', de: 'Community', pt: 'Comunidade', hi: 'समुदाय', vi: 'Cộng đồng', th: 'ชุมชน', id: 'Komunitas' },
     activeColor: '#a78bfa',   // purple
     glowColor: 'rgba(167,139,250,0.5)',
   },
   {
     id: 'support', href: '/support', Icon: IconSupport,
-    label: { ko: '후원', en: 'Support', ja: '支援', zh: '支持', es: 'Apoyo', fr: 'Soutien', de: 'Unterstütz.', pt: 'Apoio', ru: 'Поддержка', ar: 'دعم', hi: 'सहयोग', vi: 'Hỗ trợ', th: 'สนับสนุน', id: 'Dukungan' },
+    label: { ko: '후원', en: 'Support', ja: '支援', zh: '支持', es: 'Apoyo', fr: 'Soutien', de: 'Unterstütz.', pt: 'Apoio', hi: 'सहयोग', vi: 'Hỗ trợ', th: 'สนับสนุน', id: 'Dukungan' },
     activeColor: '#22d3ee',   // cyan
     glowColor: 'rgba(34,211,238,0.5)',
   },
   {
     id: 'share', href: '/share', Icon: IconShare,
-    label: { ko: '추천', en: 'Refer', ja: '紹介', zh: '推荐', es: 'Referir', fr: 'Référer', de: 'Empfehlen', pt: 'Indicar', ru: 'Реферал', ar: 'إحالة', hi: 'रेफर', vi: 'Giới thiệu', th: 'แนะนำ', id: 'Referral' },
+    label: { ko: '추천', en: 'Refer', ja: '紹介', zh: '推荐', es: 'Referir', fr: 'Référer', de: 'Empfehlen', pt: 'Indicar', hi: 'रेफर', vi: 'Giới thiệu', th: 'แนะนำ', id: 'Referral' },
     activeColor: '#38bdf8',   // sky blue
     glowColor: 'rgba(56,189,248,0.5)',
   },
   {
     id: 'profile', href: '/user-profile', Icon: IconProfile,
-    label: { ko: '프로필', en: 'Profile', ja: 'プロフィール', zh: '个人资料', es: 'Perfil', fr: 'Profil', de: 'Profil', pt: 'Perfil', ru: 'Профиль', ar: 'الملف', hi: 'प्रोफाइल', vi: 'Hồ sơ', th: 'โปรไฟล์', id: 'Profil' },
+    label: { ko: '프로필', en: 'Profile', ja: 'プロフィール', zh: '个人资料', es: 'Perfil', fr: 'Profil', de: 'Profil', pt: 'Perfil', hi: 'प्रोफाइल', vi: 'Hồ sơ', th: 'โปรไฟล์', id: 'Profil' },
     activeColor: '#e879f9',   // pink-purple
     glowColor: 'rgba(232,121,249,0.5)',
   },

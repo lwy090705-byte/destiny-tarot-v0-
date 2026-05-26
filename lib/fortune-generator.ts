@@ -21,13 +21,13 @@ const fortuneContentLanguageMap: Record<Language, FortuneContentLanguage> = {
   ja: 'ja',
   zh: 'zh',
   es: 'es',
-  id: 'id',
-  pt: 'pt',
   fr: 'fr',
   de: 'de',
+  pt: 'pt',
   hi: 'hi',
   vi: 'vi',
   th: 'th',
+  id: 'id',
 }
 
 const warnedMissingPools = new Set<string>()

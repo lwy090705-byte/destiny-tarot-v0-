@@ -22,6 +22,8 @@ import {
 import { hashSeedKeyToNumber, buildCompatibilitySeedKey } from "@/lib/fortune-seed"
 import { useLanguage } from "@/lib/language-context"
 import { usePoints } from "@/lib/points-context"
+import { usePremium } from "@/lib/use-premium"
+import { shouldSkipFortunePointCharge } from "@/lib/premium-access"
 import { PointsInsufficientModal } from "./points-insufficient-modal"
 
 interface CompatibilitySectionProps {
@@ -298,7 +300,9 @@ function PersonForm({
 export function CompatibilitySection({ profiles, selectedProfile, userCode }: CompatibilitySectionProps) {
   const { language, t } = useLanguage()
   const { deductPoints, hasEnoughPoints, points } = usePoints()
+  const { premium } = usePremium()
   const ANALYSIS_COST = 10
+  const skipPointCharge = shouldSkipFortunePointCharge(premium, 'compatibility')
 
   const years  = useMemo(() => Array.from({ length: 100 }, (_, i) => 2026 - i), [])
   const months = useMemo(() => Array.from({ length: 12 },  (_, i) => i + 1), [])
@@ -338,17 +342,19 @@ export function CompatibilitySection({ profiles, selectedProfile, userCode }: Co
   const handleCalculate = async () => {
     if (!person1.name.trim() || !person2.name.trim()) return
 
-    if (!hasEnoughPoints(ANALYSIS_COST)) {
-      setShowPointsModal(true)
-      return
-    }
-    if (
-      !deductPoints(ANALYSIS_COST, {
-        point_type: 'fortune_compatibility',
-        description: 'Compatibility analysis',
-      })
-    ) {
-      return
+    if (!skipPointCharge) {
+      if (!hasEnoughPoints(ANALYSIS_COST)) {
+        setShowPointsModal(true)
+        return
+      }
+      if (
+        !deductPoints(ANALYSIS_COST, {
+          point_type: 'fortune_compatibility',
+          description: 'Compatibility analysis',
+        })
+      ) {
+        return
+      }
     }
 
     const compatA = personInputToCompatPerson(person1, 'person-1')
@@ -509,6 +515,7 @@ export function CompatibilitySection({ profiles, selectedProfile, userCode }: Co
         onClose={() => setShowPointsModal(false)}
         currentPoints={points}
         requiredPoints={ANALYSIS_COST}
+        hideAdOptions={skipPointCharge || premium.benefits.hideAds}
         onWatchAd={() => {
           setShowPointsModal(false)
           window.location.href = '/user-profile#bonus'

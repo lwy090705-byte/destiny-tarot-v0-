@@ -19,6 +19,7 @@ export const enPackC: Record<string, string> = {
   'userProfile.levelSystem': 'Level system',
   'userProfile.settings': 'Settings',
   'userProfile.premium': 'Premium',
+  'userProfile.premiumBadge': '⭐ PREMIUM',
   'userProfile.history': 'Activity',
   'userProfile.terms': 'Terms',
   'userProfile.privacy': 'Privacy policy',

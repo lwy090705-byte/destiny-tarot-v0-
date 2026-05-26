@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button"
 import type { FortuneResult } from "@/lib/types"
 import { useLanguage } from "@/lib/language-context"
 import { usePoints } from "@/lib/points-context"
+import { usePremium } from "@/lib/use-premium"
+import { shouldSkipFortunePointCharge } from "@/lib/premium-access"
 import { PointsInsufficientModal } from "./points-insufficient-modal"
 import { loadDailyFortuneBundle } from "@/lib/fortune-daily-bundle"
 import { peekFortuneResult } from "@/lib/fortune-cache"
@@ -41,7 +43,9 @@ export function DailyFortuneSection({
 }: DailyFortuneSectionProps) {
   const { language, t } = useLanguage()
   const { deductPoints, hasEnoughPoints, points } = usePoints()
+  const { premium } = usePremium()
   const ANALYSIS_COST = 10
+  const skipPointCharge = shouldSkipFortunePointCharge(premium, 'daily')
   const [showPointsModal, setShowPointsModal] = useState(false)
 
   const getCategoryName = (cat: string) => {
@@ -148,17 +152,19 @@ export function DailyFortuneSection({
       return
     }
 
-    if (!hasEnoughPoints(ANALYSIS_COST)) {
-      setShowPointsModal(true)
-      return
-    }
-    if (
-      !deductPoints(ANALYSIS_COST, {
-        point_type: 'fortune_daily',
-        description: 'Daily fortune analysis',
-      })
-    ) {
-      return
+    if (!skipPointCharge) {
+      if (!hasEnoughPoints(ANALYSIS_COST)) {
+        setShowPointsModal(true)
+        return
+      }
+      if (
+        !deductPoints(ANALYSIS_COST, {
+          point_type: 'fortune_daily',
+          description: 'Daily fortune analysis',
+        })
+      ) {
+        return
+      }
     }
 
     const results = await loadDailyFortuneBundle({
@@ -323,6 +329,7 @@ export function DailyFortuneSection({
         onClose={() => setShowPointsModal(false)}
         currentPoints={points}
         requiredPoints={ANALYSIS_COST}
+        hideAdOptions={skipPointCharge || premium.benefits.hideAds}
         onWatchAd={() => {
           setShowPointsModal(false)
           window.location.href = '/user-profile#bonus'
