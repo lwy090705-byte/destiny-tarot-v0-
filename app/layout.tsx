@@ -57,6 +57,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko" suppressHydrationWarning className="bg-[#1e0a3c]">
+      <head>
+        <Script
+          id="adsense-script"
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3800755907918334"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
+      </head>
       <body className={`${notoSansKR.variable} font-sans antialiased`} suppressHydrationWarning>
         <LanguageProvider>
           <UserProvider>
@@ -68,13 +77,6 @@ export default function RootLayout({
                   {children}
                 </OnboardingGate>
                 <Analytics />
-                <Script
-                  id="adsense-script"
-                  async
-                  src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3800755907918334"
-                  crossOrigin="anonymous"
-                  strategy="afterInteractive"
-                />
               </AnnouncementProvider>
             </PointsProvider>
             </PremiumProvider>
