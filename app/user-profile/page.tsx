@@ -703,7 +703,7 @@ export default function UserProfilePage() {
                 {t('userProfile.bonusWatchAdLine')}
               </div>
               <div className="text-xs mt-1" style={{ opacity: 0.7 }}>
-                {t('attendance.description').replace('20P', '50P')}
+                {t('userProfile.bonusDailyHint')}
               </div>
             </div>
 

@@ -88,4 +88,6 @@ export const uiOverlayThExtra: Record<string, string> = {
   'premium.cancel': 'ยกเลิก',
   'premium.payNow': 'ชำระเงิน',
   'premium.alertComingSoon': 'การชำระ Pi กำลังมาเร็วๆ นี้',
+  'userProfile.bonusWatchAdLine': 'รับโบนัสถึง 50P ทุกวัน!',
+  'userProfile.bonusDailyHint': 'รับโบนัสประจำวันกันเถอะ!',
 }

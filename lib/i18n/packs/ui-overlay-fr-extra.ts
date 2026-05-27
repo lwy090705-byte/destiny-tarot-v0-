@@ -88,4 +88,6 @@ export const uiOverlayFrExtra: Record<string, string> = {
   'premium.cancel': 'Annuler',
   'premium.payNow': 'Payer',
   'premium.alertComingSoon': 'Paiement Pi bientôt disponible.',
+  'userProfile.bonusWatchAdLine': "Jusqu'à 50P de bonus par jour !",
+  'userProfile.bonusDailyHint': 'Gagnez des bonus quotidiens !',
 }

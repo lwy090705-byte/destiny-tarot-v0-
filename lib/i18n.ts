@@ -384,7 +384,7 @@ export const koTranslations: Record<string, string> = {
     'userProfile.user': '사용자',
     'userProfile.attendance': '출석체크',
     'userProfile.attendanceComplete': '오늘 출석 완료!',
-    'userProfile.attendanceReward': '매일 출석하고 +20P 받기',
+    'userProfile.attendanceReward': '오늘의 출석을 기록해 보세요',
 
     // User Profile - Detailed
     'userProfile.watchAd': '광고 보기',
@@ -416,7 +416,7 @@ export const koTranslations: Record<string, string> = {
 
     // Attendance Modal
     'attendance.title': '이번 주 출석부',
-    'attendance.description': '매일 출석하고 20P 받으세요!',
+    'attendance.description': '매일 방문하고 포인트를 받아보세요!',
     'attendance.weekly': '이번 주 출석',
     'attendance.checkButton': '출석체크 (+20P)',
     'attendance.checkedButton': '오늘 출석 완료!',
@@ -646,7 +646,8 @@ export const koTranslations: Record<string, string> = {
     'privacy.emailContact': '이메일: lwy2016@naver.com',
     'userProfile.checkInBonusHeading': '출석체크 · 보너스 받기',
     'userProfile.checkInBonusSub': '매일 포인트를 적립해보세요',
-    'userProfile.bonusWatchAdLine': '광고보고 보너스 받기',
+    'userProfile.bonusWatchAdLine': '매일 50P 보너스를 받아보세요!',
+    'userProfile.bonusDailyHint': '매일 보너스를 획득해보세요!',
     'userProfile.dailyRewardWithMax': '일일 보상 ({current}/{max})',
     'userProfile.pickDrawTitle': '뽑기',
     'userProfile.pickDrawSubtitle': '5개의 선물 상자 중 하나를 선택하세요!',
