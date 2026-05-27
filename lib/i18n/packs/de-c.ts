@@ -75,4 +75,13 @@ export const dePackC: Record<string, string> = {
   'achievement.6.title': 'Element-Entdecker',
   'achievement.6.desc': 'Alle Element-Horoskope',
   'achievement.5.reward': 'Premium 7 Tage',
+  'usageGuide.title': 'Bedienung',
+  'usageGuide.intro': 'Wähle unten eine Kategorie und folge der Anleitung zum Ausfüllen oder Auswählen.',
+  'usageGuide.sajuDailyCompatLabel': 'Ost-Horoskop / Tageshoroskop / Kompatibilität',
+  'usageGuide.sajuDailyCompatDesc': 'Geburtsdatum und nötige Angaben eingeben, um die Analyse zu sehen.',
+  'usageGuide.tarotLabel': 'Tarot',
+  'usageGuide.tarotDesc': 'Karten oder Legemethode wählen, um das Ergebnis zu erhalten.',
+  'usageGuide.mbtiLabel': 'MBTI',
+  'usageGuide.mbtiDesc': 'Fragen beantworten für Typ und Kompatibilitätsanalyse.',
+  'usageGuide.close': 'Schließen',
 }

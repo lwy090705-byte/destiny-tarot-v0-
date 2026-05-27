@@ -75,4 +75,13 @@ export const idPackC: Record<string, string> = {
   'achievement.6.title': 'Penjelajah elemen',
   'achievement.6.desc': 'Semua ramalan elemen',
   'achievement.5.reward': 'Premium 7 hari',
+  'usageGuide.title': 'Cara pakai',
+  'usageGuide.intro': 'Pilih kategori di bawah, lalu ikuti panduan untuk mengisi info atau memilih opsi.',
+  'usageGuide.sajuDailyCompatLabel': 'Saju Timur / Ramalan hari ini / Kecocokan',
+  'usageGuide.sajuDailyCompatDesc': 'Masukkan tanggal lahir dan info yang diperlukan untuk melihat analisis.',
+  'usageGuide.tarotLabel': 'Tarot',
+  'usageGuide.tarotDesc': 'Pilih kartu atau gaya bacaan untuk mendapatkan hasil.',
+  'usageGuide.mbtiLabel': 'MBTI',
+  'usageGuide.mbtiDesc': 'Jawab pertanyaan untuk melihat tipe kepribadian dan analisis kecocokan.',
+  'usageGuide.close': 'Tutup',
 }

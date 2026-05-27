@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 // Build: 20260403-v11-force-reload
 
 import { useState, useEffect, useMemo, useCallback } from "react"

@@ -75,4 +75,13 @@ export const ptPackC: Record<string, string> = {
   'achievement.6.title': 'Explorador dos elementos',
   'achievement.6.desc': 'Todas as sortes dos elementos',
   'achievement.5.reward': 'Premium 7 dias',
+  'usageGuide.title': 'Como usar',
+  'usageGuide.intro': 'Escolha uma categoria abaixo e siga o guia para preencher dados ou uma opção.',
+  'usageGuide.sajuDailyCompatLabel': 'Astrologia oriental / Sorte do dia / Compatibilidade',
+  'usageGuide.sajuDailyCompatDesc': 'Informe data de nascimento e dados necessários para ver a análise.',
+  'usageGuide.tarotLabel': 'Tarô',
+  'usageGuide.tarotDesc': 'Escolha cartas ou estilo de leitura para receber o resultado.',
+  'usageGuide.mbtiLabel': 'MBTI',
+  'usageGuide.mbtiDesc': 'Responda às perguntas para ver seu tipo e análise de compatibilidade.',
+  'usageGuide.close': 'Fechar',
 }

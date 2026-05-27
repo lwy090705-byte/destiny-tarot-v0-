@@ -75,4 +75,13 @@ export const viPackC: Record<string, string> = {
   'achievement.6.title': 'Nhà thám hiểm ngũ hành',
   'achievement.6.desc': 'Xem hết vận ngũ hành',
   'achievement.5.reward': 'Premium 7 ngày',
+  'usageGuide.title': 'Cách sử dụng',
+  'usageGuide.intro': 'Chọn danh mục bên dưới, sau đó nhập thông tin hoặc chọn mục theo hướng dẫn.',
+  'usageGuide.sajuDailyCompatLabel': 'Tử vi phương Đông / Vận hôm nay / Hợp tuổi',
+  'usageGuide.sajuDailyCompatDesc': 'Nhập ngày sinh và thông tin cần thiết để xem kết quả phân tích.',
+  'usageGuide.tarotLabel': 'Tarot',
+  'usageGuide.tarotDesc': 'Chọn lá bài hoặc cách đọc để nhận kết quả.',
+  'usageGuide.mbtiLabel': 'MBTI',
+  'usageGuide.mbtiDesc': 'Trả lời câu hỏi để xem loại tính cách và phân tích hợp tuổi.',
+  'usageGuide.close': 'Đóng',
 }

@@ -75,4 +75,13 @@ export const thPackC: Record<string, string> = {
   'achievement.6.title': 'นักสำรวจธาตุ',
   'achievement.6.desc': 'ดูดวงธาตุครบทุกแบบ',
   'achievement.5.reward': 'พรีเมียม 7 วัน',
+  'usageGuide.title': 'วิธีใช้งาน',
+  'usageGuide.intro': 'เลือกหมวดด้านล่าง แล้วกรอกข้อมูลหรือเลือกรายการตามคำแนะนำ',
+  'usageGuide.sajuDailyCompatLabel': 'โหราจีนตะวันออก / ดวงวันนี้ / ความเข้ากัน',
+  'usageGuide.sajuDailyCompatDesc': 'กรอกวันเกิดและข้อมูลที่จำเป็นเพื่อดูผลวิเคราะห์',
+  'usageGuide.tarotLabel': 'ทาโรต์',
+  'usageGuide.tarotDesc': 'เลือกไพ่หรือรูปแบบการอ่านเพื่อรับผลลัพธ์',
+  'usageGuide.mbtiLabel': 'MBTI',
+  'usageGuide.mbtiDesc': 'ตอบคำถามเพื่อดูประเภทบุคลิกและการวิเคราะห์ความเข้ากัน',
+  'usageGuide.close': 'ปิด',
 }

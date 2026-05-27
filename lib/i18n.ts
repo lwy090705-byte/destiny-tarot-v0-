@@ -79,6 +79,17 @@ export const koTranslations: Record<string, string> = {
     'category.tarot': '타로',
     'category.compatibility': '궁합',
     'category.mbti': 'MBTI',
+
+    // Usage guide
+    'usageGuide.title': '이용 방법',
+    'usageGuide.intro': '원하는 카테고리를 선택한 후 아래 안내에 따라 정보를 입력하거나 원하는 항목을 선택해주세요.',
+    'usageGuide.sajuDailyCompatLabel': '동양사주 / 오늘의 운세 / 궁합',
+    'usageGuide.sajuDailyCompatDesc': '생년월일 등 필요한 정보를 입력하면 분석 결과를 확인할 수 있습니다.',
+    'usageGuide.tarotLabel': '타로',
+    'usageGuide.tarotDesc': '원하는 카드 또는 리딩 방식을 선택하면 결과가 제공됩니다.',
+    'usageGuide.mbtiLabel': 'MBTI',
+    'usageGuide.mbtiDesc': '질문에 답변하면 성격 유형과 궁합 분석 결과를 확인할 수 있습니다.',
+    'usageGuide.close': '창닫기',
     
     // MBTI
     'mbti.title': 'MBTI 성격 테스트',

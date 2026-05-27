@@ -75,4 +75,13 @@ export const hiPackC: Record<string, string> = {
   'achievement.6.title': 'तत्व खोजकर्ता',
   'achievement.6.desc': 'सभी तत्व भाग्य देखे',
   'achievement.5.reward': 'प्रीमियम 7 दिन',
+  'usageGuide.title': 'उपयोग विधि',
+  'usageGuide.intro': 'नीचे श्रेणी चुनें, फिर मार्गदर्शन के अनुसार जानकारी भरें या विकल्प चुनें।',
+  'usageGuide.sajuDailyCompatLabel': 'पूर्वी ज्योतिष / आज का भाग्य / मेल',
+  'usageGuide.sajuDailyCompatDesc': 'जन्म तिथि आदि जानकारी दर्ज करके विश्लेषण देखें।',
+  'usageGuide.tarotLabel': 'टैरो',
+  'usageGuide.tarotDesc': 'कार्ड या रीडिंग शैली चुनकर परिणाम पाएँ।',
+  'usageGuide.mbtiLabel': 'MBTI',
+  'usageGuide.mbtiDesc': 'प्रश्नों के उत्तर से प्रकार और मेल विश्लेषण देखें।',
+  'usageGuide.close': 'बंद करें',
 }

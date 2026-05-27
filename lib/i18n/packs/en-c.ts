@@ -83,4 +83,13 @@ export const enPackC: Record<string, string> = {
   'achievement.6.title': 'Element explorer',
   'achievement.6.desc': 'Viewed all element fortunes',
   'achievement.5.reward': 'Premium 7 days',
+  'usageGuide.title': 'How to use',
+  'usageGuide.intro': 'Choose a category below, then follow the guide to enter details or pick an option.',
+  'usageGuide.sajuDailyCompatLabel': 'Eastern astrology / Daily fortune / Compatibility',
+  'usageGuide.sajuDailyCompatDesc': 'Enter birth date and other required info to view your analysis.',
+  'usageGuide.tarotLabel': 'Tarot',
+  'usageGuide.tarotDesc': 'Pick cards or a reading style to receive your result.',
+  'usageGuide.mbtiLabel': 'MBTI',
+  'usageGuide.mbtiDesc': 'Answer the questions to see your type and compatibility insights.',
+  'usageGuide.close': 'Close',
 }

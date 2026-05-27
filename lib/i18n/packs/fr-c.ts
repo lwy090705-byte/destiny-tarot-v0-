@@ -75,4 +75,13 @@ export const frPackC: Record<string, string> = {
   'achievement.6.title': 'Explorateur des éléments',
   'achievement.6.desc': 'Toutes les fortunes des éléments',
   'achievement.5.reward': 'Premium 7 jours',
+  'usageGuide.title': 'Mode d’emploi',
+  'usageGuide.intro': 'Choisissez une catégorie ci-dessous, puis suivez le guide pour saisir vos infos ou une option.',
+  'usageGuide.sajuDailyCompatLabel': 'Astrologie orientale / Fortune du jour / Compatibilité',
+  'usageGuide.sajuDailyCompatDesc': 'Saisissez la date de naissance et les infos requises pour voir l’analyse.',
+  'usageGuide.tarotLabel': 'Tarot',
+  'usageGuide.tarotDesc': 'Choisissez des cartes ou un type de tirage pour obtenir le résultat.',
+  'usageGuide.mbtiLabel': 'MBTI',
+  'usageGuide.mbtiDesc': 'Répondez aux questions pour voir votre type et l’analyse de compatibilité.',
+  'usageGuide.close': 'Fermer',
 }

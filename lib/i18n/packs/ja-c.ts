@@ -75,4 +75,13 @@ export const jaPackC: Record<string, string> = {
   'achievement.6.title': '五行探検家',
   'achievement.6.desc': 'すべての五行運勢を閲覧',
   'achievement.5.reward': 'プレミアム7日間',
+  'usageGuide.title': '使い方',
+  'usageGuide.intro': '下のカテゴリを選び、案内に従って情報を入力するか項目を選んでください。',
+  'usageGuide.sajuDailyCompatLabel': '東洋四柱 / 今日の運勢 / 相性',
+  'usageGuide.sajuDailyCompatDesc': '生年月日など必要な情報を入力すると分析結果を確認できます。',
+  'usageGuide.tarotLabel': 'タロット',
+  'usageGuide.tarotDesc': 'カードやリーディング方式を選ぶと結果が表示されます。',
+  'usageGuide.mbtiLabel': 'MBTI',
+  'usageGuide.mbtiDesc': '質問に答えると性格タイプと相性分析を確認できます。',
+  'usageGuide.close': '閉じる',
 }

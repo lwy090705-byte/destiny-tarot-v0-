@@ -75,4 +75,13 @@ export const zhPackC: Record<string, string> = {
   'achievement.6.title': '五行探索者',
   'achievement.6.desc': '查看全部五行运势',
   'achievement.5.reward': '高级会员 7 天',
+  'usageGuide.title': '使用方法',
+  'usageGuide.intro': '请先选择下方类别，再按说明填写信息或选择项目。',
+  'usageGuide.sajuDailyCompatLabel': '东方八字 / 今日运势 / 配对',
+  'usageGuide.sajuDailyCompatDesc': '输入出生日期等必要信息即可查看分析结果。',
+  'usageGuide.tarotLabel': '塔罗',
+  'usageGuide.tarotDesc': '选择想要的牌或解读方式即可获得结果。',
+  'usageGuide.mbtiLabel': 'MBTI',
+  'usageGuide.mbtiDesc': '回答问题即可查看性格类型与配对分析。',
+  'usageGuide.close': '关闭',
 }

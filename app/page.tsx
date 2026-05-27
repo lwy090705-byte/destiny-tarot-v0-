@@ -20,6 +20,7 @@ import { useAnnouncement } from "@/lib/announcement-context"
 import { useUser } from "@/lib/user-context"
 import type { UserProfile, Category } from "@/lib/types"
 import { useLanguage } from "@/lib/language-context"
+import { UsageGuideCard } from "@/components/usage-guide-card"
 
 export default function Home() {
   const [profiles, setProfiles] = useState<UserProfile[]>([])
@@ -109,7 +110,9 @@ export default function Home() {
 
       <main className="container mx-auto px-4 py-3 max-w-lg pb-16 relative z-10">
 
-        {/* 카테고리 선택 - 최상단, 메인 포커스 */}
+        <UsageGuideCard />
+
+        {/* 카테고리 선택 */}
         <div
           className="rounded-3xl p-5 mb-2"
           style={{
