@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next'
+import Script from 'next/script'
 import { Noto_Sans_KR } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { OnboardingGate } from '@/components/onboarding-gate'
@@ -67,6 +68,13 @@ export default function RootLayout({
                   {children}
                 </OnboardingGate>
                 <Analytics />
+                <Script
+                  id="adsense-script"
+                  async
+                  src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3800755907918334"
+                  crossOrigin="anonymous"
+                  strategy="afterInteractive"
+                />
               </AnnouncementProvider>
             </PointsProvider>
             </PremiumProvider>
