@@ -61,6 +61,7 @@ export default function RootLayout({
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3800755907918334"
           crossOrigin="anonymous"
+          suppressHydrationWarning
         ></script>
       </head>
       <body className={`${notoSansKR.variable} font-sans antialiased`} suppressHydrationWarning>
