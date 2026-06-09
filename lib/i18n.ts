@@ -83,13 +83,25 @@ export const koTranslations: Record<string, string> = {
     // Usage guide
     'usageGuide.title': '이용 방법',
     'usageGuide.intro': '원하는 카테고리를 선택한 후 아래 안내에 따라 정보를 입력하거나 원하는 항목을 선택해주세요.',
+    'usageGuide.myungliLabel': '동양사주',
+    'usageGuide.myungliDesc': '생년월일을 바탕으로 성격, 재물운, 직업운, 애정운 등을 분석합니다.',
+    'usageGuide.dailyLabel': '오늘의 운세',
+    'usageGuide.dailyDesc': '생년월일을 바탕으로 오늘의 운세와 하루의 흐름을 분석합니다.',
+    'usageGuide.compatibilityLabel': '궁합',
+    'usageGuide.compatibilityDesc': '두 사람의 생년월일을 바탕으로 성향과 궁합을 분석합니다.',
+    'usageGuide.tarotLabel': '타로',
+    'usageGuide.tarotDesc': '타로카드를 통해 현재 상황과 미래의 가능성을 해석합니다.',
+    'usageGuide.mbtiLabel': 'MBTI',
+    'usageGuide.mbtiDesc': '질문을 통해 성격 유형과 특징을 분석합니다.',
+    'usageGuide.noticeLabel': '안내',
+    'usageGuide.noticeDesc': '본 서비스의 결과는 참고용으로 제공되며, 실제 상황과 차이가 있을 수 있습니다.',
     'usageGuide.sajuDailyCompatLabel': '동양사주 / 오늘의 운세 / 궁합',
     'usageGuide.sajuDailyCompatDesc': '생년월일 등 필요한 정보를 입력하면 분석 결과를 확인할 수 있습니다.',
-    'usageGuide.tarotLabel': '타로',
-    'usageGuide.tarotDesc': '원하는 카드 또는 리딩 방식을 선택하면 결과가 제공됩니다.',
-    'usageGuide.mbtiLabel': 'MBTI',
-    'usageGuide.mbtiDesc': '질문에 답변하면 성격 유형과 궁합 분석 결과를 확인할 수 있습니다.',
     'usageGuide.close': '창닫기',
+
+    // Home feature buttons
+    'home.buttons.usageGuide': '이용방법',
+    'home.buttons.announcements': '공지사항',
     
     // MBTI
     'mbti.title': 'MBTI 성격 테스트',

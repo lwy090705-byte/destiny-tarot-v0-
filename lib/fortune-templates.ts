@@ -6,6 +6,7 @@
 import type { FortuneContentLanguage } from './fortune-generator'
 import { getFortuneContentLanguage, pickFortunePool, pickFortuneString } from './fortune-generator'
 import type { Language } from './i18n'
+import { generateRichMonthlyFortune } from './monthly-fortune-generator'
 
 // ─── Fallback Templates (장애 복구용 기본 템플릿) ──────────────────────────────
 
@@ -394,6 +395,9 @@ const monthlyDetailedZh: string[] = [
 ]
 
 export function getMonthlyDetailedLine(month: number, language: Language | string): string {
+  if (month >= 1 && month <= 12) {
+    return generateRichMonthlyFortune(month, month * 2003, language, 'total')
+  }
   const idx = Math.max(0, Math.min(11, month - 1))
   const ext = monthlyDetailedTemplates as {
     es?: string[]

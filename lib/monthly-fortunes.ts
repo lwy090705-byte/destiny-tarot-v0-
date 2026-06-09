@@ -5,6 +5,7 @@
 
 import type { FortuneContentLanguage } from './fortune-generator'
 import { getFortuneContentLanguage, pickFortuneString } from './fortune-generator'
+import { generateRichMonthlyFortune } from './monthly-fortune-generator'
 
 type MonthlyFortuneMap = Record<number, Partial<Record<FortuneContentLanguage, string>>>
 
@@ -60,6 +61,9 @@ export const monthlyFortunes: MonthlyFortuneMap = {
 }
 
 export function getMonthlyFortune(month: number, language: string = 'ko'): string {
+  if (month >= 1 && month <= 12) {
+    return generateRichMonthlyFortune(month, month * 1009, language, 'total')
+  }
   const fortune = monthlyFortunes[month]
   if (!fortune) {
     const L = getFortuneContentLanguage(language)

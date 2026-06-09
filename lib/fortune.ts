@@ -21,6 +21,7 @@ import { templatePoolsHi } from './fortune-pools-hi'
 import { getPersonalizationVariant, createPersonalization, type FortunePersonalization } from './myeongrihak'
 import { resolveProfileNumericSeed } from './fortune-seed'
 import { getMonthlyFortune } from './monthly-fortunes'
+import { generateRichMonthlyFortune } from './monthly-fortune-generator'
 import { 
   loveFortuneTemplates, 
   wealthFortuneTemplates, 
@@ -1257,9 +1258,15 @@ export function generateFortune(
   try {
     const langKey = getFortuneLanguage(language)
     
-    // 월별 운세인 경우 새로운 상세 운세 사용
+    // 월별 운세인 경우 상세 다문단 운세 사용
     if (type === 'monthly' && seedOrMonth !== undefined) {
-      const monthlyText = getMonthlyFortune(seedOrMonth, langKey)
+      const monthlySeed = seedOrMonth + (personalizationVariant || 0) * 997
+      const monthlyText = generateRichMonthlyFortune(
+        seedOrMonth,
+        monthlySeed,
+        language,
+        category
+      )
       const random1 = seededRandom(seedOrMonth + (personalizationVariant || 0))
       const random2 = seededRandom(seedOrMonth + 100 + (personalizationVariant || 0))
       const random3 = seededRandom(seedOrMonth + 200 + (personalizationVariant || 0))
@@ -1274,7 +1281,7 @@ export function generateFortune(
         category,
         month: seedOrMonth,
         score: Math.min(10, Math.max(1, score)),
-        description: typeof monthlyText === 'string' ? monthlyText : getFallbackTemplate('monthly', language),
+        description: monthlyText || getFallbackTemplate('monthly', language),
         luckyColor: colorArray.length > 0 ? colorArray[colorIdx] : '#9C27B0',
         luckyNumber: numberArray.length > 0 ? numberArray[colorIdx % numberArray.length] : 7,
       }
@@ -1575,23 +1582,12 @@ export function generateEnhancedMonthlyFortunesWithProfile(
             )
         const rng = new SeededRandom(personalSeed)
         
-        // Use category-specific pools for monthly fortune
-        const categoryPools = categorySpecificPools[primaryCategory as keyof typeof categorySpecificPools] || categorySpecificPools.total
-        
-        // Select different pool combinations for each month for variety
-        const poolCombination = month % 3
-        let monthlyDescription: string
-        if (langKey === 'ko') {
-          if (poolCombination === 0) {
-            monthlyDescription = generateCustomFortune(personalSeed, { ...categoryPools, positive: fortuneSentencePools.monthly.positive }, 3, language)
-          } else if (poolCombination === 1) {
-            monthlyDescription = generateCustomFortune(personalSeed, { ...categoryPools, caution: fortuneSentencePools.monthly.caution }, 3, language)
-          } else {
-            monthlyDescription = generateCustomFortune(personalSeed, { ...categoryPools, transform: fortuneSentencePools.monthly.transform }, 3, language)
-          }
-        } else {
-          monthlyDescription = getMonthlyDetailedLine(month, language)
-        }
+        const monthlyDescription = generateRichMonthlyFortune(
+          month,
+          personalSeed,
+          language,
+          primaryCategory
+        )
         
         const score = Math.min(10, Math.max(1, 6 + rng.nextInt(4)))
         const colorArr = luckyColorsByLang[language] || luckyColorsByLang[langKey] || luckyColorsByLang.ko || []
@@ -1907,20 +1903,12 @@ export function generateFortuneWithProfile(
       const currentMonth = new Date().getMonth() + 1
       const personalSeed = createPersonalSeed(profileHash, 'monthly', undefined, currentMonth, month)
       
-      // Generate custom monthly fortune using specialized sentence pools
-      const randomPool = rng.nextInt(3)
-      let monthlyDescription: string
-      if (langKey === 'ko') {
-        if (randomPool === 0) {
-          monthlyDescription = generateCustomFortune(personalSeed, { positive: fortuneSentencePools.monthly.positive, caution: fortuneSentencePools.monthly.caution }, 2, language)
-        } else if (randomPool === 1) {
-          monthlyDescription = generateCustomFortune(personalSeed, { caution: fortuneSentencePools.monthly.caution, transform: fortuneSentencePools.monthly.transform }, 2, language)
-        } else {
-          monthlyDescription = generateCustomFortune(personalSeed, { positive: fortuneSentencePools.monthly.positive, transform: fortuneSentencePools.monthly.transform }, 2, language)
-        }
-      } else {
-        monthlyDescription = getMonthlyDetailedLine(month, language)
-      }
+      const monthlyDescription = generateRichMonthlyFortune(
+        month,
+        personalSeed,
+        language,
+        category
+      )
       
       const monthlyRng = new SeededRandom(personalSeed)
       const monthlyScore = Math.min(10, Math.max(1, 6 + monthlyRng.nextInt(4)))
@@ -1997,7 +1985,7 @@ export function generateMonthlyFortunesWithProfile(
         category,
         month: i + 1,
         score: 7,
-        description: getMonthlyDetailedLine(i + 1, language),
+        description: generateRichMonthlyFortune(i + 1, i + 1, language, category),
         luckyColor: '#9C27B0',
         luckyNumber: 7,
       }))
@@ -2013,7 +2001,7 @@ export function generateMonthlyFortunesWithProfile(
           category,
           month: i + 1,
           score: 7,
-          description: getMonthlyDetailedLine(i + 1, language),
+          description: generateRichMonthlyFortune(i + 1, i + 1, language, category),
           luckyColor: '#9C27B0',
           luckyNumber: 7,
         }

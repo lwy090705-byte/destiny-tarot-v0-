@@ -20,7 +20,9 @@ import { useAnnouncement } from "@/lib/announcement-context"
 import { useUser } from "@/lib/user-context"
 import type { UserProfile, Category } from "@/lib/types"
 import { useLanguage } from "@/lib/language-context"
-import { UsageGuideCard } from "@/components/usage-guide-card"
+import { HomeFeatureButtons } from "@/components/home-feature-buttons"
+import { UsageGuideModal } from "@/components/usage-guide-modal"
+import { AnnouncementsViewModal } from "@/components/announcements-view-modal"
 
 export default function Home() {
   const [profiles, setProfiles] = useState<UserProfile[]>([])
@@ -29,6 +31,8 @@ export default function Home() {
   const [calendarType, setCalendarType] = useState<'solar' | 'lunar'>('solar')
   const [isHydrated, setIsHydrated] = useState(false)
   const [showAnnouncement, setShowAnnouncement] = useState(false)
+  const [showUsageGuide, setShowUsageGuide] = useState(false)
+  const [showAnnouncementsView, setShowAnnouncementsView] = useState(false)
 
   const { language, t, isLanguageReady, hasCompletedLanguageOnboarding } = useLanguage()
   const { shouldShowAnnouncement } = useAnnouncement()
@@ -108,9 +112,22 @@ export default function Home() {
         onClose={() => setShowAnnouncement(false)}
       />
 
+      <UsageGuideModal
+        isOpen={showUsageGuide}
+        onClose={() => setShowUsageGuide(false)}
+      />
+
+      <AnnouncementsViewModal
+        isOpen={showAnnouncementsView}
+        onClose={() => setShowAnnouncementsView(false)}
+      />
+
       <main className="container mx-auto px-4 py-3 max-w-lg pb-16 relative z-10">
 
-        <UsageGuideCard />
+        <HomeFeatureButtons
+          onUsageGuideClick={() => setShowUsageGuide(true)}
+          onAnnouncementsClick={() => setShowAnnouncementsView(true)}
+        />
 
         {/* 카테고리 선택 */}
         <div

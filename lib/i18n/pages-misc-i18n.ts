@@ -69,6 +69,8 @@ const KO: Record<string, string> = {
   'announcements.cancel': '취소',
   'announcements.empty': '공지사항이 없습니다.',
   'announcements.fillRequired': '제목과 내용을 입력해주세요.',
+  'home.buttons.usageGuide': '이용방법',
+  'home.buttons.announcements': '공지사항',
   'business.title': '사업 협력 문의',
   'business.heroTitle': '함께 성장할 파트너를 찾습니다',
   'business.heroDesc':
@@ -158,6 +160,8 @@ const EN: Record<string, string> = {
   'announcements.cancel': 'Cancel',
   'announcements.empty': 'No announcements yet.',
   'announcements.fillRequired': 'Please enter a title and content.',
+  'home.buttons.usageGuide': 'How to use',
+  'home.buttons.announcements': 'Announcements',
   'business.title': 'Business inquiry',
   'business.heroTitle': 'Looking for partners to grow together',
   'business.heroDesc':
@@ -204,6 +208,8 @@ const JA: Record<string, string> = {
   'share.platform.kakao': 'カカオトーク',
   'pointsShop.title': 'ポイント購入',
   'announcements.title': 'お知らせ',
+  'home.buttons.usageGuide': '使い方',
+  'home.buttons.announcements': 'お知らせ',
   'business.title': '事業提携のお問い合わせ',
 }
 

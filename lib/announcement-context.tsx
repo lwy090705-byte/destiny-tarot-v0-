@@ -51,8 +51,8 @@ export function AnnouncementProvider({ children }: { children: React.ReactNode }
         title: '',
         content: '',
         isNew: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: '2026-06-09T00:00:00.000Z',
+        updatedAt: '2026-06-09T00:00:00.000Z',
         version: DEFAULT_ANNOUNCEMENT_VERSION,
       }
       loaded = [defaultAnnouncement]
