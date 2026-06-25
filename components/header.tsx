@@ -6,6 +6,7 @@ import { languages, type Language } from "@/lib/i18n"
 
 import { useLanguage } from "@/lib/language-context"
 import { usePoints } from "@/lib/points-context"
+import { PiSignInButton } from "@/components/pi-sign-in-button"
 
 export function Header() {
   const { language, setLanguage, t } = useLanguage()
@@ -101,7 +102,9 @@ export function Header() {
             <span style={{ fontSize: 11 }}>✦</span> v3.0
           </div>
 
-          {/* Language selector — bottom of right column, naturally aligned with points pill */}
+          {/* Pi sign-in + language selector — bottom of right column */}
+          <div className="flex items-center gap-1.5">
+            <PiSignInButton />
           <button
             onClick={() => setOpen((v) => !v)}
             className="flex items-center gap-1.5 rounded-full font-bold transition-all active:scale-95"
@@ -135,6 +138,7 @@ export function Header() {
               />
             </svg>
           </button>
+          </div>
 
           {/* Dropdown */}
           {open && (

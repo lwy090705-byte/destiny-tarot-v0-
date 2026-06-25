@@ -164,6 +164,9 @@ const EN: Record<string, string> = {
   'home.buttons.announcements': 'Notices',
   'intro.skip': 'Skip',
   'intro.videoLabel': 'App intro video',
+  'pi.signIn': 'Sign in with Pi',
+  'pi.signingIn': 'Signing in…',
+  'pi.signOut': 'Sign out of Pi',
   'business.title': 'Business inquiry',
   'business.heroTitle': 'Looking for partners to grow together',
   'business.heroDesc':

@@ -104,6 +104,9 @@ export const koTranslations: Record<string, string> = {
     'home.buttons.announcements': '공지사항',
     'intro.skip': '건너뛰기',
     'intro.videoLabel': '앱 인트로 영상',
+    'pi.signIn': 'Pi 로그인',
+    'pi.signingIn': '로그인 중…',
+    'pi.signOut': 'Pi 로그아웃',
     
     // MBTI
     'mbti.title': 'MBTI 성격 테스트',

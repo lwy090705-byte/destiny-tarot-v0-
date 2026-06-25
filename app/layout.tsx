@@ -9,6 +9,7 @@ import { AnnouncementProvider } from '@/lib/announcement-context'
 import { UserProvider } from '@/lib/user-context'
 import { PremiumProvider } from '@/lib/premium-context'
 import { VisitLogTracker } from '@/components/visit-log-tracker'
+import { PiAuthProvider } from '@/lib/pi-auth-context'
 import './globals.css'
 
 const notoSansKR = Noto_Sans_KR({ 
@@ -67,6 +68,7 @@ export default function RootLayout({
       </head>
       <body className={`${notoSansKR.variable} font-sans antialiased`} suppressHydrationWarning>
         <LanguageProvider>
+          <PiAuthProvider>
           <UserProvider>
             <PremiumProvider>
             <VisitLogTracker />
@@ -82,6 +84,7 @@ export default function RootLayout({
             </PointsProvider>
             </PremiumProvider>
           </UserProvider>
+          </PiAuthProvider>
         </LanguageProvider>
       </body>
     </html>
