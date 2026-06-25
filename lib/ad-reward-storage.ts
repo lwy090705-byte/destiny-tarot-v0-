@@ -1,5 +1,5 @@
 /** Daily ad-reward watch limit (profile bonus roulette / pick draw). */
-export const DAILY_AD_REWARD_LIMIT = 5
+export const DAILY_AD_REWARD_LIMIT = 1
 
 const KEYS = {
   date: 'adRewardDate',

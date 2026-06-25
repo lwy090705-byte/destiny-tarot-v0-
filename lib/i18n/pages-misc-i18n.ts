@@ -160,8 +160,10 @@ const EN: Record<string, string> = {
   'announcements.cancel': 'Cancel',
   'announcements.empty': 'No announcements yet.',
   'announcements.fillRequired': 'Please enter a title and content.',
-  'home.buttons.usageGuide': 'How to use',
-  'home.buttons.announcements': 'Announcements',
+  'home.buttons.usageGuide': 'User Guide',
+  'home.buttons.announcements': 'Notices',
+  'intro.skip': 'Skip',
+  'intro.videoLabel': 'App intro video',
   'business.title': 'Business inquiry',
   'business.heroTitle': 'Looking for partners to grow together',
   'business.heroDesc':
@@ -208,8 +210,10 @@ const JA: Record<string, string> = {
   'share.platform.kakao': 'カカオトーク',
   'pointsShop.title': 'ポイント購入',
   'announcements.title': 'お知らせ',
-  'home.buttons.usageGuide': '使い方',
+  'home.buttons.usageGuide': 'ご利用方法',
   'home.buttons.announcements': 'お知らせ',
+  'intro.skip': 'スキップ',
+  'intro.videoLabel': 'アプリ紹介動画',
   'business.title': '事業提携のお問い合わせ',
 }
 
@@ -226,6 +230,8 @@ const ZH: Record<string, string> = {
   'share.appName': '命运与塔罗',
   'pointsShop.title': '积分充值',
   'announcements.title': '公告',
+  'home.buttons.usageGuide': '使用方法',
+  'home.buttons.announcements': '公告',
   'business.title': '商务合作咨询',
 }
 
@@ -241,6 +247,8 @@ const ES: Record<string, string> = {
   'share.kakaoButton': 'Abrir ahora',
   'pointsShop.title': 'Comprar puntos',
   'announcements.title': 'Anuncios',
+  'home.buttons.usageGuide': 'Guía de uso',
+  'home.buttons.announcements': 'Avisos',
   'business.title': 'Consulta comercial',
 }
 
@@ -254,6 +262,8 @@ const ID: Record<string, string> = {
   'common.confirm': 'OK',
   'pointsShop.title': 'Beli poin',
   'announcements.title': 'Pengumuman',
+  'home.buttons.usageGuide': 'Panduan Penggunaan',
+  'home.buttons.announcements': 'Pengumuman',
   'business.title': 'Kemitraan bisnis',
 }
 
@@ -269,6 +279,8 @@ const FR: Record<string, string> = {
   'common.confirm': 'OK',
   'pointsShop.title': 'Acheter des points',
   'announcements.title': 'Annonces',
+  'home.buttons.usageGuide': "Guide d'utilisation",
+  'home.buttons.announcements': 'Annonces',
   'business.title': 'Contact professionnel',
 }
 
@@ -284,6 +296,8 @@ const DE: Record<string, string> = {
   'share.kakaoButton': 'Jetzt öffnen',
   'pointsShop.title': 'Punkte kaufen',
   'announcements.title': 'Mitteilungen',
+  'home.buttons.usageGuide': 'Anleitung',
+  'home.buttons.announcements': 'Hinweise',
   'business.title': 'Geschäftsanfrage',
 }
 
@@ -299,6 +313,8 @@ const PT: Record<string, string> = {
   'share.kakaoButton': 'Abrir agora',
   'pointsShop.title': 'Comprar pontos',
   'announcements.title': 'Avisos',
+  'home.buttons.usageGuide': 'Guia de Uso',
+  'home.buttons.announcements': 'Avisos',
   'business.title': 'Contato comercial',
 }
 
@@ -313,6 +329,8 @@ const HI: Record<string, string> = {
   'share.kakaoButton': 'अभी खोलें',
   'pointsShop.title': 'पॉइंट खरीदें',
   'announcements.title': 'घोषणाएँ',
+  'home.buttons.usageGuide': 'उपयोग विधि',
+  'home.buttons.announcements': 'सूचना',
   'business.title': 'व्यापार पूछताछ',
 }
 
@@ -327,6 +345,8 @@ const VI: Record<string, string> = {
   'share.kakaoButton': 'Mở ngay',
   'pointsShop.title': 'Nạp điểm',
   'announcements.title': 'Thông báo',
+  'home.buttons.usageGuide': 'Hướng dẫn sử dụng',
+  'home.buttons.announcements': 'Thông báo',
   'business.title': 'Hợp tác kinh doanh',
 }
 
@@ -341,6 +361,8 @@ const TH: Record<string, string> = {
   'share.kakaoButton': 'เปิดเลย',
   'pointsShop.title': 'เติมพอยต์',
   'announcements.title': 'ประกาศ',
+  'home.buttons.usageGuide': 'วิธีใช้งาน',
+  'home.buttons.announcements': 'ประกาศ',
   'business.title': 'ติดต่อธุรกิจ',
 }
 

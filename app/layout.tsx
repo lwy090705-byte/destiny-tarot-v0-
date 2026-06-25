@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Noto_Sans_KR } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { OnboardingGate } from '@/components/onboarding-gate'
+import { IntroGate } from '@/components/intro-gate'
 import { LanguageProvider } from '@/lib/language-context'
 import { PointsProvider } from '@/lib/points-context'
 import { AnnouncementProvider } from '@/lib/announcement-context'
@@ -71,9 +72,11 @@ export default function RootLayout({
             <VisitLogTracker />
             <PointsProvider>
               <AnnouncementProvider>
-                <OnboardingGate>
-                  {children}
-                </OnboardingGate>
+                <IntroGate>
+                  <OnboardingGate>
+                    {children}
+                  </OnboardingGate>
+                </IntroGate>
                 <Analytics />
               </AnnouncementProvider>
             </PointsProvider>

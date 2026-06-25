@@ -700,10 +700,14 @@ export default function UserProfilePage() {
                 {t('userProfile.bonus')}
               </div>
               <div className="text-sm mt-0.5" style={{ opacity: 0.9 }}>
-                {t('userProfile.bonusWatchAdLine')}
+                {canClaimReward()
+                  ? t('userProfile.bonusWatchAdLine')
+                  : t('userProfile.bonusAllClaimedToday')}
               </div>
               <div className="text-xs mt-1" style={{ opacity: 0.7 }}>
-                {t('userProfile.bonusDailyHint')}
+                {canClaimReward()
+                  ? t('userProfile.bonusDailyHint')
+                  : t('userProfile.availableTomorrow')}
               </div>
             </div>
 
@@ -742,9 +746,11 @@ export default function UserProfilePage() {
           <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.2)' }}>
             <div className="flex items-center justify-between mb-2 px-0.5">
               <span className="text-xs font-bold" style={{ opacity: 0.95 }}>
-                {t('userProfile.dailyRewardWithMax')
-                  .replace('{current}', String(dailyRewardCount))
-                  .replace('{max}', String(DAILY_AD_REWARD_LIMIT))}
+                {canClaimReward()
+                  ? t('userProfile.dailyRewardWithMax')
+                      .replace('{current}', String(dailyRewardCount))
+                      .replace('{max}', String(DAILY_AD_REWARD_LIMIT))
+                  : t('userProfile.dailyRewardCompleteToday')}
               </span>
               <Gift className="h-4 w-4" style={{ opacity: 0.7 }} />
             </div>
@@ -1003,7 +1009,11 @@ export default function UserProfilePage() {
                 disabled={isSpinning || !canClaimReward()}
                 className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold py-3 disabled:opacity-50"
               >
-                {isSpinning ? t('roulette.spinning') : t('roulette.spin')}
+                {isSpinning
+                  ? t('roulette.spinning')
+                  : !canClaimReward()
+                    ? t('userProfile.bonusAllClaimedToday')
+                    : t('roulette.spin')}
               </Button>
             )}
           </div>

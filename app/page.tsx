@@ -23,6 +23,7 @@ import { useLanguage } from "@/lib/language-context"
 import { HomeFeatureButtons } from "@/components/home-feature-buttons"
 import { UsageGuideModal } from "@/components/usage-guide-modal"
 import { AnnouncementsViewModal } from "@/components/announcements-view-modal"
+import { useIntroFinished } from "@/components/intro-gate"
 
 export default function Home() {
   const [profiles, setProfiles] = useState<UserProfile[]>([])
@@ -34,6 +35,7 @@ export default function Home() {
   const [showUsageGuide, setShowUsageGuide] = useState(false)
   const [showAnnouncementsView, setShowAnnouncementsView] = useState(false)
 
+  const introFinished = useIntroFinished()
   const { language, t, isLanguageReady, hasCompletedLanguageOnboarding } = useLanguage()
   const { shouldShowAnnouncement } = useAnnouncement()
   const { user, isHydrated: userHydrated, needsNickname } = useUser()
@@ -42,14 +44,16 @@ export default function Home() {
     setIsHydrated(true)
   }, [])
 
-  // 언어·닉네임 온보딩 완료 후 공지사항 표시
+  // 언어·닉네임 온보딩·인트로 완료 후 공지사항 표시
   useEffect(() => {
+    if (!introFinished) return
     if (!isLanguageReady || !userHydrated) return
     if (!hasCompletedLanguageOnboarding || needsNickname) return
     if (shouldShowAnnouncement) {
       setShowAnnouncement(true)
     }
   }, [
+    introFinished,
     isLanguageReady,
     userHydrated,
     hasCompletedLanguageOnboarding,

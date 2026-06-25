@@ -16,7 +16,6 @@ const FEATURE_KEYS = [
   'updatePopup.feature3',
   'updatePopup.feature4',
   'updatePopup.feature5',
-  'updatePopup.feature6',
 ] as const
 
 interface AnnouncementsViewModalProps {

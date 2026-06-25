@@ -102,6 +102,8 @@ export const koTranslations: Record<string, string> = {
     // Home feature buttons
     'home.buttons.usageGuide': '이용방법',
     'home.buttons.announcements': '공지사항',
+    'intro.skip': '건너뛰기',
+    'intro.videoLabel': '앱 인트로 영상',
     
     // MBTI
     'mbti.title': 'MBTI 성격 테스트',
@@ -412,7 +414,7 @@ export const koTranslations: Record<string, string> = {
     // User Profile - Detailed
     'userProfile.watchAd': '광고 보기',
     'userProfile.watchAdReward': '+10P 적립',
-    'userProfile.bonus': '보너스 받기',
+    'userProfile.bonus': '🎁 보너스 받기',
     'userProfile.onceDaily': '하루 1회',
     'userProfile.availableTomorrow': '내일 가능',
     'userProfile.achievements': '업적',
@@ -449,11 +451,11 @@ export const koTranslations: Record<string, string> = {
     // Points system
     'points.notEnough': '포인트가 부족합니다. 충전 후 이용해주세요.',
     'points.insufficient': '포인트가 부족합니다',
-    'points.insufficientDesc': '포인트를 충전하거나 광고 보상으로 포인트를 받을 수 있습니다',
+    'points.insufficientDesc': '포인트를 충전하거나 보너스를 받아 포인트를 획득할 수 있습니다.',
     'points.current': '현재 포인트',
     'points.required': '필요한 포인트',
     'points.needed': '부족한 포인트',
-    'points.watchAd': '광고 보기',
+    'points.watchAd': '일일 포인트 받기',
     'points.buyPi': 'Pi로 구매',
     'points.info': '포인트는 일정 시간 후 계정에 적용됩니다. 환불은 불가능합니다.',
     'points.deducted': '10 포인트가 차감되었습니다.',
@@ -669,9 +671,11 @@ export const koTranslations: Record<string, string> = {
     'privacy.emailContact': '이메일: lwy2016@naver.com',
     'userProfile.checkInBonusHeading': '출석체크 · 보너스 받기',
     'userProfile.checkInBonusSub': '매일 포인트를 적립해보세요',
-    'userProfile.bonusWatchAdLine': '매일 50P 보너스를 받아보세요!',
-    'userProfile.bonusDailyHint': '매일 보너스를 획득해보세요!',
+    'userProfile.bonusWatchAdLine': '하루 1회 보너스를 받을 수 있습니다.',
+    'userProfile.bonusDailyHint': '보너스를 받아 포인트를 충전해보세요.',
     'userProfile.dailyRewardWithMax': '일일 보상 ({current}/{max})',
+    'userProfile.dailyRewardCompleteToday': '오늘 1회 완료',
+    'userProfile.bonusAllClaimedToday': '오늘 보너스를 모두 받았습니다.',
     'userProfile.pickDrawTitle': '뽑기',
     'userProfile.pickDrawSubtitle': '5개의 선물 상자 중 하나를 선택하세요!',
     'common.congrats': '축하합니다!',

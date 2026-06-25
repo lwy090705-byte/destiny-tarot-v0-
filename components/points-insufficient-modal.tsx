@@ -72,7 +72,7 @@ export function PointsInsufficientModal({
               </h2>
               <p className="text-white/90 text-sm leading-relaxed">
                 {t('points.insufficientDesc') ||
-                  '포인트를 충전하거나 광고 보상으로 포인트를 받을 수 있습니다'}
+                  '포인트를 충전하거나 보너스를 받아 포인트를 획득할 수 있습니다'}
               </p>
             </div>
           </div>
@@ -132,7 +132,7 @@ export function PointsInsufficientModal({
                     d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                   />
                 </svg>
-                <span>{t('points.watchAd') || '광고 보기'}</span>
+                <span>{t('points.watchAd') || '일일 포인트 받기'}</span>
               </button>
               )}
 
