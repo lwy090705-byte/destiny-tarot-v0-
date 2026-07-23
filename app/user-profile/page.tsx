@@ -14,6 +14,8 @@ import { useMasterAccess } from "@/lib/use-master-access"
 import { MasterPointGrantPanel } from "@/components/master-point-grant-panel"
 /* TEMP_ADMIN_DIAGNOSTIC — remove import + <TempAdminDiagnostic /> after env setup */
 import { TempAdminDiagnostic } from "@/components/temp-admin-diagnostic"
+/* TEMP_PI_PROFILE_MIGRATION — remove import + <TempPiProfileMigration /> after migrate */
+import { TempPiProfileMigration } from "@/components/temp-pi-profile-migration"
 import {
   getMasterPointsDisplay,
   getMasterPointsLabel,
@@ -556,6 +558,8 @@ export default function UserProfilePage() {
 
         {/* TEMP_ADMIN_DIAGNOSTIC — remove this block after copying MASTER_PI_UIDS */}
         <TempAdminDiagnostic />
+        {/* TEMP_PI_PROFILE_MIGRATION — remove after 파이조아→대질주 migrate succeeds */}
+        <TempPiProfileMigration />
 
         {showMasterUi && user?.nickname && (
           <MasterPointGrantPanel grantedBy={user.nickname.trim()} />

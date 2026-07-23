@@ -13,10 +13,12 @@ export const runtime = 'nodejs'
  * POST /api/profile/link-pi
  * Body: { nickname: string }
  *
- * Sets profiles.pi_uid = verified Pi session.uid for that app nickname.
- * - Does NOT put nicknames into MASTER_PI_UIDS (env must use real Pi UIDs only).
- * - Designated master nickname (대질주): may link when pi_uid empty; also sets
- *   is_master/role. If MASTER_PI_UIDS is non-empty, session uid must be listed.
+ * Always writes:
+ *   UPDATE profiles SET pi_uid = <session.uid> WHERE nickname = <app nickname>
+ * (service_role). Master role flags are applied separately for 대질주.
+ *
+ * MASTER_PI_UIDS must NOT block the pi_uid write (chicken-and-egg: you need
+ * the uid in DB / env before the allow-list can match).
  */
 export async function POST(request: NextRequest) {
   if (!hasSupabaseServiceRole()) {
@@ -52,22 +54,8 @@ export async function POST(request: NextRequest) {
 
   const masterEnvList = masterPiUidsFromEnv()
   const isDesignatedMasterNick = isMasterNickname(nickname)
-
-  // If operator allow-list is configured, only those Pi UIDs may claim 대질주.
-  if (
-    isDesignatedMasterNick &&
-    masterEnvList.length > 0 &&
-    !isUidInMasterList(session.uid, masterEnvList)
-  ) {
-    return NextResponse.json(
-      {
-        error: 'This Pi account is not in MASTER_PI_UIDS; cannot link operator nickname',
-        code: 'MASTER_PI_UIDS_MISMATCH',
-        session_pi_uid: session.uid,
-      },
-      { status: 403 }
-    )
-  }
+  const uidAllowedAsMaster =
+    masterEnvList.length === 0 || isUidInMasterList(session.uid, masterEnvList)
 
   try {
     const admin = createSupabaseAdmin()
@@ -107,7 +95,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: missingCol
-            ? 'profiles.pi_uid column missing — run supabase/rls_secure_phase2.sql'
+            ? 'profiles.pi_uid column missing — run supabase/migrate_pi_profile.sql'
             : 'Profile lookup failed',
           code: missingCol ? 'PI_UID_COLUMN_MISSING' : 'LOOKUP_FAILED',
         },
@@ -115,12 +103,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!profile) {
+    if (!profile?.nickname) {
       return NextResponse.json(
         { error: 'Profile not found for nickname', code: 'PROFILE_NOT_FOUND' },
         { status: 404 }
       )
     }
+
+    const dbNickname = String(profile.nickname)
 
     if (profile.pi_uid && String(profile.pi_uid) !== session.uid) {
       return NextResponse.json(
@@ -132,37 +122,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Idempotent: already linked
-    if (profile.pi_uid && String(profile.pi_uid) === session.uid) {
-      if (isDesignatedMasterNick) {
-        await admin
-          .from('profiles')
-          .update({
-            role: MASTER_ROLE,
-            is_master: true,
-            level_title: MASTER_LEVEL_TITLE,
-          })
-          .ilike('nickname', nickname)
-      }
-      return NextResponse.json({
-        ok: true,
-        nickname: String(profile.nickname),
-        pi_uid: session.uid,
-        already_linked: true,
-      })
-    }
+    const alreadyLinked =
+      profile.pi_uid != null && String(profile.pi_uid) === session.uid
 
+    // Always persist pi_uid (idempotent). Optionally promote designated master nick.
     const payload: Record<string, unknown> = { pi_uid: session.uid }
-    if (isDesignatedMasterNick) {
+    if (isDesignatedMasterNick && uidAllowedAsMaster) {
       payload.role = MASTER_ROLE
       payload.is_master = true
       payload.level_title = MASTER_LEVEL_TITLE
     }
 
-    const { error: updErr } = await admin
+    const { data: updated, error: updErr } = await admin
       .from('profiles')
       .update(payload)
-      .ilike('nickname', nickname)
+      .eq('nickname', dbNickname)
+      .select('nickname, pi_uid, role, is_master')
+      .maybeSingle()
 
     if (updErr) {
       const missingCol = /pi_uid/i.test(updErr.message) || updErr.code === '42703'
@@ -170,19 +146,43 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: missingCol
-            ? 'profiles.pi_uid column missing — run supabase/rls_secure_phase2.sql'
+            ? 'profiles.pi_uid column missing — run supabase/migrate_pi_profile.sql'
             : 'Link failed',
           code: missingCol ? 'PI_UID_COLUMN_MISSING' : 'UPDATE_FAILED',
+          detail: updErr.message,
         },
         { status: missingCol ? 503 : 502 }
       )
     }
 
+    if (!updated || String(updated.pi_uid ?? '') !== session.uid) {
+      console.error('[link-pi] update returned no row or pi_uid mismatch', {
+        nickname: dbNickname,
+        updated,
+      })
+      return NextResponse.json(
+        {
+          error: 'pi_uid was not saved (0 rows updated)',
+          code: 'UPDATE_NO_ROWS',
+        },
+        { status: 502 }
+      )
+    }
+
+    console.log('[link-pi] saved', {
+      nickname: updated.nickname,
+      pi_uid_prefix: `${session.uid.slice(0, 6)}…`,
+      already_linked: alreadyLinked,
+    })
+
     return NextResponse.json({
       ok: true,
-      nickname: String(profile.nickname),
+      nickname: String(updated.nickname),
       pi_uid: session.uid,
-      already_linked: false,
+      already_linked: alreadyLinked,
+      is_master: updated.is_master === true,
+      role: updated.role != null ? String(updated.role) : null,
+      master_flags_applied: isDesignatedMasterNick && uidAllowedAsMaster,
       /** Copy this value into MASTER_PI_UIDS — never use Pi username or app nickname. */
       hint: 'Set MASTER_PI_UIDS to this pi_uid on the server (comma-separated if multiple).',
     })

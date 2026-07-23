@@ -1,5 +1,6 @@
 /**
  * Client helper: bind app nickname → verified Pi session uid via server.
+ * POST /api/profile/link-pi → UPDATE profiles SET pi_uid = session.uid WHERE nickname = …
  * Never puts nicknames into MASTER_PI_UIDS — only the returned pi_uid may be copied there.
  */
 import { piAuthFetch } from '@/lib/pi-session-client'
@@ -13,55 +14,89 @@ export type LinkPiResult = {
   code?: string
 }
 
+/** Dedupe concurrent / repeat binds for the same nickname in one tab. */
+let lastSuccessKey = ''
+let lastSuccessAt = 0
+let inFlightKey = ''
+let inFlight: Promise<LinkPiResult> | null = null
+
 export async function linkPiToAppNickname(nickname: string): Promise<LinkPiResult> {
   const nick = nickname.trim()
   if (!nick) {
     return { ok: false, status: 400, error: 'nickname required' }
   }
 
-  try {
-    const res = await piAuthFetch('/api/profile/link-pi', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nickname: nick }),
-    })
-    let payload: {
-      ok?: boolean
-      pi_uid?: string
-      nickname?: string
-      error?: string
-      code?: string
-    } = {}
-    try {
-      payload = (await res.json()) as typeof payload
-    } catch {
-      /* ignore */
-    }
+  const now = Date.now()
+  const key = nick.toLowerCase()
+  if (inFlight && inFlightKey === key) {
+    return inFlight
+  }
+  // Skip identical success path spam within 8s (auth boot + nickname hydrate)
+  if (lastSuccessKey === key && now - lastSuccessAt < 8000) {
+    return { ok: true, status: 200, nickname: nick }
+  }
 
-    if (!res.ok) {
-      console.warn('[link-pi] failed', res.status, payload.error ?? payload.code)
+  inFlightKey = key
+  inFlight = (async (): Promise<LinkPiResult> => {
+    try {
+      const res = await piAuthFetch('/api/profile/link-pi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nickname: nick }),
+      })
+      let payload: {
+        ok?: boolean
+        pi_uid?: string
+        nickname?: string
+        error?: string
+        code?: string
+        detail?: string
+      } = {}
+      try {
+        payload = (await res.json()) as typeof payload
+      } catch {
+        /* ignore */
+      }
+
+      if (!res.ok) {
+        console.warn(
+          '[link-pi] failed — profiles.pi_uid NOT saved',
+          res.status,
+          payload.code ?? payload.error,
+          payload.detail ?? ''
+        )
+        return {
+          ok: false,
+          status: res.status,
+          error: payload.error ?? 'Link failed',
+          code: payload.code,
+        }
+      }
+
+      lastSuccessKey = key
+      lastSuccessAt = Date.now()
+      console.log('[link-pi] success — profiles.pi_uid saved', {
+        nickname: payload.nickname ?? nick,
+        pi_uid: payload.pi_uid ? `${String(payload.pi_uid).slice(0, 6)}…` : null,
+      })
       return {
-        ok: false,
-        status: res.status,
-        error: payload.error ?? 'Link failed',
-        code: payload.code,
+        ok: true,
+        status: 200,
+        pi_uid: payload.pi_uid,
+        nickname: payload.nickname ?? nick,
+      }
+    } catch (err) {
+      console.warn('[link-pi] network error', err)
+      return { ok: false, status: 0, error: 'Network error' }
+    } finally {
+      if (inFlightKey === key) {
+        inFlight = null
+        inFlightKey = ''
       }
     }
+  })()
 
-    console.log('[link-pi] success', {
-      nickname: payload.nickname ?? nick,
-      pi_uid: payload.pi_uid ? `${String(payload.pi_uid).slice(0, 6)}…` : null,
-    })
-    return {
-      ok: true,
-      status: 200,
-      pi_uid: payload.pi_uid,
-      nickname: payload.nickname ?? nick,
-    }
-  } catch (err) {
-    console.warn('[link-pi] network error', err)
-    return { ok: false, status: 0, error: 'Network error' }
-  }
+  return inFlight
 }
 
 /** GET /api/profile/link-pi with Pi session (cookie or Authorization header). */

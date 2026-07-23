@@ -28,6 +28,7 @@ import { clearUserScopedCaches } from '@/lib/supabase-request-cache'
 import { clearAuthorMetaCache } from '@/lib/supabase-profile-level-titles'
 import { isMasterNickname } from '@/lib/master-role'
 import { ensureMasterProfileFields } from '@/lib/supabase-profile-master'
+import { usePiAuth } from '@/lib/pi-auth-context'
 
 const STORAGE_KEY = 'fortune-app-user'
 
@@ -47,6 +48,11 @@ interface UserContextType {
   isHydrated: boolean
   /** Returns null on success, or validation error code. */
   saveNickname: (nickname: string) => Promise<NicknameValidationError | null>
+  /**
+   * TEMP_PI_PROFILE_MIGRATION — local-only nickname switch after server migrate.
+   * Skips uniqueness checks; does not insert a new profile row.
+   */
+  adoptNicknameLocally: (nickname: string) => void
   applyReferralCode: (
     code: string
   ) => Promise<'success' | 'already_used' | 'invalid' | 'self' | 'duplicate'>
@@ -72,6 +78,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const [isHydrated, setIsHydrated] = useState(false)
   const userRef = useRef<UserData | null>(null)
   const initialStatsFetchedRef = useRef(false)
+  const { status: piStatus } = usePiAuth()
 
   userRef.current = user
 
@@ -98,6 +105,16 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
     setIsHydrated(true)
   }, [])
+
+  // After Pi auth + app nickname are both ready, persist profiles.pi_uid
+  useEffect(() => {
+    if (!isHydrated || piStatus !== 'authenticated') return
+    const nick = user?.nickname?.trim()
+    if (!nick) return
+    void import('@/lib/link-pi-client').then(({ linkPiToAppNickname }) =>
+      linkPiToAppNickname(nick)
+    )
+  }, [isHydrated, piStatus, user?.nickname])
 
   const refetchReferralStats = useCallback(async (): Promise<number> => {
     const current = userRef.current
@@ -185,6 +202,31 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     return null
   }
 
+  /** TEMP_PI_PROFILE_MIGRATION — remove with migrate UI */
+  const adoptNicknameLocally = useCallback(
+    (nickname: string) => {
+      const trimmed = nickname.trim()
+      if (!trimmed) return
+      const current = userRef.current
+      clearUserScopedCaches(current?.nickname)
+      clearUserScopedCaches(trimmed)
+      clearAuthorMetaCache()
+      if (current) {
+        persist({ ...current, nickname: trimmed })
+      } else {
+        persist({
+          nickname: trimmed,
+          referralCode: generateReferralCode(),
+          referredBy: null,
+          referralCount: 0,
+          referralRewardClaimed: false,
+          createdAt: new Date().toISOString(),
+        })
+      }
+    },
+    [persist]
+  )
+
   const applyReferralCode = async (
     code: string
   ): Promise<'success' | 'already_used' | 'invalid' | 'self' | 'duplicate'> => {
@@ -232,6 +274,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         user,
         isHydrated,
         saveNickname,
+        adoptNicknameLocally,
         applyReferralCode,
         incrementReferralCount,
         syncReferralCount,
