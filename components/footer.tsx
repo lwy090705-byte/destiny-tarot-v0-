@@ -1,12 +1,13 @@
 import Link from "next/link"
 import { Briefcase, Share2, User, ChevronRight } from "lucide-react"
+import { APP_ROUTES } from "@/lib/app-routes"
 
 export function Footer() {
   const links = [
     {
       title: "홈화면",
       description: "메인으로 돌아가기",
-      href: "/",
+      href: APP_ROUTES.home,
       icon: Briefcase,
       bgColor: "bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-600",
       iconBg: "bg-emerald-400/30",
@@ -15,7 +16,7 @@ export function Footer() {
     {
       title: "추천하기",
       description: "공유하고 보상받기",
-      href: "/share",
+      href: APP_ROUTES.share,
       icon: Share2,
       bgColor: "bg-gradient-to-br from-orange-600 via-orange-500 to-red-600",
       iconBg: "bg-orange-400/30",
@@ -24,7 +25,7 @@ export function Footer() {
     {
       title: "내 프로필",
       description: "포인트 및 업적",
-      href: "/user-profile",
+      href: APP_ROUTES.userProfile,
       icon: User,
       bgColor: "bg-gradient-to-br from-purple-600 via-pink-500 to-rose-600",
       iconBg: "bg-purple-400/30",
@@ -39,7 +40,13 @@ export function Footer() {
           {links.map((link) => {
             const Icon = link.icon
             return (
-              <Link key={link.href} href={link.href}>
+              <Link
+                key={link.href}
+                href={link.href}
+                prefetch={false}
+                translate="no"
+                className="notranslate"
+              >
                 <div className={`${link.bgColor} rounded-2xl p-5 shadow-xl ${link.shadow} hover:shadow-2xl hover:scale-[1.03] active:scale-[0.98] transition-all duration-200 cursor-pointer h-full border border-white/20`}>
                   <div className="flex flex-col space-y-3">
                     <div className={`${link.iconBg} backdrop-blur-sm rounded-xl p-3 w-fit`}>

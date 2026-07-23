@@ -40,6 +40,7 @@ import {
   getTemplateCount,
   getYearlyComprehensivePool,
   getYearlyDetailedPool,
+  type FortuneCategory as TemplateFortuneCategory,
 } from './fortune-templates'
 
 // ─── Safety Utils ─────────────────────────────────────────────────────────────
@@ -92,14 +93,23 @@ function sanitizeFortuneResult(result: unknown, type: FortuneType, category: For
   }
 
   const obj = result as Record<string, unknown>
+  const rawCategory = obj.category
+  const categoryValue: FortuneCategory =
+    typeof rawCategory === 'string' && rawCategory.length > 0
+      ? (rawCategory as FortuneCategory)
+      : category
+
   return {
-    type: obj.type === 'daily' || obj.type === 'yearly' || obj.type === 'monthly' ? obj.type : type,
-    category: obj.category || category,
+    type: obj.type === 'daily' || obj.type === 'yearly' || obj.type === 'monthly' || obj.type === 'lifetime' ? obj.type : type,
+    category: categoryValue,
     month: typeof obj.month === 'number' ? obj.month : undefined,
     score: normalizScore(obj.score),
     description: sanitizeDescription(obj.description, language),
     luckyColor: typeof obj.luckyColor === 'string' ? obj.luckyColor : '#9C27B0',
-    luckyNumber: typeof obj.luckyNumber === 'number' ? obj.luckyNumber : 7,
+    luckyNumber:
+      typeof obj.luckyNumber === 'string' || typeof obj.luckyNumber === 'number'
+        ? obj.luckyNumber
+        : 7,
   }
 }
 
@@ -1234,9 +1244,14 @@ const lifetimeTitlesByContentLang: Partial<Record<FortuneContentLanguage, { earl
   },
 }
 
-export function getLifetimeTitles(language: Language) {
+export function getLifetimeTitles(language: Language): {
+  early: string
+  mid: string
+  late: string
+} {
   const langKey = getFortuneLanguage(language)
-  return lifetimeTitlesByContentLang[langKey] ?? lifetimeTitlesByContentLang.en
+  const titles = lifetimeTitlesByContentLang[langKey] ?? lifetimeTitlesByContentLang.en
+  return titles ?? { early: 'Early life', mid: 'Mid life', late: 'Later life' }
 }
 
 
@@ -1434,7 +1449,7 @@ export function generateEnhancedFortuneWithProfile(
       }
     } else {
       // For other types, use category-specific templates
-      const categoryTemplateMap: Record<FortuneCategory, typeof loveFortuneTemplates> = {
+      const categoryTemplateMap: Record<TemplateFortuneCategory, typeof loveFortuneTemplates> = {
         love: loveFortuneTemplates,
         wealth: wealthFortuneTemplates,
         career: careerFortuneTemplates,
@@ -1444,11 +1459,14 @@ export function generateEnhancedFortuneWithProfile(
         relationship: relationshipFortuneTemplates,
       }
 
-      const pool = categoryTemplateMap[primaryCategory] || categoryTemplateMap.love
+      const templateKey = (primaryCategory as unknown as TemplateFortuneCategory)
+      const pool = categoryTemplateMap[templateKey] || categoryTemplateMap.love
       const templates = pickFortunePool(pool, language, `profile:${primaryCategory}`)
       if (templates.length > 0) {
         // Enhanced template selection - include type and month for more variety
-        const typeBonus = type === 'daily' ? 13 : type === 'yearly' ? 97 : (month || 1) * 47
+        const typeKey = type as FortuneType
+        const typeBonus =
+          typeKey === 'daily' ? 13 : typeKey === 'yearly' ? 97 : (month || 1) * 47
         const templateIndex = Math.abs((seed + typeBonus) % templates.length)
         description = templates[templateIndex] || getFallbackTemplate('general', language)
       }
@@ -1505,17 +1523,15 @@ export function generateEnhancedFortuneWithProfile(
 export function generateComprehensiveFortuneWithProfile(
   profile: FortuneProfileContext,
   language: Language = 'ko'
-): Record<FortuneCategory, FortuneResult> {
-  const categories: FortuneCategory[] = ['love', 'wealth', 'career', 'health', 'opportunity', 'warning', 'relationship']
-  
+): Record<TemplateFortuneCategory, FortuneResult> {
   return {
     love: generateEnhancedFortuneWithProfile('daily', 'love', profile, undefined, language),
     wealth: generateEnhancedFortuneWithProfile('daily', 'wealth', profile, undefined, language),
-    career: generateEnhancedFortuneWithProfile('daily', 'career', profile, undefined, language),
+    career: generateEnhancedFortuneWithProfile('daily', 'career' as FortuneCategory, profile, undefined, language),
     health: generateEnhancedFortuneWithProfile('daily', 'health', profile, undefined, language),
-    opportunity: generateEnhancedFortuneWithProfile('daily', 'opportunity', profile, undefined, language),
-    warning: generateEnhancedFortuneWithProfile('daily', 'warning', profile, undefined, language),
-    relationship: generateEnhancedFortuneWithProfile('daily', 'relationship', profile, undefined, language),
+    opportunity: generateEnhancedFortuneWithProfile('daily', 'opportunity' as FortuneCategory, profile, undefined, language),
+    warning: generateEnhancedFortuneWithProfile('daily', 'warning' as FortuneCategory, profile, undefined, language),
+    relationship: generateEnhancedFortuneWithProfile('daily', 'relationship' as FortuneCategory, profile, undefined, language),
   }
 }
 
@@ -1635,16 +1651,23 @@ export function generateLifetimeFortuneWithProfile(
 ): LifetimeFortune {
   try {
     const langKey = getFortuneLanguage(language)
-    const titles = getLifetimeTitles(language)
+    const titles = getLifetimeTitles(language) ?? {
+      early: '초년운',
+      mid: '중년운',
+      late: '말년운',
+    }
+    const earlyTitle = titles.early ?? '초년운'
+    const midTitle = titles.mid ?? '중년운'
+    const lateTitle = titles.late ?? '말년운'
     
     // Validate profile data
     if (!profile || !profile.name || typeof profile.birthYear !== 'number') {
       console.log('[v0] Invalid profile data, using fallback')
       return {
         category,
-        early: { title: titles.early, description: getFallbackTemplate('lifetime', language), score: 7 },
-        mid: { title: titles.mid, description: getFallbackTemplate('lifetime', language), score: 7 },
-        late: { title: titles.late, description: getFallbackTemplate('lifetime', language), score: 7 },
+        early: { title: earlyTitle, description: getFallbackTemplate('lifetime', language), score: 7 },
+        mid: { title: midTitle, description: getFallbackTemplate('lifetime', language), score: 7 },
+        late: { title: lateTitle, description: getFallbackTemplate('lifetime', language), score: 7 },
       }
     }
 
@@ -1659,9 +1682,9 @@ export function generateLifetimeFortuneWithProfile(
       console.log('[v0] Lifetime templates empty, using fallback')
       return {
         category,
-        early: { title: titles.early, description: getFallbackTemplate('lifetime', language), score: 7 },
-        mid: { title: titles.mid, description: getFallbackTemplate('lifetime', language), score: 7 },
-        late: { title: titles.late, description: getFallbackTemplate('lifetime', language), score: 7 },
+        early: { title: earlyTitle, description: getFallbackTemplate('lifetime', language), score: 7 },
+        mid: { title: midTitle, description: getFallbackTemplate('lifetime', language), score: 7 },
+        late: { title: lateTitle, description: getFallbackTemplate('lifetime', language), score: 7 },
       }
     }
     
@@ -1739,17 +1762,17 @@ export function generateLifetimeFortuneWithProfile(
     return {
       category,
       early: {
-        title: titles.early,
+        title: earlyTitle,
         description: earlyDescription,
         score: earlyScore,
       },
       mid: {
-        title: titles.mid,
+        title: midTitle,
         description: midDescription,
         score: midScore,
       },
       late: {
-        title: titles.late,
+        title: lateTitle,
         description: lateDescription,
         score: lateScore,
       },
@@ -2028,7 +2051,11 @@ export function generateLifetimeFortune(category: FortuneCategory, language: Lan
     const langKey = getFortuneLanguage(language)
     const descs = lifetimeDescriptions?.[category]
     const titles = getLifetimeTitles(language)
-    const phaseShort = legacyLifetimePhaseTitles[langKey] ?? legacyLifetimePhaseTitles.en
+    const phaseShort = legacyLifetimePhaseTitles[langKey] ?? legacyLifetimePhaseTitles.en ?? {
+      early: 'Early',
+      mid: 'Mid',
+      late: 'Late',
+    }
 
     if (!descs || !titles) {
       return {
@@ -2065,7 +2092,11 @@ export function generateLifetimeFortune(category: FortuneCategory, language: Lan
   } catch (error) {
     console.log('[v0] Error in generateLifetimeFortune:', error)
     const langKey = getFortuneLanguage(language)
-    const phaseShort = legacyLifetimePhaseTitles[langKey] ?? legacyLifetimePhaseTitles.en
+    const phaseShort = legacyLifetimePhaseTitles[langKey] ?? legacyLifetimePhaseTitles.en ?? {
+      early: 'Early',
+      mid: 'Mid',
+      late: 'Late',
+    }
     return {
       category,
       early: { title: phaseShort.early, description: getFallbackTemplate('lifetime', language), score: 7 },

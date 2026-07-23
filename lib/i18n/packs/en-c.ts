@@ -66,6 +66,7 @@ export const enPackC: Record<string, string> = {
   'level.4': 'Seeker',
   'level.5': 'Adept',
   'level.6': 'Novice',
+  'level.operator': 'Operator',
   'level.1.desc': 'Supreme master of destiny',
   'level.2.desc': 'Wise sage of deep insight',
   'level.3.desc': 'Interpreter of fate and tarot',

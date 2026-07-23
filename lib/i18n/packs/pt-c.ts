@@ -62,6 +62,7 @@ export const ptPackC: Record<string, string> = {
   'level.4': 'Buscador',
   'level.5': 'Adepto',
   'level.6': 'Novato',
+  'level.operator': 'Operador',
   'achievement.1.title': 'Primeira sorte',
   'achievement.1.desc': 'Viu a primeira sorte',
   'achievement.2.title': 'Iniciante em tarot',

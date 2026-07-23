@@ -10,6 +10,8 @@ import {
   type ReactNode,
 } from 'react'
 import { authenticateWithPi } from '@/lib/pi-client'
+import { isPiBrowserEnvironment } from '@/lib/pi-browser'
+import { createDevLoggedFetch, logDevRequest } from '@/lib/dev-request-log'
 
 export type PiAuthUser = {
   uid: string
@@ -33,22 +35,83 @@ type PiAuthContextValue = {
 
 const PiAuthContext = createContext<PiAuthContextValue | undefined>(undefined)
 
+const SESSION_TTL_MS = 5 * 60 * 1000
+const MAX_AUTO_SIGNIN_ATTEMPTS = 1
+
+type SessionCache = {
+  user: PiAuthUser | null
+  checkedAt: number
+}
+
+let memorySessionCache: SessionCache | null = null
+let sessionInFlight: Promise<PiAuthUser | null> | null = null
+
+const devFetch = createDevLoggedFetch('pi-auth-context')
+
 async function fetchSession(): Promise<PiAuthUser | null> {
-  const res = await fetch('/api/pi/auth', {
-    method: 'GET',
-    credentials: 'include',
-    cache: 'no-store',
-  })
-  if (!res.ok) return null
-  const data = (await res.json()) as {
-    authenticated?: boolean
-    user?: PiAuthUser
+  const now = Date.now()
+  if (memorySessionCache && now - memorySessionCache.checkedAt < SESSION_TTL_MS) {
+    logDevRequest({
+      url: '/api/pi/auth',
+      source: 'pi-auth.fetchSession.cache',
+      method: 'GET',
+      inFlight: false,
+    })
+    return memorySessionCache.user
   }
-  return data.authenticated && data.user ? data.user : null
+
+  if (sessionInFlight) {
+    logDevRequest({
+      url: '/api/pi/auth',
+      source: 'pi-auth.fetchSession.join-inflight',
+      method: 'GET',
+      inFlight: true,
+    })
+    return sessionInFlight
+  }
+
+  sessionInFlight = (async () => {
+    logDevRequest({
+      url: '/api/pi/auth',
+      source: 'pi-auth.fetchSession',
+      method: 'GET',
+      attempt: 1,
+    })
+    const res = await devFetch('/api/pi/auth', {
+      method: 'GET',
+      credentials: 'include',
+      cache: 'no-store',
+    })
+    if (!res.ok) {
+      memorySessionCache = { user: null, checkedAt: Date.now() }
+      return null
+    }
+    const data = (await res.json()) as {
+      authenticated?: boolean
+      user?: PiAuthUser
+    }
+    const user = data.authenticated && data.user ? data.user : null
+    memorySessionCache = { user, checkedAt: Date.now() }
+    return user
+  })().finally(() => {
+    sessionInFlight = null
+  })
+
+  return sessionInFlight
+}
+
+function clearSessionCache(): void {
+  memorySessionCache = null
 }
 
 async function verifyAccessTokenOnServer(accessToken: string): Promise<PiAuthUser> {
-  const res = await fetch('/api/pi/auth', {
+  logDevRequest({
+    url: '/api/pi/auth',
+    source: 'pi-auth.verifyAccessToken',
+    method: 'POST',
+    attempt: 1,
+  })
+  const res = await devFetch('/api/pi/auth', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -61,6 +124,7 @@ async function verifyAccessTokenOnServer(accessToken: string): Promise<PiAuthUse
   }
 
   const data = (await res.json()) as { user: PiAuthUser }
+  memorySessionCache = { user: data.user, checkedAt: Date.now() }
   return data.user
 }
 
@@ -68,23 +132,60 @@ export function PiAuthProvider({ children }: { children: ReactNode }) {
   const [piUser, setPiUser] = useState<PiAuthUser | null>(null)
   const [status, setStatus] = useState<PiAuthStatus>('idle')
   const [error, setError] = useState<string | null>(null)
-  const autoAttemptedRef = useRef(false)
+  const bootRanRef = useRef(false)
+  const signInInFlightRef = useRef(false)
+  const autoSignInAttemptsRef = useRef(0)
 
   const signIn = useCallback(async () => {
+    if (signInInFlightRef.current) {
+      logDevRequest({
+        url: '/api/pi/auth',
+        source: 'pi-auth.signIn.blocked-inflight',
+        method: 'POST',
+        inFlight: true,
+      })
+      return
+    }
+
+    signInInFlightRef.current = true
     setStatus('loading')
     setError(null)
 
     try {
       const auth = await authenticateWithPi()
+      if (!auth.accessToken?.trim()) {
+        throw new Error('Pi access token missing')
+      }
       const verified = await verifyAccessTokenOnServer(auth.accessToken)
       setPiUser(verified)
       setStatus('authenticated')
+      // Best-effort: bind app nickname → Pi uid for Phase 2 ownership checks
+      try {
+        const raw = localStorage.getItem('fortune-app-user')
+        if (raw) {
+          const parsed = JSON.parse(raw) as { nickname?: string; name?: string }
+          const nick = String(parsed.nickname ?? parsed.name ?? '').trim()
+          if (nick) {
+            void fetch('/api/profile/link-pi', {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ nickname: nick }),
+            })
+          }
+        }
+      } catch {
+        /* ignore link failures */
+      }
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Pi authentication failed'
       setError(message)
       setPiUser(null)
       setStatus('unauthenticated')
+      memorySessionCache = { user: null, checkedAt: Date.now() }
+    } finally {
+      signInInFlightRef.current = false
     }
   }, [])
 
@@ -92,16 +193,26 @@ export function PiAuthProvider({ children }: { children: ReactNode }) {
     setStatus('loading')
     setError(null)
     try {
-      await fetch('/api/pi/auth', { method: 'DELETE', credentials: 'include' })
+      logDevRequest({
+        url: '/api/pi/auth',
+        source: 'pi-auth.signOut',
+        method: 'DELETE',
+      })
+      await devFetch('/api/pi/auth', { method: 'DELETE', credentials: 'include' })
     } finally {
+      const { clearUserScopedCaches } = await import('@/lib/supabase-request-cache')
+      const { clearAuthorMetaCache } = await import('@/lib/supabase-profile-level-titles')
+      clearUserScopedCaches()
+      clearAuthorMetaCache()
+      clearSessionCache()
       setPiUser(null)
       setStatus('unauthenticated')
     }
   }, [])
 
   useEffect(() => {
-    if (autoAttemptedRef.current) return
-    autoAttemptedRef.current = true
+    if (bootRanRef.current) return
+    bootRanRef.current = true
 
     let cancelled = false
 
@@ -117,6 +228,29 @@ export function PiAuthProvider({ children }: { children: ReactNode }) {
           return
         }
 
+        // No cookie session: only auto-auth inside Pi Browser (manual button elsewhere)
+        if (!isPiBrowserEnvironment()) {
+          logDevRequest({
+            url: '/api/pi/auth',
+            source: 'pi-auth.skip-auto-signin-non-pi-browser',
+            method: 'GET',
+          })
+          setStatus('unauthenticated')
+          return
+        }
+
+        if (autoSignInAttemptsRef.current >= MAX_AUTO_SIGNIN_ATTEMPTS) {
+          setStatus('unauthenticated')
+          return
+        }
+
+        autoSignInAttemptsRef.current += 1
+        logDevRequest({
+          url: '/api/pi/auth',
+          source: 'pi-auth.auto-signin',
+          method: 'POST',
+          attempt: autoSignInAttemptsRef.current,
+        })
         await signIn()
       } catch {
         if (!cancelled) {

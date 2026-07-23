@@ -74,7 +74,7 @@ export async function fetchCommunityCommentsByPostId(
   try {
     const { data, error } = await supabase
       .from('community_comments')
-      .select('*')
+      .select('id, created_at, post_id, author, content, is_hidden, hidden_by, hidden_at')
       .eq('post_id', id)
       .order('created_at', { ascending: true })
 
@@ -113,7 +113,7 @@ export async function insertCommunityComment(
     const { data, error } = await supabase
       .from('community_comments')
       .insert(payload)
-      .select('*')
+      .select('id, created_at, post_id, author, content, is_hidden, hidden_by, hidden_at')
       .single()
 
     if (error) {
@@ -129,12 +129,48 @@ export async function insertCommunityComment(
   }
 }
 
-/** Increment community_posts.comments_count by 1. Never throws. */
-export async function incrementPostCommentsCount(postId: string): Promise<boolean> {
+/** Increment community_posts.comments_count by 1 (atomic RPC preferred). Never throws. */
+export async function incrementPostCommentsCount(postId: string): Promise<number | null> {
+  return adjustPostCommentsCount(postId, 1)
+}
+
+/** Decrement community_posts.comments_count by 1 (min 0, atomic RPC preferred). Never throws. */
+export async function decrementPostCommentsCount(postId: string): Promise<number | null> {
+  return adjustPostCommentsCount(postId, -1)
+}
+
+/**
+ * Atomically adjust comments_count via RPC (comments_count + delta).
+ * Falls back to read-modify-write if migration not applied.
+ * Returns the new count, or null on failure.
+ */
+export async function adjustPostCommentsCount(
+  postId: string,
+  delta: number
+): Promise<number | null> {
   const id = postId.trim()
-  if (!id) return false
+  if (!id || !Number.isFinite(delta) || delta === 0) return null
 
   try {
+    const { data, error } = await supabase.rpc('adjust_community_post_comments', {
+      p_post_id: id,
+      p_delta: Math.trunc(delta),
+    })
+
+    if (!error && data != null) {
+      const next = Math.max(0, Number(data) || 0)
+      console.log('[community_posts] comments_count adjusted (rpc)', {
+        post_id: id,
+        delta,
+        comments_count: next,
+      })
+      return next
+    }
+
+    if (error) {
+      console.warn('[community_posts] comments RPC missing/failed — fallback', error.message)
+    }
+
     const { data: post, error: fetchError } = await supabase
       .from('community_posts')
       .select('comments_count')
@@ -143,11 +179,10 @@ export async function incrementPostCommentsCount(postId: string): Promise<boolea
 
     if (fetchError) {
       console.error('[community_posts] comments_count read failed', fetchError)
-      return false
+      return null
     }
 
-    const nextCount = (Number(post?.comments_count) || 0) + 1
-
+    const nextCount = Math.max(0, (Number(post?.comments_count) || 0) + Math.trunc(delta))
     const { error: updateError } = await supabase
       .from('community_posts')
       .update({ comments_count: nextCount })
@@ -155,50 +190,39 @@ export async function incrementPostCommentsCount(postId: string): Promise<boolea
 
     if (updateError) {
       console.error('[community_posts] comments_count update failed', updateError)
-      return false
+      return null
     }
 
-    console.log('[community_posts] comments_count updated', { post_id: id, comments_count: nextCount })
-    return true
+    console.log('[community_posts] comments_count adjusted (fallback)', {
+      post_id: id,
+      comments_count: nextCount,
+    })
+    return nextCount
   } catch (err) {
-    console.error('[community_posts] comments_count update error', err)
-    return false
+    console.error('[community_posts] comments_count adjust error', err)
+    return null
   }
 }
 
-/** Decrement community_posts.comments_count by 1 (min 0). Never throws. */
-export async function decrementPostCommentsCount(postId: string): Promise<boolean> {
+/** @deprecated Prefer adjustPostCommentsCount — kept for callers that pass an absolute value. */
+export async function setPostCommentsCount(postId: string, count: number): Promise<boolean> {
   const id = postId.trim()
   if (!id) return false
+  const next = Math.max(0, Math.floor(count))
 
   try {
-    const { data: post, error: fetchError } = await supabase
+    const { error } = await supabase
       .from('community_posts')
-      .select('comments_count')
-      .eq('id', id)
-      .single()
-
-    if (fetchError) {
-      console.error('[community_posts] comments_count read failed', fetchError)
-      return false
-    }
-
-    const nextCount = Math.max(0, (Number(post?.comments_count) || 0) - 1)
-
-    const { error: updateError } = await supabase
-      .from('community_posts')
-      .update({ comments_count: nextCount })
+      .update({ comments_count: next })
       .eq('id', id)
 
-    if (updateError) {
-      console.error('[community_posts] comments_count decrement failed', updateError)
+    if (error) {
+      console.error('[community_posts] comments_count set failed', error)
       return false
     }
-
-    console.log('[community_posts] comments_count decremented', { post_id: id, comments_count: nextCount })
     return true
   } catch (err) {
-    console.error('[community_posts] comments_count decrement error', err)
+    console.error('[community_posts] comments_count set error', err)
     return false
   }
 }

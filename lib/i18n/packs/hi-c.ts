@@ -62,6 +62,7 @@ export const hiPackC: Record<string, string> = {
   'level.4': 'खोजकर्ता',
   'level.5': 'अभ्यासी',
   'level.6': 'नौसिखिया',
+  'level.operator': 'ऑपरेटर',
   'achievement.1.title': 'पहला भाग्य',
   'achievement.1.desc': 'पहली बार भाग्य देखा',
   'achievement.2.title': 'टैरो शुरुआत',

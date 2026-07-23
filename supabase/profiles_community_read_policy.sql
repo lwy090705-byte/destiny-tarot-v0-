@@ -1,3 +1,4 @@
+-- DEPRECATED for production: use supabase/rls_policies.sql instead.
 -- Run in Supabase SQL Editor if community author levels always show as 입문자.
 -- Allows anon/authenticated clients to read display fields on profiles for community UI.
 

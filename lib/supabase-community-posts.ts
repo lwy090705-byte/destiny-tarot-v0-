@@ -31,6 +31,13 @@ const CATEGORY_KEYS: CommunityCategoryKey[] = [
   'other',
 ]
 
+/** Columns needed by list + detail UI (avoid select *). */
+const POST_SELECT =
+  'id, created_at, title, content, category, author, likes, comments_count, is_hidden, hidden_by, hidden_at' as const
+
+/** Default page size for community list fetches. */
+export const COMMUNITY_POSTS_PAGE_SIZE = 50
+
 export function normalizeCategoryKey(raw: string | null | undefined): CommunityCategoryKey {
   const key = (raw ?? 'other').trim().toLowerCase() as CommunityCategoryKey
   return CATEGORY_KEYS.includes(key) ? key : 'other'
@@ -60,30 +67,36 @@ function mapRawRow(row: Record<string, unknown>): CommunityPostRow {
   }
 }
 
-function filterVisiblePosts(
-  rows: CommunityPostRow[],
-  includeHidden: boolean
-): CommunityPostRow[] {
-  if (includeHidden) return rows
-  return rows.filter((row) => !row.is_hidden)
-}
-
 export type FetchCommunityPostsOptions = {
   /** When true (master), includes is_hidden posts for moderation. */
   includeHidden?: boolean
+  /** Max rows to return (default COMMUNITY_POSTS_PAGE_SIZE). */
+  limit?: number
+  /** 0-based offset for pagination. */
+  offset?: number
 }
 
-/** Load posts newest first. Never throws. */
+/** Load posts newest first with limit/offset. Never throws. */
 export async function fetchCommunityPosts(
   options?: FetchCommunityPostsOptions
 ): Promise<CommunityPostRow[]> {
   const includeHidden = options?.includeHidden === true
+  const limit = Math.max(1, Math.min(options?.limit ?? COMMUNITY_POSTS_PAGE_SIZE, 100))
+  const offset = Math.max(0, options?.offset ?? 0)
 
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('community_posts')
-      .select('*')
+      .select(POST_SELECT)
       .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
+      .range(offset, offset + limit - 1)
+
+    if (!includeHidden) {
+      query = query.or('is_hidden.is.null,is_hidden.eq.false')
+    }
+
+    const { data, error } = await query
 
     if (error) {
       console.error('[community_posts] fetch failed', error)
@@ -91,11 +104,52 @@ export async function fetchCommunityPosts(
     }
 
     const rows = (data ?? []).map((row) => mapRawRow(row as Record<string, unknown>))
-    const visible = filterVisiblePosts(rows, includeHidden)
-    console.log('[community_posts] fetch success', { total: rows.length, visible: visible.length })
-    return visible
+    console.log('[community_posts] fetch success', {
+      total: rows.length,
+      offset,
+      limit,
+      includeHidden,
+    })
+    return rows
   } catch (err) {
     console.error('[community_posts] fetch error', err)
+    return []
+  }
+}
+
+/** Recommended posts (likes >= 80), limited. Never throws. */
+export async function fetchRecommendedCommunityPosts(
+  options?: FetchCommunityPostsOptions
+): Promise<CommunityPostRow[]> {
+  const includeHidden = options?.includeHidden === true
+  const limit = Math.max(1, Math.min(options?.limit ?? COMMUNITY_POSTS_PAGE_SIZE, 100))
+
+  try {
+    let query = supabase
+      .from('community_posts')
+      .select(POST_SELECT)
+      .gte('likes', 80)
+      .order('likes', { ascending: false })
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
+      .limit(limit)
+
+    if (!includeHidden) {
+      query = query.or('is_hidden.is.null,is_hidden.eq.false')
+    }
+
+    const { data, error } = await query
+
+    if (error) {
+      console.error('[community_posts] recommended fetch failed', error)
+      return []
+    }
+
+    const rows = (data ?? []).map((row) => mapRawRow(row as Record<string, unknown>))
+    console.log('[community_posts] recommended fetch success', { total: rows.length })
+    return rows
+  } catch (err) {
+    console.error('[community_posts] recommended fetch error', err)
     return []
   }
 }
@@ -117,7 +171,7 @@ export async function insertCommunityPost(
     const { data, error } = await supabase
       .from('community_posts')
       .insert(payload)
-      .select('*')
+      .select(POST_SELECT)
       .single()
 
     if (error) {
@@ -133,19 +187,32 @@ export async function insertCommunityPost(
   }
 }
 
-/** Delete a post by id. Never throws. */
-export async function deleteCommunityPost(postId: string): Promise<boolean> {
+/**
+ * Delete a post via server API (Pi session + pi_uid ownership / operator).
+ * Direct anon DELETE is blocked after rls_safe_phase1.sql.
+ */
+export async function deleteCommunityPost(
+  postId: string,
+  nickname?: string
+): Promise<boolean> {
   const id = postId.trim()
   if (!id) return false
 
   try {
-    const { error } = await supabase.from('community_posts').delete().eq('id', id)
-
-    if (error) {
-      console.error('[community_posts] delete failed', error)
+    const res = await fetch('/api/community/post-mutate', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'delete',
+        postId: id,
+        nickname: nickname?.trim() ?? '',
+      }),
+    })
+    if (!res.ok) {
+      console.error('[community_posts] delete API failed', res.status)
       return false
     }
-
     console.log('[community_posts] delete success', { post_id: id })
     return true
   } catch (err) {
@@ -155,7 +222,7 @@ export async function deleteCommunityPost(postId: string): Promise<boolean> {
 }
 
 /**
- * Soft-hide a post (is_hidden, hidden_by, hidden_at).
+ * Soft-hide a post via server API (Pi session + ownership / operator).
  * Columns: see supabase/community_hidden_columns.sql
  */
 export async function hideCommunityPost(
@@ -167,24 +234,72 @@ export async function hideCommunityPost(
   if (!id || !by) return false
 
   try {
-    const { error } = await supabase
-      .from('community_posts')
-      .update({
-        is_hidden: true,
-        hidden_by: by,
-        hidden_at: new Date().toISOString(),
-      })
-      .eq('id', id)
-
-    if (error) {
-      console.error('[community_posts] hide failed', error)
+    const res = await fetch('/api/community/post-mutate', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'hide',
+        postId: id,
+        nickname: by,
+      }),
+    })
+    if (!res.ok) {
+      console.error('[community_posts] hide API failed', res.status)
       return false
     }
-
     console.log('[community_posts] hide success', { post_id: id, hidden_by: by })
     return true
   } catch (err) {
     console.error('[community_posts] hide error', err)
+    return false
+  }
+}
+
+/** Set likes without a prior select (caller already knows next value).
+ * @deprecated Prefer increment_community_post_likes RPC via likeCommunityPost.
+ */
+export async function setPostLikesCount(postId: string, likes: number): Promise<boolean> {
+  const id = postId.trim()
+  if (!id) return false
+  const next = Math.max(0, Math.floor(likes))
+
+  try {
+    const { error } = await supabase
+      .from('community_posts')
+      .update({ likes: next })
+      .eq('id', id)
+
+    if (error) {
+      console.error('[community_posts] likes set failed', error)
+      return false
+    }
+    return true
+  } catch (err) {
+    console.error('[community_posts] likes set error', err)
+    return false
+  }
+}
+
+/** @deprecated Prefer adjustPostCommentsCount in supabase-community-comments. */
+export async function setPostCommentsCount(postId: string, count: number): Promise<boolean> {
+  const id = postId.trim()
+  if (!id) return false
+  const next = Math.max(0, Math.floor(count))
+
+  try {
+    const { error } = await supabase
+      .from('community_posts')
+      .update({ comments_count: next })
+      .eq('id', id)
+
+    if (error) {
+      console.error('[community_posts] comments_count set failed', error)
+      return false
+    }
+    return true
+  } catch (err) {
+    console.error('[community_posts] comments_count set error', err)
     return false
   }
 }

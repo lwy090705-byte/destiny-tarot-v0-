@@ -1,3 +1,4 @@
+-- DEPRECATED for production: use supabase/rls_policies.sql instead.
 -- Run in Supabase SQL Editor for cross-device referrer +30P payouts.
 
 CREATE TABLE IF NOT EXISTS public.referral_codes (

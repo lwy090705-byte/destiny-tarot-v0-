@@ -8,11 +8,20 @@ import { supabase } from '@/lib/supabase'
  * - user_code text
  * - nickname text
  * See: supabase/community_post_likes.sql
+ *
+ * Atomic likes increment: supabase/community_post_counters.sql
+ * (increment_community_post_likes RPC)
  */
 
 export type CommunityLikeUser = {
   user_code: string
   nickname: string
+}
+
+export type LikeCommunityPostResult = {
+  status: 'success' | 'already_liked' | 'failed'
+  /** Server-side likes after atomic increment (when available). */
+  likes?: number
 }
 
 /** Post ids the user already liked. Never throws. */
@@ -48,15 +57,18 @@ export async function fetchLikedPostIdsForUser(
   }
 }
 
-/** Like a post once; increments community_posts.likes. Never throws. */
+/**
+ * Like a post once. Inserts into community_post_likes first;
+ * only then atomically increments community_posts.likes via RPC.
+ */
 export async function likeCommunityPost(
   postId: string,
   user: CommunityLikeUser
-): Promise<'success' | 'already_liked' | 'failed'> {
+): Promise<LikeCommunityPostResult> {
   const id = postId.trim()
   const userCode = user.user_code.trim().toUpperCase()
   const nickname = user.nickname.trim()
-  if (!id || (!userCode && !nickname)) return 'failed'
+  if (!id || (!userCode && !nickname)) return { status: 'failed' }
 
   try {
     let dupQuery = supabase.from('community_post_likes').select('id').eq('post_id', id)
@@ -71,12 +83,12 @@ export async function likeCommunityPost(
 
     if (dupError) {
       console.error('[community_post_likes] duplicate check failed', dupError)
-      return 'failed'
+      return { status: 'failed' }
     }
 
     if (existing) {
       console.log('[community_post_likes] already liked', { post_id: id })
-      return 'already_liked'
+      return { status: 'already_liked' }
     }
 
     const { error: insertError } = await supabase.from('community_post_likes').insert({
@@ -86,10 +98,31 @@ export async function likeCommunityPost(
     })
 
     if (insertError) {
+      // Unique violation = concurrent duplicate like
+      if (insertError.code === '23505') {
+        return { status: 'already_liked' }
+      }
       console.error('[community_post_likes] insert failed', insertError)
-      return 'failed'
+      return { status: 'failed' }
     }
 
+    // Prefer atomic RPC (likes = likes + 1)
+    const { data: rpcLikes, error: rpcError } = await supabase.rpc(
+      'increment_community_post_likes',
+      { p_post_id: id }
+    )
+
+    if (!rpcError && rpcLikes != null) {
+      const likes = Number(rpcLikes) || 0
+      console.log('[community_post_likes] like success (rpc)', { post_id: id, likes })
+      return { status: 'success', likes }
+    }
+
+    if (rpcError) {
+      console.warn('[community_post_likes] RPC missing/failed — fallback update', rpcError.message)
+    }
+
+    // Fallback if SQL migration not applied yet (still better than client nextLikes overwrite)
     const { data: post, error: readError } = await supabase
       .from('community_posts')
       .select('likes')
@@ -98,26 +131,25 @@ export async function likeCommunityPost(
 
     if (readError) {
       console.error('[community_posts] likes read failed', readError)
-      return 'failed'
+      return { status: 'failed' }
     }
 
-    const nextLikes = (Number(post?.likes) || 0) + 1
-
+    const likes = (Number(post?.likes) || 0) + 1
     const { error: updateError } = await supabase
       .from('community_posts')
-      .update({ likes: nextLikes })
+      .update({ likes })
       .eq('id', id)
 
     if (updateError) {
       console.error('[community_posts] likes update failed', updateError)
-      return 'failed'
+      return { status: 'failed' }
     }
 
-    console.log('[community_post_likes] like success', { post_id: id, likes: nextLikes })
-    return 'success'
+    console.log('[community_post_likes] like success (fallback)', { post_id: id, likes })
+    return { status: 'success', likes }
   } catch (err) {
     console.error('[community_post_likes] like error', err)
-    return 'failed'
+    return { status: 'failed' }
   }
 }
 

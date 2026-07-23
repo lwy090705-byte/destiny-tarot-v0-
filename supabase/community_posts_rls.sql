@@ -1,4 +1,5 @@
--- Run in Supabase SQL Editor if inserts/selects fail with RLS errors (42501).
+-- DEPRECATED for production: use supabase/rls_policies.sql instead.
+-- Kept for reference. Run in Supabase SQL Editor if inserts/selects fail with RLS errors (42501).
 -- Allows anonymous read/write for community_posts (anon key from the app).
 
 ALTER TABLE public.community_posts ENABLE ROW LEVEL SECURITY;

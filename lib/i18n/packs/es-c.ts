@@ -62,6 +62,7 @@ export const esPackC: Record<string, string> = {
   'level.4': 'Buscador',
   'level.5': 'Adepto',
   'level.6': 'Novato',
+  'level.operator': 'Operador',
   'achievement.1.title': 'Primera fortuna',
   'achievement.1.desc': 'Viste tu primera fortuna',
   'achievement.2.title': 'Inicio en tarot',

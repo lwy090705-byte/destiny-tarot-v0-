@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Star, Coins, Trophy, Target, Flame, Award, Crown, Sparkles, ChevronRight, Gift, Play, X, Check, CalendarCheck, FileText, Zap } from "lucide-react"
+import { ArrowLeft, Star, Coins, Trophy, Target, Flame, Award, Crown, Sparkles, ChevronRight, Gift, Play, X, Check, CalendarCheck, FileText, Zap, RefreshCw } from "lucide-react"
 import Link from "next/link"
 import { useLanguage } from "@/lib/language-context"
 import { usePoints } from "@/lib/points-context"
@@ -15,16 +15,17 @@ import { MasterPointGrantPanel } from "@/components/master-point-grant-panel"
 import {
   getMasterPointsDisplay,
   getMasterPointsLabel,
-  isMasterNickname,
   MASTER_LEVEL_TITLE,
 } from "@/lib/master-role"
+import { profileIndicatesMaster } from "@/lib/community-author-display"
 import { fetchVisitStats, type VisitStats } from "@/lib/supabase-visit-logs"
 import { LevelSystemCards } from "@/components/level-system-cards"
 import { ProfileLevelAvatar, ProfileLevelDisplay } from "@/components/profile-level-display"
 import type { AuthorProfileFields } from "@/lib/community-author-display"
 import { resolveProfileEmblemVariant } from "@/lib/profile-level-emblem"
-import { OPERATOR_LEVEL } from "@/lib/level-system"
+import { OPERATOR_LEVEL, getLevelTitleKo, translateLevelTitle } from "@/lib/level-system"
 import { fetchProfileMasterFields } from "@/lib/supabase-profile-master"
+import { APP_ROUTES } from "@/lib/app-routes"
 import {
   canWatchAdReward,
   DAILY_AD_REWARD_LIMIT,
@@ -69,15 +70,17 @@ export default function UserProfilePage() {
   const { points: contextPoints, addPoints, isUnlimitedPoints } = usePoints()
   const { user } = useUser()
   const { premium } = usePremium()
-  const showMasterUi = isMasterNickname(user?.nickname)
+  const { isMaster } = useMasterAccess()
   const hideAds = premium.benefits.hideAds
   const [profileFields, setProfileFields] = useState<AuthorProfileFields | null>(null)
+  const showMasterUi = isMaster || profileIndicatesMaster(profileFields)
   const [visitStats, setVisitStats] = useState<VisitStats>({
     daily: 0,
     weekly: 0,
     monthly: 0,
     total: 0,
   })
+  const [visitStatsLoading, setVisitStatsLoading] = useState(false)
   const [userProgress, setUserProgress] = useState<UserProgressData>(createDefaultProgress)
   const [stats, setStats] = useState<UserStats>({
     points: 0,
@@ -86,9 +89,12 @@ export default function UserProfilePage() {
     totalReadings: 0,
     memberSince: createDefaultProgress().memberSince,
     level: 6,
-    levelName: t('level.6'),
+    levelName: getLevelTitleKo(6),
     nextLevelPoints: 500,
   })
+
+  /** Render-time translation of stored canonical (Korean / operator) title */
+  const displayLevelName = translateLevelTitle(stats.levelName, t)
 
   const achievements = useMemo<Achievement[]>(() => {
     const states = computeAchievements(userProgress, user?.referralCount ?? 0)
@@ -115,10 +121,10 @@ export default function UserProfilePage() {
       totalReadings: userProgress.totalReadings,
       memberSince: userProgress.memberSince,
       level: showMasterUi ? OPERATOR_LEVEL : levelInfo.level,
-      levelName: showMasterUi ? MASTER_LEVEL_TITLE : t(`level.${levelInfo.level}`),
+      levelName: showMasterUi ? MASTER_LEVEL_TITLE : getLevelTitleKo(levelInfo.level),
       nextLevelPoints: showMasterUi ? 0 : levelInfo.nextLevelPoints,
     })
-  }, [contextPoints, userProgress, t, showMasterUi])
+  }, [contextPoints, userProgress, showMasterUi])
 
   const loadProfileFields = useCallback(async () => {
     const nick = user?.nickname?.trim()
@@ -141,7 +147,7 @@ export default function UserProfilePage() {
 
   useEffect(() => {
     void loadProfileFields()
-  }, [loadProfileFields, contextPoints])
+  }, [loadProfileFields])
 
   const profileEmblemVariant = useMemo(
     () =>
@@ -155,10 +161,27 @@ export default function UserProfilePage() {
     [user?.nickname, stats.level, stats.levelName, showMasterUi, profileFields]
   )
 
+  const loadVisitStats = useCallback(
+    async (forceRefresh = false) => {
+      const nick = user?.nickname?.trim()
+      if (!showMasterUi || !nick) return
+      setVisitStatsLoading(true)
+      try {
+        const next = await fetchVisitStats({
+          requesterNickname: nick,
+          forceRefresh,
+        })
+        setVisitStats(next)
+      } finally {
+        setVisitStatsLoading(false)
+      }
+    },
+    [showMasterUi, user?.nickname]
+  )
+
   useEffect(() => {
-    if (!showMasterUi) return
-    void fetchVisitStats().then(setVisitStats)
-  }, [showMasterUi])
+    void loadVisitStats(false)
+  }, [loadVisitStats])
 
   const [showRoulette, setShowRoulette] = useState(false)
   const [showPickDraw, setShowPickDraw] = useState(false)
@@ -375,10 +398,10 @@ export default function UserProfilePage() {
     : `${stats.points} / ${stats.nextLevelPoints} P`
 
   const menuItems = useMemo(() => [
-    { icon: Star, label: t('userProfile.premium'), href: '/premium' },
-    { icon: FileText, label: t('userProfile.terms'), href: '/terms' },
-    { icon: FileText, label: t('userProfile.privacy'), href: '/privacy' },
-  ], [language])
+    { icon: Star, label: t('userProfile.premium'), href: APP_ROUTES.premium },
+    { icon: FileText, label: t('userProfile.terms'), href: APP_ROUTES.terms },
+    { icon: FileText, label: t('userProfile.privacy'), href: APP_ROUTES.privacy },
+  ], [language, t])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-indigo-900 to-purple-800 pb-12">
@@ -386,7 +409,7 @@ export default function UserProfilePage() {
       <header className="sticky top-0 bg-white/10 backdrop-blur-md border-b border-white/20 z-40">
         <div className="max-w-lg mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/" className="text-white hover:text-purple-200 transition">
+            <Link href={APP_ROUTES.home} prefetch={false} translate="no" className="notranslate text-white hover:text-purple-200 transition">
               <ArrowLeft className="h-6 w-6" />
             </Link>
             <h1 className="text-xl font-bold text-white">{t('userProfile.title')}</h1>
@@ -400,19 +423,19 @@ export default function UserProfilePage() {
           <div className="absolute -right-12 -top-12 w-40 h-40 bg-purple-100 rounded-full opacity-50" />
           <div className="relative z-10">
             <div className="flex items-center gap-4 mb-6">
-              <ProfileLevelAvatar variant={profileEmblemVariant} levelName={stats.levelName} />
+              <ProfileLevelAvatar variant={profileEmblemVariant} levelName={displayLevelName} />
               <div className="flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h2 className="text-xl font-bold text-gray-800">{user?.nickname || t('userProfile.user')}</h2>
                   <ProfileLevelDisplay
                     level={stats.level}
-                    levelName={stats.levelName}
+                    levelName={displayLevelName}
                     isOperator={showMasterUi}
                     mode="badge"
                   />
                   {premium.isActive && <PremiumBadge />}
                 </div>
-                <p className="text-gray-500 text-sm">{stats.levelName}</p>
+                <p className="text-gray-500 text-sm">{displayLevelName}</p>
                 <p className="text-gray-400 text-xs">{t('userProfile.memberSince')}: {stats.memberSince}</p>
               </div>
             </div>
@@ -422,7 +445,7 @@ export default function UserProfilePage() {
               <div className="flex justify-between text-xs text-gray-500 mb-1">
                 <ProfileLevelDisplay
                   level={stats.level}
-                  levelName={stats.levelName}
+                  levelName={displayLevelName}
                   isOperator={showMasterUi}
                   mode="label"
                 />
@@ -438,10 +461,23 @@ export default function UserProfilePage() {
           </div>
         </div>
 
-        {/* 통계 카드 - 축소 버전 */}
+        {/* 운영자: 고유 방문자 통계 (KST) */}
         <div className="grid grid-cols-4 gap-2">
           {showMasterUi ? (
             <>
+              <div className="bg-white rounded-xl p-2 shadow-lg text-center col-span-4 flex items-center justify-between px-3 py-1.5 mb-0">
+                <span className="text-[11px] text-gray-500">고유 방문자 · Asia/Seoul</span>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 text-[11px] text-indigo-600 disabled:opacity-50"
+                  disabled={visitStatsLoading}
+                  onClick={() => void loadVisitStats(true)}
+                  aria-label="방문자 통계 새로고침"
+                >
+                  <RefreshCw className={`h-3 w-3 ${visitStatsLoading ? 'animate-spin' : ''}`} />
+                  새로고침
+                </button>
+              </div>
               <div className="bg-white rounded-xl p-2 shadow-lg text-center">
                 <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-1">
                   <Coins className="h-4 w-4 text-amber-600" />
@@ -449,7 +485,7 @@ export default function UserProfilePage() {
                 <div className="text-sm font-bold text-gray-800" suppressHydrationWarning>
                   {visitStats.daily.toLocaleString()}
                 </div>
-                <div className="text-xs text-gray-500">일간</div>
+                <div className="text-xs text-gray-500">일간 고유</div>
               </div>
               <div className="bg-white rounded-xl p-2 shadow-lg text-center">
                 <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-1">
@@ -458,7 +494,7 @@ export default function UserProfilePage() {
                 <div className="text-sm font-bold text-gray-800" suppressHydrationWarning>
                   {visitStats.weekly.toLocaleString()}
                 </div>
-                <div className="text-xs text-gray-500">주간</div>
+                <div className="text-xs text-gray-500">주간 고유</div>
               </div>
               <div className="bg-white rounded-xl p-2 shadow-lg text-center">
                 <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-1">
@@ -467,7 +503,7 @@ export default function UserProfilePage() {
                 <div className="text-sm font-bold text-gray-800" suppressHydrationWarning>
                   {visitStats.monthly.toLocaleString()}
                 </div>
-                <div className="text-xs text-gray-500">월간</div>
+                <div className="text-xs text-gray-500">월간 고유</div>
               </div>
               <div className="bg-white rounded-xl p-2 shadow-lg text-center">
                 <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-1">
@@ -476,7 +512,7 @@ export default function UserProfilePage() {
                 <div className="text-sm font-bold text-gray-800" suppressHydrationWarning>
                   {visitStats.total.toLocaleString()}
                 </div>
-                <div className="text-xs text-gray-500">총누계</div>
+                <div className="text-xs text-gray-500">총 고유</div>
               </div>
             </>
           ) : (
@@ -835,7 +871,9 @@ export default function UserProfilePage() {
               <Link 
                 key={idx}
                 href={item.href}
-                className="flex items-center justify-between p-4 hover:bg-gray-50 transition border-b border-gray-100 last:border-b-0"
+                prefetch={false}
+                translate="no"
+                className="notranslate flex items-center justify-between p-4 hover:bg-gray-50 transition border-b border-gray-100 last:border-b-0"
               >
                 <div className="flex items-center gap-3">
                   <Icon className="h-5 w-5 text-gray-500" />

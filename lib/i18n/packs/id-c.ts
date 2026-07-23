@@ -62,6 +62,7 @@ export const idPackC: Record<string, string> = {
   'level.4': 'Penjelajah',
   'level.5': 'Adept',
   'level.6': 'Pemula',
+  'level.operator': 'Operator',
   'achievement.1.title': 'Ramalan pertama',
   'achievement.1.desc': 'Anda melihat ramalan pertama',
   'achievement.2.title': 'Awal tarot',

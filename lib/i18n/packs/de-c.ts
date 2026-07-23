@@ -62,6 +62,7 @@ export const dePackC: Record<string, string> = {
   'level.4': 'Sucher',
   'level.5': 'Adept',
   'level.6': 'Anfänger',
+  'level.operator': 'Betreiber',
   'achievement.1.title': 'Erstes Horoskop',
   'achievement.1.desc': 'Erstes Horoskop angesehen',
   'achievement.2.title': 'Tarot-Einsteiger',

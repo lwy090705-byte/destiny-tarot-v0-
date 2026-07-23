@@ -62,6 +62,7 @@ export const thPackC: Record<string, string> = {
   'level.4': 'นักค้นหา',
   'level.5': 'ผู้เชี่ยวชาญ',
   'level.6': 'มือใหม่',
+  'level.operator': 'ผู้ดูแล',
   'achievement.1.title': 'ดวงแรก',
   'achievement.1.desc': 'ดูดวงครั้งแรก',
   'achievement.2.title': 'เริ่มทาโรต์',

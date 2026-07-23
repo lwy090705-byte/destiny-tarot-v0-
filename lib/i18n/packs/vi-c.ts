@@ -62,6 +62,7 @@ export const viPackC: Record<string, string> = {
   'level.4': 'Người tìm',
   'level.5': 'Tập sự',
   'level.6': 'Mới vào',
+  'level.operator': 'Quản trị',
   'achievement.1.title': 'Vận đầu tiên',
   'achievement.1.desc': 'Xem vận lần đầu',
   'achievement.2.title': 'Mới tarot',

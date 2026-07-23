@@ -10,18 +10,18 @@
  * And Five Elements (오행) analysis
  */
 
+type Element = 'wood' | 'fire' | 'earth' | 'metal' | 'water'
+type YinYang = 'yang' | 'yin'
+
 // ─── Saju Heavenly Stems (천간) ───────────────────────────────────────────
 const HEAVENLY_STEMS = ['갑', '을', '병', '정', '무', '기', '경', '신', '임', '계']
-const HEAVENLY_STEM_ELEMENTS = ['wood', 'wood', 'fire', 'fire', 'earth', 'earth', 'metal', 'metal', 'water', 'water']
+const HEAVENLY_STEM_ELEMENTS: Element[] = ['wood', 'wood', 'fire', 'fire', 'earth', 'earth', 'metal', 'metal', 'water', 'water']
 const HEAVENLY_STEM_YIN_YANG = [1, 0, 1, 0, 1, 0, 1, 0, 1, 0] // 1: Yang(양), 0: Yin(음)
 
 // ─── Saju Earthly Branches (지지) ───────────────────────────────────────
 const EARTHLY_BRANCHES = ['자', '축', '인', '묘', '진', '사', '오', '미', '신', '유', '술', '해']
-const EARTHLY_BRANCH_ELEMENTS = ['water', 'earth', 'wood', 'wood', 'earth', 'fire', 'fire', 'earth', 'metal', 'metal', 'earth', 'water']
+const EARTHLY_BRANCH_ELEMENTS: Element[] = ['water', 'earth', 'wood', 'wood', 'earth', 'fire', 'fire', 'earth', 'metal', 'metal', 'earth', 'water']
 const EARTHLY_BRANCH_YIN_YANG = [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]
-
-type Element = 'wood' | 'fire' | 'earth' | 'metal' | 'water'
-type YinYang = 'yang' | 'yin'
 
 export interface SajuPillarDetail {
   stem: string

@@ -62,6 +62,7 @@ export const jaPackC: Record<string, string> = {
   'level.4': '探求者',
   'level.5': '熟練者',
   'level.6': '入門者',
+  'level.operator': '運営者',
   'achievement.1.title': '初めての運勢',
   'achievement.1.desc': '初めて運勢を見ました',
   'achievement.2.title': 'タロット入門',

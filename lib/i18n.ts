@@ -471,6 +471,7 @@ export const koTranslations: Record<string, string> = {
     'level.4': '탐구자',
     'level.5': '수련생',
     'level.6': '입문자',
+    'level.operator': '운영자',
     'level.1.desc': '최고 등급의 운명 지배자',
     'level.2.desc': '깊은 통찰을 지닌 현자',
     'level.3.desc': '운명과 타로를 해석하는 자',

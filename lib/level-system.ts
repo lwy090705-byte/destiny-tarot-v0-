@@ -155,7 +155,95 @@ export function getLevelTitleForTier(level: number, t: (key: string) => string):
   return tier ? t(tier.titleKey) : t('level.6')
 }
 
-/** Korean default title without translator (community fallback). */
+/** i18n key for operator title (DB stores Korean 「운영자」). */
+export const LEVEL_OPERATOR_TITLE_KEY = 'level.operator'
+
+const TIER_KEY_TO_I18N: Record<LevelTierKey, string> = {
+  master: 'level.1',
+  sage: 'level.2',
+  reader: 'level.3',
+  explorer: 'level.4',
+  trainee: 'level.5',
+  beginner: 'level.6',
+}
+
+/** Known display labels (any locale leftovers) → tier key */
+const LABEL_TO_TIER: Record<string, LevelTierKey> = {
+  마스터: 'master',
+  현자: 'sage',
+  해석자: 'reader',
+  탐구자: 'explorer',
+  수련생: 'trainee',
+  숙련자: 'trainee',
+  입문자: 'beginner',
+  master: 'master',
+  sage: 'sage',
+  reader: 'reader',
+  interpreter: 'reader',
+  explorer: 'explorer',
+  seeker: 'explorer',
+  trainee: 'trainee',
+  adept: 'trainee',
+  skilled: 'trainee',
+  beginner: 'beginner',
+  novice: 'beginner',
+  マスター: 'master',
+  賢者: 'sage',
+  解釈者: 'reader',
+  探求者: 'explorer',
+  熟練者: 'trainee',
+  入門者: 'beginner',
+  大师: 'master',
+  贤者: 'sage',
+  解读者: 'reader',
+  探索者: 'explorer',
+  熟手: 'trainee',
+  新手: 'beginner',
+  初学者: 'beginner',
+}
+
+/**
+ * Map any stored / displayed level title (ko, en key, or prior locale label)
+ * to an i18n key. Never returns a locale-specific display string.
+ */
+export function resolveLevelTitleI18nKey(raw: string | null | undefined): string {
+  const trimmed = (raw ?? '').trim()
+  if (!trimmed) return 'level.6'
+
+  if (
+    trimmed === MASTER_LEVEL_TITLE ||
+    trimmed === '운영자' ||
+    trimmed.toLowerCase() === 'operator'
+  ) {
+    return LEVEL_OPERATOR_TITLE_KEY
+  }
+
+  if (/^level\.[1-6]$/.test(trimmed) || trimmed === LEVEL_OPERATOR_TITLE_KEY) {
+    return trimmed
+  }
+
+  const direct = LABEL_TO_TIER[trimmed] ?? LABEL_TO_TIER[trimmed.toLowerCase()]
+  if (direct) return TIER_KEY_TO_I18N[direct]
+
+  for (const [label, tier] of Object.entries(LABEL_TO_TIER)) {
+    if (trimmed.includes(label)) return TIER_KEY_TO_I18N[tier]
+  }
+
+  return 'level.6'
+}
+
+/**
+ * Translate a DB / cached level title for the current UI language.
+ * Call at render time — do not store the result in React state.
+ */
+export function translateLevelTitle(
+  raw: string | null | undefined,
+  t: (key: string) => string
+): string {
+  return t(resolveLevelTitleI18nKey(raw))
+}
+
+/** Korean default title without translator (community / DB sync). */
 export function getLevelTitleKo(level: number): string {
   const titles: Record<number, string> = {
     1: '마스터',

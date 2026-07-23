@@ -62,6 +62,7 @@ export const zhPackC: Record<string, string> = {
   'level.4': '探索者',
   'level.5': '熟手',
   'level.6': '新手',
+  'level.operator': '运营者',
   'achievement.1.title': '首次运势',
   'achievement.1.desc': '第一次查看运势',
   'achievement.2.title': '塔罗入门',

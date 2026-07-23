@@ -9,8 +9,9 @@ import {
 
 export async function GET(request: NextRequest) {
   const user = readPiSessionFromRequest(request)
+  // 200 + authenticated:false — session probe is not an error (avoids Vercel 401 noise)
   if (!user) {
-    return NextResponse.json({ authenticated: false }, { status: 401 })
+    return NextResponse.json({ authenticated: false }, { status: 200 })
   }
 
   return NextResponse.json({ authenticated: true, user })

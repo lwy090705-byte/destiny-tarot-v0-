@@ -8,21 +8,23 @@ import { useLanguage } from "@/lib/language-context"
 import { useUser } from "@/lib/user-context"
 import { useMasterAccess } from "@/lib/use-master-access"
 import { usePoints } from "@/lib/points-context"
+import { APP_ROUTES } from "@/lib/app-routes"
 import {
   normalizeAuthorKey,
   resolveAuthorDisplayMeta,
   type AuthorDisplayMeta,
 } from "@/lib/community-author-display"
-import { fetchAuthorDisplayMetaByNicknames } from "@/lib/supabase-profile-level-titles"
+import { getLevelTitleKo } from "@/lib/level-system"
+import { fetchAuthorDisplayMetaByNicknames, invalidateAuthorMetaForNickname } from "@/lib/supabase-profile-level-titles"
 import { CommunityAuthorMeta } from "@/components/community-author-meta"
 import type { CommunityCategoryKey } from "@/lib/community-sample-posts"
 import {
-  decrementPostCommentsCount,
   deleteCommentsByPostId,
   deleteCommunityComment,
   fetchCommunityCommentsByPostId,
   hideCommunityComment,
   incrementPostCommentsCount,
+  decrementPostCommentsCount,
   insertCommunityComment,
   mapCommentRowToView,
   type CommunityCommentView,
@@ -33,8 +35,10 @@ import {
   likeCommunityPost,
 } from "@/lib/supabase-community-likes"
 import {
+  COMMUNITY_POSTS_PAGE_SIZE,
   deleteCommunityPost,
   fetchCommunityPosts,
+  fetchRecommendedCommunityPosts,
   formatCommunityPostDate,
   hideCommunityPost,
   insertCommunityPost,
@@ -182,13 +186,14 @@ function getPostAuthorName(nickname: string | undefined, anonymousLabel: string)
 export default function CommunityPage() {
   const { t } = useLanguage()
   const { user } = useUser()
-  const { isMaster } = useMasterAccess()
+  const { isMaster, isLoading: masterLoading } = useMasterAccess()
   const { points } = usePoints()
   const postAuthor = getPostAuthorName(user?.nickname, t("community.anonymous"))
   const currentNickname = user?.nickname?.trim() ?? ""
   const currentUserCode = user?.referralCode?.trim().toUpperCase() ?? ""
   const [posts, setPosts] = useState<Post[]>([])
   const [postsLoading, setPostsLoading] = useState(true)
+  const [serverHasMore, setServerHasMore] = useState(true)
   const [likedPostIds, setLikedPostIds] = useState<Set<string>>(new Set())
   const [activeTab, setActiveTab] = useState<'latest' | 'recommended'>('latest')
   const [searchQuery, setSearchQuery] = useState('')
@@ -199,13 +204,26 @@ export default function CommunityPage() {
   const [newPostTitle, setNewPostTitle] = useState('')
   const [newPostContent, setNewPostContent] = useState('')
   const [newPostCategory, setNewPostCategory] = useState<CommunityCategoryKey>('other')
+  const [isSubmittingPost, setIsSubmittingPost] = useState(false)
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false)
   const [commentText, setCommentText] = useState('')
   const [comments, setComments] = useState<CommunityCommentView[]>([])
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const [authorMetaMap, setAuthorMetaMap] = useState<Record<string, AuthorDisplayMeta>>({})
   const loaderRef = useRef<HTMLDivElement>(null)
+  /** Sync guard: React state alone cannot block rapid double-clicks before re-render. */
+  const isSubmittingPostRef = useRef(false)
+  const isSubmittingCommentRef = useRef(false)
+  const postsOffsetRef = useRef(0)
+  const lastPostsFetchAtRef = useRef(0)
+  const softRefreshRef = useRef(false)
+  const postsLoadingMoreRef = useRef(false)
+  const serverHasMoreRef = useRef(true)
+  const recommendedLoadedRef = useRef(false)
+  const authorMetaKeysRef = useRef<Set<string>>(new Set())
+  const POSTS_REFETCH_COOLDOWN_MS = 60_000
 
-  const defaultLevelTitle = t('level.6')
+  const defaultLevelTitle = getLevelTitleKo(6)
 
   const getAuthorMeta = useCallback(
     (author: string): AuthorDisplayMeta => {
@@ -219,32 +237,107 @@ export default function CommunityPage() {
   )
 
   const refreshAuthorMeta = useCallback(
-    async (authors: string[]) => {
+    async (authors: string[], opts?: { forceKeys?: string[] }) => {
       const unique = [...new Set(authors.map((a) => a.trim()).filter(Boolean))]
       if (unique.length === 0) return
-      const map = await fetchAuthorDisplayMetaByNicknames(unique, defaultLevelTitle)
+
+      const force = new Set((opts?.forceKeys ?? []).map(normalizeAuthorKey))
+      const missing = unique.filter((a) => {
+        const key = normalizeAuthorKey(a)
+        if (force.has(key)) return true
+        return !authorMetaKeysRef.current.has(key)
+      })
+      if (missing.length === 0) return
+
+      for (const a of missing) {
+        authorMetaKeysRef.current.add(normalizeAuthorKey(a))
+      }
+
+      const map = await fetchAuthorDisplayMetaByNicknames(missing, defaultLevelTitle)
       setAuthorMetaMap((prev) => ({ ...prev, ...map }))
     },
     [defaultLevelTitle]
   )
 
-  // Toggle like with user tracking and prevention of duplicate likes
-  const loadPostsFromSupabase = useCallback(async () => {
-    setPostsLoading(true)
+  const loadPostsFromSupabase = useCallback(
+    async (mode: "replace" | "append" = "replace") => {
+      if (mode === "replace") {
+        if (!softRefreshRef.current) setPostsLoading(true)
+        postsOffsetRef.current = 0
+        setServerHasMore(true)
+      } else if (postsLoadingMoreRef.current || !serverHasMoreRef.current) {
+        return
+      }
+
+      if (mode === "append") postsLoadingMoreRef.current = true
+
+      try {
+        const offset = mode === "replace" ? 0 : postsOffsetRef.current
+        const rows = await fetchCommunityPosts({
+          includeHidden: isMaster,
+          limit: COMMUNITY_POSTS_PAGE_SIZE,
+          offset,
+        })
+        const seen = new Set<string>()
+        const mapped = rows
+          .map(mapRowToPost)
+          .filter((p) => {
+            if (seen.has(p.id)) return false
+            seen.add(p.id)
+            return true
+          })
+
+        setServerHasMore(rows.length >= COMMUNITY_POSTS_PAGE_SIZE)
+        serverHasMoreRef.current = rows.length >= COMMUNITY_POSTS_PAGE_SIZE
+        postsOffsetRef.current = offset + rows.length
+
+        if (mode === "append") {
+          setPosts((prev) => {
+            const ids = new Set(prev.map((p) => p.id))
+            return [...prev, ...mapped.filter((p) => !ids.has(p.id))]
+          })
+        } else {
+          setPosts(mapped)
+          lastPostsFetchAtRef.current = Date.now()
+        }
+      } catch {
+        if (mode === "replace") setPosts([])
+      } finally {
+        if (mode === "replace") setPostsLoading(false)
+        softRefreshRef.current = false
+        postsLoadingMoreRef.current = false
+      }
+    },
+    [isMaster]
+  )
+
+  const loadRecommendedIfNeeded = useCallback(async () => {
+    if (recommendedLoadedRef.current) return
+    recommendedLoadedRef.current = true
     try {
-      const rows = await fetchCommunityPosts({ includeHidden: isMaster })
-      setPosts(rows.map(mapRowToPost))
+      const rows = await fetchRecommendedCommunityPosts({
+        includeHidden: isMaster,
+        limit: COMMUNITY_POSTS_PAGE_SIZE,
+      })
+      const mapped = rows.map(mapRowToPost)
+      setPosts((prev) => {
+        const ids = new Set(prev.map((p) => p.id))
+        const extras = mapped.filter((p) => !ids.has(p.id))
+        return extras.length === 0 ? prev : [...prev, ...extras]
+      })
     } catch {
-      setPosts([])
-    } finally {
-      setPostsLoading(false)
+      recommendedLoadedRef.current = false
     }
   }, [isMaster])
 
+  // Wait for master hydration so we do not fetch twice (anon then master)
   useEffect(() => {
-    void loadPostsFromSupabase()
-  }, [loadPostsFromSupabase])
+    if (masterLoading) return
+    recommendedLoadedRef.current = false
+    void loadPostsFromSupabase("replace")
+  }, [loadPostsFromSupabase, masterLoading])
 
+  // Single author-meta effect — only fetch missing nicknames
   useEffect(() => {
     const authors = [
       ...posts.map((p) => p.author),
@@ -255,30 +348,41 @@ export default function CommunityPage() {
     void refreshAuthorMeta(authors)
   }, [posts, comments, currentNickname, refreshAuthorMeta])
 
+  // Points change: refresh ONLY current user's author meta (skip initial mount)
+  const skipInitialPointsMetaRef = useRef(true)
   useEffect(() => {
     if (!currentNickname) return
-    void refreshAuthorMeta([
-      ...posts.map((p) => p.author),
-      ...comments.map((c) => c.author),
-      currentNickname,
-    ])
-  }, [points, currentNickname, posts, comments, refreshAuthorMeta])
+    if (skipInitialPointsMetaRef.current) {
+      skipInitialPointsMetaRef.current = false
+      return
+    }
+    const key = normalizeAuthorKey(currentNickname)
+    authorMetaKeysRef.current.delete(key)
+    invalidateAuthorMetaForNickname(currentNickname)
+    void refreshAuthorMeta([currentNickname], { forceKeys: [currentNickname] })
+  }, [points, currentNickname, refreshAuthorMeta])
+
+  // Tab focus: cooldown soft refresh (stable listener — no duplicate registrations)
+  const loadPostsRef = useRef(loadPostsFromSupabase)
+  loadPostsRef.current = loadPostsFromSupabase
 
   useEffect(() => {
     const onVisible = () => {
-      if (document.visibilityState !== 'visible') return
-      const authors = [
-        ...posts.map((p) => p.author),
-        ...comments.map((c) => c.author),
-      ]
-      if (currentNickname) authors.push(currentNickname)
-      if (authors.length === 0) return
-      void refreshAuthorMeta(authors)
-      void loadPostsFromSupabase()
+      if (document.visibilityState !== "visible") return
+      const now = Date.now()
+      if (now - lastPostsFetchAtRef.current < POSTS_REFETCH_COOLDOWN_MS) return
+      softRefreshRef.current = true
+      void loadPostsRef.current("replace")
     }
-    document.addEventListener('visibilitychange', onVisible)
-    return () => document.removeEventListener('visibilitychange', onVisible)
-  }, [posts, comments, currentNickname, refreshAuthorMeta, loadPostsFromSupabase])
+    document.addEventListener("visibilitychange", onVisible)
+    return () => document.removeEventListener("visibilitychange", onVisible)
+  }, [])
+
+  useEffect(() => {
+    if (activeTab === "recommended") {
+      void loadRecommendedIfNeeded()
+    }
+  }, [activeTab, loadRecommendedIfNeeded])
 
   const loadLikedPostIds = useCallback(async () => {
     if (!currentNickname && !currentUserCode) {
@@ -330,23 +434,30 @@ export default function CommunityPage() {
   const handleLike = async (id: string) => {
     if (!currentNickname && !currentUserCode) return
 
+    const post = posts.find((p) => p.id === id)
+
     try {
       const result = await likeCommunityPost(id, {
         user_code: currentUserCode,
         nickname: currentNickname || postAuthor,
       })
 
-      if (result === "already_liked") {
+      if (result.status === "already_liked") {
         setLikeNotice(t("community.alreadyLiked"))
         return
       }
 
-      if (result === "failed") return
+      if (result.status === "failed") return
 
       setLikedPostIds((prev) => new Set([...prev, id]))
-      const post = posts.find((p) => p.id === id)
-      if (post) {
-        updatePostLikesInState(id, post.likes + 1)
+      const likes =
+        result.likes != null
+          ? result.likes
+          : post
+            ? post.likes + 1
+            : undefined
+      if (likes != null) {
+        updatePostLikesInState(id, likes)
       }
       setLikeNotice(null)
     } catch (err) {
@@ -362,7 +473,7 @@ export default function CommunityPage() {
     try {
       await deleteCommentsByPostId(selectedPost.id)
       await deleteLikesByPostId(selectedPost.id)
-      const ok = await deleteCommunityPost(selectedPost.id)
+      const ok = await deleteCommunityPost(selectedPost.id, currentNickname)
       if (!ok) {
         console.error('[community] delete post failed', { postId: selectedPost.id })
         return
@@ -458,58 +569,84 @@ export default function CommunityPage() {
   }
 
   const handleWritePost = async () => {
+    if (isSubmittingPostRef.current) return
+
     const title = newPostTitle.trim()
     const content = newPostContent.trim()
     if (!title || !content) return
 
-    const inserted = await insertCommunityPost({
-      title,
-      content,
-      category: newPostCategory,
-      author: postAuthor,
-    })
+    isSubmittingPostRef.current = true
+    setIsSubmittingPost(true)
 
-    if (inserted) {
-      setPosts((prev) => [mapRowToPost(inserted), ...prev])
-    } else {
-      await loadPostsFromSupabase()
+    try {
+      const inserted = await insertCommunityPost({
+        title,
+        content,
+        category: newPostCategory,
+        author: postAuthor,
+      })
+
+      if (inserted) {
+        const mapped = mapRowToPost(inserted)
+        setPosts((prev) =>
+          prev.some((p) => p.id === mapped.id) ? prev : [mapped, ...prev]
+        )
+      } else {
+        await loadPostsFromSupabase("replace")
+      }
+
+      await refreshAuthorMeta([postAuthor, ...posts.map((p) => p.author)])
+
+      setNewPostTitle('')
+      setNewPostContent('')
+      setNewPostCategory('other')
+      setShowWriteModal(false)
+    } finally {
+      isSubmittingPostRef.current = false
+      setIsSubmittingPost(false)
     }
-
-    await refreshAuthorMeta([postAuthor, ...posts.map((p) => p.author)])
-
-    setNewPostTitle('')
-    setNewPostContent('')
-    setNewPostCategory('other')
-    setShowWriteModal(false)
   }
 
   const handleAddComment = async () => {
+    if (isSubmittingCommentRef.current) return
+
     const text = commentText.trim()
     if (!text || !selectedPost) return
 
-    const inserted = await insertCommunityComment({
-      post_id: selectedPost.id,
-      author: postAuthor,
-      content: text,
-    })
+    isSubmittingCommentRef.current = true
+    setIsSubmittingComment(true)
 
-    if (!inserted) return
+    try {
+      const inserted = await insertCommunityComment({
+        post_id: selectedPost.id,
+        author: postAuthor,
+        content: text,
+      })
 
-    await incrementPostCommentsCount(selectedPost.id)
+      if (!inserted) return
 
-    setComments((prev) => [...prev, mapCommentRowToView(inserted)])
-    setCommentText('')
-    setPosts((prev) =>
-      prev.map((p) => (p.id === selectedPost.id ? { ...p, comments: p.comments + 1 } : p))
-    )
-    setSelectedPost((prev) => (prev ? { ...prev, comments: prev.comments + 1 } : null))
+      await incrementPostCommentsCount(selectedPost.id)
 
-    await refreshAuthorMeta([
-      postAuthor,
-      inserted.author,
-      ...comments.map((c) => c.author),
-      selectedPost.author,
-    ])
+      const mapped = mapCommentRowToView(inserted)
+      setComments((prev) =>
+        prev.some((c) => c.id === mapped.id) ? prev : [...prev, mapped]
+      )
+      setCommentText('')
+      setPosts((prev) =>
+        prev.map((p) => (p.id === selectedPost.id ? { ...p, comments: p.comments + 1 } : p))
+      )
+      setSelectedPost((prev) => (prev ? { ...prev, comments: prev.comments + 1 } : null))
+
+      await refreshAuthorMeta([
+        postAuthor,
+        inserted.author,
+        ...comments.map((c) => c.author),
+        selectedPost.author,
+      ])
+    } finally {
+      isSubmittingCommentRef.current = false
+      setIsSubmittingComment(false)
+    }
   }
 
   const latestPosts = posts
@@ -522,22 +659,28 @@ export default function CommunityPage() {
 
   const allDisplayPosts = activeTab === 'latest' ? latestPosts : recommendedPosts
   const displayPosts = allDisplayPosts.slice(0, visibleCount)
-  const hasMore = visibleCount < allDisplayPosts.length
+  const hasMoreLocal = visibleCount < allDisplayPosts.length
+  const hasMore = hasMoreLocal || (activeTab === 'latest' && serverHasMore)
 
   // 탭이나 검색어 변경 시 visibleCount 초기화
   useEffect(() => {
     setVisibleCount(PAGE_SIZE)
   }, [activeTab, searchQuery, searchField])
 
-  // IntersectionObserver로 스크롤 시 자동 추가 로드
+  // IntersectionObserver로 스크롤 시 자동 추가 로드 (+ server pagination)
   useEffect(() => {
     const node = loaderRef.current
     if (!node) return
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore) {
-          setVisibleCount(prev => Math.min(prev + PAGE_SIZE, allDisplayPosts.length))
+        if (!entries[0].isIntersecting) return
+        if (hasMoreLocal) {
+          setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, allDisplayPosts.length))
+          return
+        }
+        if (activeTab === 'latest' && serverHasMore) {
+          void loadPostsFromSupabase('append')
         }
       },
       { threshold: 0.1 }
@@ -548,7 +691,7 @@ export default function CommunityPage() {
       observer.unobserve(node)
       observer.disconnect()
     }
-  }, [hasMore, allDisplayPosts.length])
+  }, [hasMoreLocal, allDisplayPosts.length, activeTab, serverHasMore, loadPostsFromSupabase])
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -556,7 +699,7 @@ export default function CommunityPage() {
       <div className="sticky top-0 bg-white border-b border-gray-200 z-10 shadow-sm">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/">
+            <Link href={APP_ROUTES.home} prefetch={false} translate="no" className="notranslate">
               <ArrowLeft className="h-6 w-6 text-gray-700" />
             </Link>
             <h1 className="text-lg font-bold text-gray-800">{t('community.title')}</h1>
@@ -675,21 +818,48 @@ export default function CommunityPage() {
           <div className="bg-white w-full rounded-t-3xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-gray-800">{t('community.modalNewPost')}</h2>
-              <button onClick={() => setShowWriteModal(false)} className="text-gray-400 hover:text-gray-600">
+              <button
+                type="button"
+                onClick={() => {
+                  if (isSubmittingPost) return
+                  setShowWriteModal(false)
+                }}
+                disabled={isSubmittingPost}
+                className="text-gray-400 hover:text-gray-600 disabled:opacity-40"
+              >
                 <X className="h-6 w-6" />
               </button>
             </div>
             <div className="space-y-3">
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1">{t('community.labelTitle')}</label>
-                <input type="text" value={newPostTitle} onChange={(e) => setNewPostTitle(e.target.value)} placeholder={t('community.placeholderTitle')} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-800 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-400" />
+                <input
+                  type="text"
+                  value={newPostTitle}
+                  onChange={(e) => setNewPostTitle(e.target.value)}
+                  placeholder={t('community.placeholderTitle')}
+                  disabled={isSubmittingPost}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-800 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-400 disabled:opacity-60"
+                />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-1">{t('community.labelContent')}</label>
-                <textarea value={newPostContent} onChange={(e) => setNewPostContent(e.target.value)} placeholder={t('community.placeholderContent')} rows={6} className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-800 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-400 resize-none" />
+                <textarea
+                  value={newPostContent}
+                  onChange={(e) => setNewPostContent(e.target.value)}
+                  placeholder={t('community.placeholderContent')}
+                  rows={6}
+                  disabled={isSubmittingPost}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-800 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-400 resize-none disabled:opacity-60"
+                />
               </div>
-              <Button onClick={handleWritePost} className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold">
-                {t('community.publish')}
+              <Button
+                type="button"
+                onClick={() => void handleWritePost()}
+                disabled={isSubmittingPost || !newPostTitle.trim() || !newPostContent.trim()}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold disabled:opacity-60 disabled:pointer-events-none"
+              >
+                {isSubmittingPost ? '...' : t('community.publish')}
               </Button>
             </div>
           </div>
@@ -766,9 +936,21 @@ export default function CommunityPage() {
             <div className="space-y-2 border-t pt-4">
               <label className="text-sm font-medium text-gray-700 block">{t('community.labelComment')}</label>
               <div className="flex gap-2">
-                <input type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder={t('community.placeholderComment')} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-800 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-400" />
-                <Button onClick={handleAddComment} className="bg-purple-600 hover:bg-purple-700 text-white px-4">
-                  {t('community.send')}
+                <input
+                  type="text"
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  placeholder={t('community.placeholderComment')}
+                  disabled={isSubmittingComment}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-800 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-400 disabled:opacity-60"
+                />
+                <Button
+                  type="button"
+                  onClick={() => void handleAddComment()}
+                  disabled={isSubmittingComment || !commentText.trim()}
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-4 disabled:opacity-60 disabled:pointer-events-none"
+                >
+                  {isSubmittingComment ? '...' : t('community.send')}
                 </Button>
               </div>
             </div>

@@ -6,7 +6,7 @@ import {
   type AuthorDisplayMeta,
   type AuthorProfileFields,
 } from '@/lib/community-author-display'
-import { fetchPointsTotalByNickname } from '@/lib/supabase-points'
+import { invalidateCachedFetch } from '@/lib/supabase-request-cache'
 
 const PROFILE_SELECT_BASE =
   'nickname, level_title, role, is_master, total_points' as const
@@ -22,7 +22,18 @@ type ProfileRow = {
   total_points?: number | null
 }
 
-const CONCURRENCY = 6
+const AUTHOR_META_TTL_MS = 5 * 60 * 1000
+const PROFILE_CHUNK = 25
+
+type MetaCacheEntry = {
+  meta: AuthorDisplayMeta
+  expiresAt: number
+}
+
+/** Per-nickname memory cache (session). */
+const metaCache = new Map<string, MetaCacheEntry>()
+/** In-flight batch promises keyed by sorted missing-nick list. */
+const inflightBatches = new Map<string, Promise<Record<string, AuthorDisplayMeta>>>()
 
 function mapRowToFields(row: ProfileRow): AuthorProfileFields {
   return {
@@ -40,104 +51,85 @@ function isMissingColumnError(error: { code?: string; message?: string } | null)
   return (
     error.code === '42703' ||
     error.code === 'PGRST204' ||
-    msg.includes('level') && msg.includes('does not exist')
+    (msg.includes('level') && msg.includes('does not exist'))
   )
 }
 
-/** Per-nickname lookup (same pattern as fetchProfileMasterFields). */
-async function fetchProfileRowByNickname(nickname: string): Promise<ProfileRow | null> {
-  const nick = nickname.trim()
-  if (!nick) return null
-
-  const withLevel = await supabase
-    .from('profiles')
-    .select(PROFILE_SELECT_WITH_LEVEL)
-    .ilike('nickname', nick)
-    .limit(1)
-    .maybeSingle()
-
-  if (withLevel.error && isMissingColumnError(withLevel.error)) {
-    const fallback = await supabase
-      .from('profiles')
-      .select(PROFILE_SELECT_BASE)
-      .ilike('nickname', nick)
-      .limit(1)
-      .maybeSingle()
-
-    if (fallback.error) {
-      console.error('[profiles] author profile fetch failed', { nickname: nick, error: fallback.error })
-      return null
-    }
-    return (fallback.data as ProfileRow | null) ?? null
-  }
-
-  if (withLevel.error) {
-    console.error('[profiles] author profile fetch failed', { nickname: nick, error: withLevel.error })
+function getCachedMeta(key: string): AuthorDisplayMeta | null {
+  const entry = metaCache.get(key)
+  if (!entry) return null
+  if (entry.expiresAt <= Date.now()) {
+    metaCache.delete(key)
     return null
   }
-
-  return (withLevel.data as ProfileRow | null) ?? null
+  return entry.meta
 }
 
-async function enrichFieldsFromPointsLedger(
-  nickname: string,
-  fields: AuthorProfileFields
-): Promise<AuthorProfileFields> {
-  if (fields.level_title?.trim()) return fields
-
-  const profilePoints = fields.total_points
-  if (profilePoints != null && profilePoints > 0) return fields
-
-  const ledgerTotal = await fetchPointsTotalByNickname(nickname)
-  if (ledgerTotal <= 0) return fields
-
-  return { ...fields, total_points: ledgerTotal }
+function setCachedMeta(key: string, meta: AuthorDisplayMeta): void {
+  metaCache.set(key, { meta, expiresAt: Date.now() + AUTHOR_META_TTL_MS })
 }
 
-async function resolveMetaForNickname(
+/** Batch-load profile rows with `.in()` chunks (1 request per chunk). */
+async function fetchProfileRowsByNicknames(nicknames: string[]): Promise<Map<string, ProfileRow>> {
+  const result = new Map<string, ProfileRow>()
+  const unique = [...new Set(nicknames.map((n) => n.trim()).filter(Boolean))]
+  if (unique.length === 0) return result
+
+  for (let i = 0; i < unique.length; i += PROFILE_CHUNK) {
+    const chunk = unique.slice(i, i + PROFILE_CHUNK)
+
+    let data: unknown[] | null = null
+    let error: { code?: string; message?: string } | null = null
+
+    const withLevel = await supabase
+      .from('profiles')
+      .select(PROFILE_SELECT_WITH_LEVEL)
+      .in('nickname', chunk)
+
+    if (withLevel.error && isMissingColumnError(withLevel.error)) {
+      const fallback = await supabase
+        .from('profiles')
+        .select(PROFILE_SELECT_BASE)
+        .in('nickname', chunk)
+      data = fallback.data as unknown[] | null
+      error = fallback.error
+    } else {
+      data = withLevel.data as unknown[] | null
+      error = withLevel.error
+    }
+
+    if (error) {
+      console.error('[profiles] author profile batch failed', { chunkSize: chunk.length, error })
+      continue
+    }
+
+    for (const raw of data ?? []) {
+      const row = raw as ProfileRow
+      const nick = row.nickname?.trim()
+      if (!nick) continue
+      result.set(normalizeAuthorKey(nick), row)
+    }
+  }
+
+  return result
+}
+
+function rowToMeta(
   nickname: string,
+  row: ProfileRow | undefined,
   defaultLevelTitle: string
-): Promise<AuthorDisplayMeta> {
-  const nick = nickname.trim()
-  const row = await fetchProfileRowByNickname(nick)
-  let fields: AuthorProfileFields | undefined
-
-  if (row) {
-    fields = await enrichFieldsFromPointsLedger(nick, mapRowToFields(row))
-  } else {
-    const ledgerTotal = await fetchPointsTotalByNickname(nick)
-    if (ledgerTotal > 0) {
-      fields = { total_points: ledgerTotal }
-    }
-  }
-
-  const meta = resolveAuthorDisplayMeta(nick, fields, defaultLevelTitle)
-  logCommunityAuthorLevel(nick, meta, row ? 'profile' : 'fallback')
+): AuthorDisplayMeta {
+  const fields = row ? mapRowToFields(row) : undefined
+  const meta = resolveAuthorDisplayMeta(nickname, fields, defaultLevelTitle)
+  logCommunityAuthorLevel(nickname, meta, row ? 'profile' : 'fallback')
   return meta
-}
-
-async function mapPool<T, R>(
-  items: T[],
-  limit: number,
-  fn: (item: T) => Promise<R>
-): Promise<R[]> {
-  const results: R[] = []
-  let index = 0
-
-  async function worker() {
-    while (index < items.length) {
-      const i = index++
-      results[i] = await fn(items[i])
-    }
-  }
-
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, () => worker()))
-  return results
 }
 
 /**
  * Batch-load profiles for community author rows.
- * Uses ilike per nickname (reliable with RLS) — not .or() batch filters.
+ * - Skips nicknames already in TTL cache
+ * - Uses chunked `.in('nickname', …)` (not per-nickname N+1)
+ * - Does not fan out to points ledger (avoids O(authors) points selects)
  */
 export async function fetchAuthorDisplayMetaByNicknames(
   nicknames: string[],
@@ -145,23 +137,67 @@ export async function fetchAuthorDisplayMetaByNicknames(
 ): Promise<Record<string, AuthorDisplayMeta>> {
   const unique = [...new Set(nicknames.map((n) => n.trim()).filter(Boolean))]
   const result: Record<string, AuthorDisplayMeta> = {}
-
   if (unique.length === 0) return result
 
-  const metas = await mapPool(unique, CONCURRENCY, (nick) =>
-    resolveMetaForNickname(nick, defaultLevelTitle)
-  )
+  const missing: string[] = []
+  for (const nick of unique) {
+    const key = normalizeAuthorKey(nick)
+    const cached = getCachedMeta(key)
+    if (cached) {
+      result[key] = cached
+    } else {
+      missing.push(nick)
+    }
+  }
 
-  unique.forEach((nick, i) => {
-    result[normalizeAuthorKey(nick)] = metas[i]
+  if (missing.length === 0) return result
+
+  const batchKey = missing.map(normalizeAuthorKey).sort().join('|')
+  const existing = inflightBatches.get(batchKey)
+  if (existing) {
+    const fetched = await existing
+    return { ...result, ...fetched }
+  }
+
+  const promise = (async (): Promise<Record<string, AuthorDisplayMeta>> => {
+    const batchResult: Record<string, AuthorDisplayMeta> = {}
+    const rowsByKey = await fetchProfileRowsByNicknames(missing)
+
+    for (const nick of missing) {
+      const key = normalizeAuthorKey(nick)
+      const meta = rowToMeta(nick, rowsByKey.get(key), defaultLevelTitle)
+      setCachedMeta(key, meta)
+      batchResult[key] = meta
+    }
+
+    console.log('[profiles] author meta batch complete', {
+      requested: unique.length,
+      cacheHits: unique.length - missing.length,
+      fetched: missing.length,
+      profileHits: rowsByKey.size,
+    })
+
+    return batchResult
+  })().finally(() => {
+    inflightBatches.delete(batchKey)
   })
 
-  console.log('[profiles] author meta batch complete', {
-    requested: unique.length,
-    resolved: Object.keys(result).length,
-  })
+  inflightBatches.set(batchKey, promise)
+  const fetched = await promise
+  return { ...result, ...fetched }
+}
 
-  return result
+/** Drop cached meta for one author (e.g. after current user's points change). */
+export function invalidateAuthorMetaForNickname(nickname: string): void {
+  const key = normalizeAuthorKey(nickname)
+  metaCache.delete(key)
+  invalidateCachedFetch(`author-meta:${key}`)
+}
+
+/** Clear all author display meta (logout / nickname switch). */
+export function clearAuthorMetaCache(): void {
+  metaCache.clear()
+  inflightBatches.clear()
 }
 
 /** @deprecated Use fetchAuthorDisplayMetaByNicknames */

@@ -68,59 +68,73 @@ export async function fetchProfileMasterFields(
   }
 }
 
-/** Set master flags on profiles for the designated nickname. */
+/** Set master flags on profiles for the designated nickname (once per session). */
+const masterEnsureDone = new Set<string>()
+const masterEnsureInflight = new Map<string, Promise<boolean>>()
+
 export async function ensureMasterProfileFields(nickname: string): Promise<boolean> {
   const nick = nickname.trim()
   if (!isMasterNickname(nick)) return false
 
-  const payload = {
-    role: MASTER_ROLE,
-    is_master: true,
-    level_title: MASTER_LEVEL_TITLE,
-  }
+  const key = nick.toLowerCase()
+  if (masterEnsureDone.has(key)) return true
 
-  try {
-    const { data: existing, error: readError } = await supabase
-      .from('profiles')
-      .select('nickname')
-      .ilike('nickname', nick)
-      .limit(1)
-      .maybeSingle()
+  const pending = masterEnsureInflight.get(key)
+  if (pending) return pending
 
-    if (readError) {
-      console.error('[profiles] master ensure read failed', readError)
-      return false
+  const promise = (async (): Promise<boolean> => {
+    const payload = {
+      role: MASTER_ROLE,
+      is_master: true,
+      level_title: MASTER_LEVEL_TITLE,
     }
 
-    if (existing) {
-      const { error } = await supabase.from('profiles').update(payload).ilike('nickname', nick)
-      if (error) {
-        console.error('[profiles] master ensure update failed', error)
+    try {
+      const { ok, profile } = await fetchProfileMasterFields(nick)
+      if (ok && profile && profileIndicatesMaster(profile) && profile.level_title === MASTER_LEVEL_TITLE) {
+        masterEnsureDone.add(key)
+        console.log('[profiles] master ensure skipped — already synced', { nickname: nick })
+        return true
+      }
+
+      if (ok && profile) {
+        const { error } = await supabase.from('profiles').update(payload).ilike('nickname', nick)
+        if (error) {
+          console.error('[profiles] master ensure update failed', error)
+          return false
+        }
+        masterEnsureDone.add(key)
+        console.log('[profiles] master ensure update success', { nickname: nick })
+        return true
+      }
+
+      // No profile row yet — insert
+      const { error: insertError } = await supabase.from('profiles').insert({
+        nickname: nick,
+        birthdate: null,
+        gender: null,
+        ...payload,
+        total_points: 0,
+      })
+
+      if (insertError) {
+        console.error('[profiles] master ensure insert failed', insertError)
         return false
       }
-      console.log('[profiles] master ensure update success', { nickname: nick })
+
+      masterEnsureDone.add(key)
+      console.log('[profiles] master ensure insert success', { nickname: nick })
       return true
-    }
-
-    const { error: insertError } = await supabase.from('profiles').insert({
-      nickname: nick,
-      birthdate: null,
-      gender: null,
-      ...payload,
-      total_points: 0,
-    })
-
-    if (insertError) {
-      console.error('[profiles] master ensure insert failed', insertError)
+    } catch (err) {
+      console.error('[profiles] master ensure error', err)
       return false
+    } finally {
+      masterEnsureInflight.delete(key)
     }
+  })()
 
-    console.log('[profiles] master ensure insert success', { nickname: nick })
-    return true
-  } catch (err) {
-    console.error('[profiles] master ensure error', err)
-    return false
-  }
+  masterEnsureInflight.set(key, promise)
+  return promise
 }
 
 /**

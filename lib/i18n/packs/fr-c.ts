@@ -62,6 +62,7 @@ export const frPackC: Record<string, string> = {
   'level.4': 'Chercheur',
   'level.5': 'Adepte',
   'level.6': 'Novice',
+  'level.operator': 'Opérateur',
   'achievement.1.title': 'Première fortune',
   'achievement.1.desc': 'Vous avez consulté votre première fortune',
   'achievement.2.title': 'Débutant tarot',

@@ -56,7 +56,8 @@ export interface FortuneResult {
   score: number
   description: string
   luckyColor: string
-  luckyNumber: string
+  /** Display value — may be a single digit or a pair string like "1, 7". */
+  luckyNumber: string | number
 }
 
 export interface LifetimeFortune {

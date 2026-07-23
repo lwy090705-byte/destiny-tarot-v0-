@@ -24,6 +24,8 @@ import {
   type NicknameValidationError,
 } from '@/lib/nickname-validation'
 import { upsertReferralCodeMapping } from '@/lib/supabase-referral-map'
+import { clearUserScopedCaches } from '@/lib/supabase-request-cache'
+import { clearAuthorMetaCache } from '@/lib/supabase-profile-level-titles'
 import { isMasterNickname } from '@/lib/master-role'
 import { ensureMasterProfileFields } from '@/lib/supabase-profile-master'
 
@@ -140,6 +142,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
 
     const trimmed = validation.nickname
+
+    // Prevent prior nickname's cached points/meta leaking into the new session identity
+    clearUserScopedCaches(user?.nickname)
+    clearUserScopedCaches(trimmed)
+    clearAuthorMetaCache()
 
     await insertProfileToSupabase({
       nickname: trimmed,

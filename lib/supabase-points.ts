@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { countReferralsByReferrerCode } from '@/lib/supabase-referrals'
+import { cachedFetch, invalidateCachedFetch } from '@/lib/supabase-request-cache'
 
 export type PointInsert = {
   nickname: string
@@ -8,26 +9,70 @@ export type PointInsert = {
   description: string | null
 }
 
+const POINTS_TOTAL_TTL_MS = 15_000
+
+function pointsTotalCacheKey(nick: string): string {
+  return `points-total:${nick.trim().toLowerCase()}`
+}
+
 /** Sum of all `amount` rows for a nickname (source of truth for balance). */
 export async function fetchPointsTotalByNickname(nickname: string): Promise<number> {
   const nick = nickname.trim()
   if (!nick) return 0
 
-  try {
-    const { data, error } = await supabase.from('points').select('amount').eq('nickname', nick)
+  return cachedFetch(
+    pointsTotalCacheKey(nick),
+    async () => {
+      try {
+        // Prefer aggregate so we do not download every ledger row
+        const { data, error } = await supabase
+          .from('points')
+          .select('amount.sum()')
+          .eq('nickname', nick)
 
-    if (error) {
-      console.error('[points] sum failed', error)
-      return 0
-    }
+        if (!error && Array.isArray(data) && data.length > 0) {
+          const raw = data[0] as { sum?: number | string | null }
+          const total = Number(raw.sum ?? 0) || 0
+          console.log('[points] fetch success (aggregate)', { nickname: nick, total })
+          return total
+        }
 
-    const total = (data ?? []).reduce((sum, row) => sum + (Number(row.amount) || 0), 0)
-    console.log('[points] fetch success', { nickname: nick, total })
-    return total
-  } catch (err) {
-    console.error('[points] fetch error', err)
-    return 0
-  }
+        if (!error && data && !Array.isArray(data)) {
+          const raw = data as { sum?: number | string | null }
+          const total = Number(raw.sum ?? 0) || 0
+          console.log('[points] fetch success (aggregate)', { nickname: nick, total })
+          return total
+        }
+
+        // Fallback: client-side sum if aggregate is unavailable
+        if (error) {
+          console.warn('[points] aggregate unavailable, falling back', error.message)
+        }
+
+        const { data: rows, error: rowsError } = await supabase
+          .from('points')
+          .select('amount')
+          .eq('nickname', nick)
+
+        if (rowsError) {
+          console.error('[points] sum failed', rowsError)
+          return 0
+        }
+
+        const total = (rows ?? []).reduce((sum, row) => sum + (Number(row.amount) || 0), 0)
+        console.log('[points] fetch success (rows)', { nickname: nick, total })
+        return total
+      } catch (err) {
+        console.error('[points] fetch error', err)
+        return 0
+      }
+    },
+    POINTS_TOTAL_TTL_MS
+  )
+}
+
+export function invalidatePointsTotalCache(nickname: string): void {
+  invalidateCachedFetch(pointsTotalCacheKey(nickname.trim()))
 }
 
 /** True if this nickname already received the one-time referral input bonus. */
@@ -68,9 +113,9 @@ export async function referrerRewardAlreadyPaid(
     const referralCount = await countReferralsByReferrerCode(code)
     if (referralCount === 0) return false
 
-    const { count, error } = await supabase
+  const { count, error } = await supabase
       .from('points')
-      .select('*', { count: 'exact', head: true })
+      .select('id', { count: 'exact', head: true })
       .eq('nickname', nick)
       .eq('point_type', 'referral_reward')
 
@@ -88,8 +133,9 @@ export async function referrerRewardAlreadyPaid(
 /** Inserts a points ledger row. Never throws. */
 export async function insertPointTransaction(row: PointInsert): Promise<boolean> {
   try {
+    const nick = row.nickname.trim()
     const { data, error } = await supabase.from('points').insert({
-      nickname: row.nickname.trim(),
+      nickname: nick,
       point_type: row.point_type,
       amount: row.amount,
       description: row.description,
@@ -100,6 +146,7 @@ export async function insertPointTransaction(row: PointInsert): Promise<boolean>
       return false
     }
 
+    invalidatePointsTotalCache(nick)
     console.log('[points] insert success', data)
     return true
   } catch (err) {

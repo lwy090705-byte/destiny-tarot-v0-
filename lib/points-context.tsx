@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode, useMemo } from "react"
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode, useMemo, useRef } from "react"
 import { useUser } from "@/lib/user-context"
 import { getMasterPointsDisplay, isMasterNickname } from "@/lib/master-role"
 import { ensureMasterProfileFields } from "@/lib/supabase-profile-master"
@@ -66,6 +66,8 @@ export function PointsProvider({ children }: { children: ReactNode }) {
   const userReferralCode = user?.referralCode ?? ""
   const [points, setPoints] = useState(0)
   const [isHydrated, setIsHydrated] = useState(false)
+  const bootRanForRef = useRef<string>("")
+  const achievementsRanForRef = useRef<string>("")
 
   const nickname = user?.nickname?.trim() ?? ""
   const referralCount = user?.referralCount ?? 0
@@ -99,48 +101,65 @@ export function PointsProvider({ children }: { children: ReactNode }) {
     writePointsCache(nickname, total)
   }, [nickname, isUnlimitedPoints])
 
+  const runAchievementGrants = useCallback(async () => {
+    if (isUnlimitedPoints) {
+      console.log("[points] refetch skipped achievements ledger for operator")
+      return
+    }
+    if (!nickname || !userReferralCode) return
+
+    const claimed = await grantCompletedAchievementRewards({
+      referralCode: userReferralCode,
+      nickname,
+      referralCount,
+      progress: loadUserProgress(userReferralCode),
+    })
+    if (claimed.length > 0) {
+      console.log("[achievement] reward grant success", claimed)
+      await refreshPoints()
+    }
+  }, [nickname, userReferralCode, referralCount, refreshPoints, isUnlimitedPoints])
+
+  const refetchPointsAndAchievements = useCallback(async () => {
+    try {
+      await refreshPoints()
+      await runAchievementGrants()
+      console.log("[points] refetch success")
+    } catch (err) {
+      console.error("[points] refetch failed", err)
+    }
+  }, [refreshPoints, runAchievementGrants])
+
+  // Single boot path: one points fetch + one achievement pass (no double refreshPoints)
   useEffect(() => {
     if (!userHydrated) return
+
+    const bootKey = `${nickname}|${userReferralCode}`
+    if (bootRanForRef.current === bootKey) return
+    bootRanForRef.current = bootKey
 
     void (async () => {
       if (nickname) {
         await refreshPoints()
+        if (userReferralCode) {
+          achievementsRanForRef.current = `${bootKey}|${referralCount}`
+          await runAchievementGrants()
+        }
       } else {
         setPoints(readPointsCache(""))
       }
       setIsHydrated(true)
     })()
-  }, [userHydrated, nickname, refreshPoints])
+  }, [userHydrated, nickname, userReferralCode, referralCount, refreshPoints, runAchievementGrants])
 
-  const refetchPointsAndAchievements = useCallback(async () => {
-    try {
-      await refreshPoints()
-      if (isUnlimitedPoints) {
-        console.log("[points] refetch skipped achievements ledger for operator")
-        return
-      }
-      if (nickname && userReferralCode) {
-        const claimed = await grantCompletedAchievementRewards({
-          referralCode: userReferralCode,
-          nickname,
-          referralCount,
-          progress: loadUserProgress(userReferralCode),
-        })
-        if (claimed.length > 0) {
-          console.log("[achievement] reward grant success", claimed)
-          await refreshPoints()
-        }
-      }
-      console.log("[points] refetch success")
-    } catch (err) {
-      console.error("[points] refetch failed", err)
-    }
-  }, [nickname, userReferralCode, referralCount, refreshPoints, isUnlimitedPoints])
-
+  // Only re-run achievement grants when referralCount changes after boot (not a full points double-fetch)
   useEffect(() => {
-    if (!userHydrated || !nickname || !userReferralCode) return
-    void refetchPointsAndAchievements()
-  }, [userHydrated, nickname, userReferralCode, referralCount, refetchPointsAndAchievements])
+    if (!isHydrated || !nickname || !userReferralCode) return
+    const key = `${nickname}|${userReferralCode}|${referralCount}`
+    if (achievementsRanForRef.current === key) return
+    achievementsRanForRef.current = key
+    void runAchievementGrants()
+  }, [isHydrated, nickname, userReferralCode, referralCount, runAchievementGrants])
 
   const hasEnoughPoints = (amount: number): boolean => {
     if (isUnlimitedPoints) return true

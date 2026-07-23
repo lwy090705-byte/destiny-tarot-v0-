@@ -820,5 +820,5 @@ export function getTemplateByIndex(category: FortuneCategory, index: number, lan
  * 카테고리의 총 템플릿 개수
  */
 export function getTemplateCount(category: FortuneCategory): number {
-  return allTemplates[category].ko.length
+  return allTemplates[category]?.ko?.length ?? 0
 }

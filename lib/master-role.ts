@@ -6,7 +6,7 @@ export const MASTER_ROLE = 'master'
 export const OPERATOR_ROLE = 'operator'
 
 export function isMasterNickname(nickname: string | undefined | null): boolean {
-  return nickname?.trim() === MASTER_NICKNAME
+  return nickname?.trim().toLowerCase() === MASTER_NICKNAME.trim().toLowerCase()
 }
 
 export function getMasterPointsDisplay(language: string): string {
