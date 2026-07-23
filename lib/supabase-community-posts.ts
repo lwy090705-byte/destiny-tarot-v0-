@@ -196,7 +196,7 @@ export type CommunityMutateClientResult = {
 
 function messageForMutateStatus(status: number, bodyMessage?: string): string {
   if (bodyMessage?.trim()) return bodyMessage.trim()
-  if (status === 401) return 'Pi 로그인이 필요합니다.'
+  if (status === 401) return '운영자 권한이 없습니다. (인증 필요)'
   if (status === 403) return '삭제 권한이 없습니다.'
   if (status === 503) return '서버 설정(SUPABASE_SERVICE_ROLE_KEY)이 필요합니다.'
   if (status === 404) return '게시글을 찾을 수 없습니다.'
@@ -208,7 +208,7 @@ function messageForMutateStatus(status: number, bodyMessage?: string): string {
  */
 export async function deleteCommunityPost(
   postId: string,
-  _nickname?: string
+  nickname?: string
 ): Promise<CommunityMutateClientResult> {
   const id = postId.trim()
   if (!id) {
@@ -216,22 +216,28 @@ export async function deleteCommunityPost(
   }
 
   try {
-    const res = await (await import('@/lib/pi-session-client')).piAuthFetch(
-      '/api/community/post-mutate',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'delete', postId: id }),
-      }
-    )
-    let payload: { error?: string; code?: string } = {}
+    const res = await fetch('/api/community/post-mutate', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'delete',
+        postId: id,
+        nickname: nickname?.trim() || undefined,
+      }),
+    })
+    let payload: { error?: string; code?: string; reason?: string } = {}
     try {
-      payload = (await res.json()) as { error?: string; code?: string }
+      payload = (await res.json()) as typeof payload
     } catch {
       /* ignore */
     }
     if (!res.ok) {
-      console.error('[community_posts] delete API failed', res.status, payload)
+      console.error('[community_posts] delete API failed', res.status, {
+        code: payload.code,
+        reason: payload.reason,
+        error: payload.error,
+      })
       return {
         ok: false,
         status: res.status,
@@ -265,26 +271,27 @@ export async function hideCommunityPost(
   }
 
   try {
-    const res = await (await import('@/lib/pi-session-client')).piAuthFetch(
-      '/api/community/post-mutate',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'hide',
-          postId: id,
-          nickname: by,
-        }),
-      }
-    )
-    let payload: { error?: string; code?: string } = {}
+    const res = await fetch('/api/community/post-mutate', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'hide',
+        postId: id,
+        nickname: by,
+      }),
+    })
+    let payload: { error?: string; code?: string; reason?: string } = {}
     try {
-      payload = (await res.json()) as { error?: string; code?: string }
+      payload = (await res.json()) as typeof payload
     } catch {
       /* ignore */
     }
     if (!res.ok) {
-      console.error('[community_posts] hide API failed', res.status, payload)
+      console.error('[community_posts] hide API failed', res.status, {
+        code: payload.code,
+        reason: payload.reason,
+      })
       return {
         ok: false,
         status: res.status,
@@ -300,6 +307,56 @@ export async function hideCommunityPost(
       ok: false,
       status: 0,
       message: '네트워크 오류로 숨기지 못했습니다.',
+    }
+  }
+}
+
+/** Unhide a post via secured API only. */
+export async function unhideCommunityPost(
+  postId: string,
+  nickname?: string
+): Promise<CommunityMutateClientResult> {
+  const id = postId.trim()
+  if (!id) {
+    return { ok: false, status: 400, message: '잘못된 게시글입니다.' }
+  }
+
+  try {
+    const res = await fetch('/api/community/post-mutate', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'unhide',
+        postId: id,
+        nickname: nickname?.trim() || undefined,
+      }),
+    })
+    let payload: { error?: string; code?: string; reason?: string } = {}
+    try {
+      payload = (await res.json()) as typeof payload
+    } catch {
+      /* ignore */
+    }
+    if (!res.ok) {
+      console.error('[community_posts] unhide API failed', res.status, {
+        code: payload.code,
+        reason: payload.reason,
+      })
+      return {
+        ok: false,
+        status: res.status,
+        message: messageForMutateStatus(res.status, payload.error),
+        code: payload.code,
+      }
+    }
+    return { ok: true, status: 200, message: '숨김이 해제되었습니다.' }
+  } catch (err) {
+    console.error('[community_posts] unhide error', err)
+    return {
+      ok: false,
+      status: 0,
+      message: '네트워크 오류로 숨김 해제에 실패했습니다.',
     }
   }
 }

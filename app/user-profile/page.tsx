@@ -12,20 +12,16 @@ import { usePremium } from "@/lib/use-premium"
 import { PremiumBadge } from "@/components/premium-badge"
 import { useMasterAccess } from "@/lib/use-master-access"
 import { MasterPointGrantPanel } from "@/components/master-point-grant-panel"
-/* TEMP_ADMIN_DIAGNOSTIC — remove import + <TempAdminDiagnostic /> after env setup */
-import { TempAdminDiagnostic } from "@/components/temp-admin-diagnostic"
-/* TEMP_PI_PROFILE_MIGRATION — remove import + <TempPiProfileMigration /> after migrate */
-import { TempPiProfileMigration } from "@/components/temp-pi-profile-migration"
 import {
   getMasterPointsDisplay,
   getMasterPointsLabel,
   MASTER_LEVEL_TITLE,
 } from "@/lib/master-role"
 import { profileIndicatesMaster } from "@/lib/community-author-display"
+import type { AuthorProfileFields } from "@/lib/community-author-display"
 import { fetchVisitStats, type VisitStats } from "@/lib/supabase-visit-logs"
 import { LevelSystemCards } from "@/components/level-system-cards"
 import { ProfileLevelAvatar, ProfileLevelDisplay } from "@/components/profile-level-display"
-import type { AuthorProfileFields } from "@/lib/community-author-display"
 import { resolveProfileEmblemVariant } from "@/lib/profile-level-emblem"
 import { OPERATOR_LEVEL, getLevelTitleKo, translateLevelTitle } from "@/lib/level-system"
 import { fetchProfileMasterFields } from "@/lib/supabase-profile-master"
@@ -555,11 +551,6 @@ export default function UserProfilePage() {
             </>
           )}
         </div>
-
-        {/* TEMP_ADMIN_DIAGNOSTIC — remove this block after copying MASTER_PI_UIDS */}
-        <TempAdminDiagnostic />
-        {/* TEMP_PI_PROFILE_MIGRATION — remove after 파이조아→대질주 migrate succeeds */}
-        <TempPiProfileMigration />
 
         {showMasterUi && user?.nickname && (
           <MasterPointGrantPanel grantedBy={user.nickname.trim()} />

@@ -1,40 +1,42 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { usePiAuth } from '@/lib/pi-auth-context'
+import { useUser } from '@/lib/user-context'
+import { isMasterNickname } from '@/lib/master-role'
+import {
+  ensureMasterProfileFields,
+  fetchProfileMasterFields,
+  resolveMasterAccess,
+} from '@/lib/supabase-profile-master'
 
 export type MasterAccessState = {
-  /** Pi-verified operator (MASTER_PI_UIDS or profiles.pi_uid + is_master/role). */
+  /** 대질주 + profiles master flags (or optional Pi operator via auth-context). */
   isMaster: boolean
   isLoading: boolean
-  /** Nickname linked to the Pi uid in profiles (null if not linked). */
   linkedNickname: string | null
   authenticated: boolean
 }
 
 /**
- * Operator UI gate — does NOT trust localStorage nickname alone.
- * Waits for Pi session + /api/community/auth-context.
+ * Operator UI: nickname === '대질주' and DB role/is_master (via resolveMasterAccess).
+ * No separate admin password / Pi session required for 대질주.
  */
 export function useMasterAccess(): MasterAccessState {
-  const { piUser, status } = usePiAuth()
+  const { user, isHydrated } = useUser()
   const [isMaster, setIsMaster] = useState(false)
-  const [linkedNickname, setLinkedNickname] = useState<string | null>(null)
-  const [authenticated, setAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     let cancelled = false
 
-    if (status === 'idle' || status === 'loading') {
+    if (!isHydrated) {
       setIsLoading(true)
       return
     }
 
-    if (status !== 'authenticated' || !piUser) {
+    const nick = user?.nickname?.trim() ?? ''
+    if (!nick) {
       setIsMaster(false)
-      setLinkedNickname(null)
-      setAuthenticated(false)
       setIsLoading(false)
       return
     }
@@ -42,28 +44,39 @@ export function useMasterAccess(): MasterAccessState {
     setIsLoading(true)
     void (async () => {
       try {
-        const res = await (await import('@/lib/pi-session-client')).piAuthFetch(
-          '/api/community/auth-context',
-          {
-            cache: 'no-store',
+        if (isMasterNickname(nick)) {
+          await ensureMasterProfileFields(nick)
+          const granted = await resolveMasterAccess(nick)
+          if (cancelled) return
+          // Prefer strict DB flags when fetch succeeds
+          const { ok, profile } = await fetchProfileMasterFields(nick)
+          if (cancelled) return
+          if (
+            ok &&
+            profile &&
+            profile.is_master === true &&
+            String(profile.role ?? '').toLowerCase() === 'master'
+          ) {
+            setIsMaster(true)
+            return
           }
-        )
-        const data = (await res.json()) as {
-          authenticated?: boolean
-          isOperator?: boolean
-          linkedNickname?: string | null
+          setIsMaster(granted)
+          return
         }
-        if (cancelled) return
-        setAuthenticated(data.authenticated === true)
-        setIsMaster(data.isOperator === true)
-        setLinkedNickname(
-          data.linkedNickname != null ? String(data.linkedNickname) : null
-        )
-      } catch {
-        if (cancelled) return
-        setIsMaster(false)
-        setLinkedNickname(null)
-        setAuthenticated(false)
+
+        // Non-대질주: optional Pi operator via auth-context
+        try {
+          const { piAuthFetch } = await import('@/lib/pi-session-client')
+          const res = await piAuthFetch(
+            `/api/community/auth-context?nickname=${encodeURIComponent(nick)}`,
+            { cache: 'no-store' }
+          )
+          const data = (await res.json()) as { isOperator?: boolean }
+          if (cancelled) return
+          setIsMaster(data.isOperator === true)
+        } catch {
+          if (!cancelled) setIsMaster(false)
+        }
       } finally {
         if (!cancelled) setIsLoading(false)
       }
@@ -72,7 +85,12 @@ export function useMasterAccess(): MasterAccessState {
     return () => {
       cancelled = true
     }
-  }, [status, piUser?.uid])
+  }, [isHydrated, user?.nickname])
 
-  return { isMaster, isLoading, linkedNickname, authenticated }
+  return {
+    isMaster,
+    isLoading,
+    linkedNickname: isMaster && isMasterNickname(user?.nickname) ? '대질주' : null,
+    authenticated: isMaster,
+  }
 }

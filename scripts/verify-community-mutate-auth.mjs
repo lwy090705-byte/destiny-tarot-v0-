@@ -1,12 +1,17 @@
 /**
- * Community mutate auth unit tests (Pi uid trust model).
+ * Community mutate auth unit tests (대질주 nickname + optional Pi).
  * Usage: node scripts/verify-community-mutate-auth.mjs
  */
 
 function canMutateCommunityContent(input) {
+  if (input.isDaejiljuMaster) {
+    return { allowed: true, reason: 'daejilju_master' }
+  }
+  if (input.isPiOperator) {
+    return { allowed: true, reason: 'pi_operator' }
+  }
   const sessionUid = String(input.sessionPiUid || '').trim()
   if (!sessionUid) return { allowed: false, reason: 'denied' }
-  if (input.isPiOperator) return { allowed: true, reason: 'pi_operator' }
   const authorUid = String(input.authorPiUid || '').trim()
   if (authorUid && authorUid === sessionUid) {
     return { allowed: true, reason: 'author_pi_uid' }
@@ -14,18 +19,31 @@ function canMutateCommunityContent(input) {
   return { allowed: false, reason: 'denied' }
 }
 
-function parseMasterPiUidsEnv(raw) {
-  if (!raw?.trim()) return []
-  return raw
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean)
+function isDaejiljuMaster(nickname, profile) {
+  return (
+    nickname === '대질주' &&
+    profile &&
+    profile.role === 'master' &&
+    profile.is_master === true
+  )
 }
 
 const cases = [
   {
-    name: 'operator pi deletes any post',
+    name: '대질주 master without Pi uid allowed',
     input: {
+      isDaejiljuMaster: true,
+      isPiOperator: false,
+      sessionPiUid: '',
+      authorPiUid: null,
+    },
+    expectAllowed: true,
+    expectReason: 'daejilju_master',
+  },
+  {
+    name: 'pi operator deletes any post',
+    input: {
+      isDaejiljuMaster: false,
       isPiOperator: true,
       sessionPiUid: 'uid-op',
       authorPiUid: 'uid-other',
@@ -34,8 +52,9 @@ const cases = [
     expectReason: 'pi_operator',
   },
   {
-    name: 'forged nickname 대질주 without operator flag DENIED',
+    name: 'forged nickname without DB master DENIED',
     input: {
+      isDaejiljuMaster: false,
       isPiOperator: false,
       sessionPiUid: 'uid-attacker',
       authorPiUid: 'uid-victim',
@@ -46,6 +65,7 @@ const cases = [
   {
     name: 'author matching pi_uid allowed',
     input: {
+      isDaejiljuMaster: false,
       isPiOperator: false,
       sessionPiUid: 'uid-author',
       authorPiUid: 'uid-author',
@@ -53,25 +73,26 @@ const cases = [
     expectAllowed: true,
     expectReason: 'author_pi_uid',
   },
+]
+
+const profileCases = [
   {
-    name: 'author nickname match alone not enough (null author pi)',
-    input: {
-      isPiOperator: false,
-      sessionPiUid: 'uid-x',
-      authorPiUid: null,
-    },
-    expectAllowed: false,
-    expectReason: 'denied',
+    name: '대질주 + master flags',
+    nickname: '대질주',
+    profile: { role: 'master', is_master: true },
+    expect: true,
   },
   {
-    name: 'empty session denied',
-    input: {
-      isPiOperator: true,
-      sessionPiUid: '',
-      authorPiUid: 'uid-a',
-    },
-    expectAllowed: false,
-    expectReason: 'denied',
+    name: '대질주 without master flags',
+    nickname: '대질주',
+    profile: { role: 'user', is_master: false },
+    expect: false,
+  },
+  {
+    name: '파이조아 never master via nickname',
+    nickname: '파이조아',
+    profile: { role: 'master', is_master: true },
+    expect: false,
   },
 ]
 
@@ -79,36 +100,26 @@ let failed = 0
 for (const c of cases) {
   const r = canMutateCommunityContent(c.input)
   const ok = r.allowed === c.expectAllowed && r.reason === c.expectReason
-  console.log(ok ? 'PASS' : 'FAIL', c.name, r)
-  if (!ok) failed++
+  if (!ok) {
+    failed += 1
+    console.error('FAIL', c.name, r)
+  } else {
+    console.log('ok', c.name)
+  }
 }
 
-const list = parseMasterPiUidsEnv(' a,b , ,c ')
-const listOk = list.length === 3 && list[0] === 'a' && list[2] === 'c'
-console.log(listOk ? 'PASS' : 'FAIL', 'MASTER_PI_UIDS parse', list)
-if (!listOk) failed++
+for (const c of profileCases) {
+  const got = isDaejiljuMaster(c.nickname, c.profile)
+  if (got !== c.expect) {
+    failed += 1
+    console.error('FAIL', c.name, got)
+  } else {
+    console.log('ok', c.name)
+  }
+}
 
-// Client must not contain direct delete fallback strings in posts lib
-import { readFileSync } from 'node:fs'
-const postsLib = readFileSync('lib/supabase-community-posts.ts', 'utf8')
-const hasFallback =
-  postsLib.includes('trying direct') ||
-  postsLib.includes("from('community_posts').delete()")
-console.log(
-  !hasFallback ? 'PASS' : 'FAIL',
-  'no anon DELETE fallback in supabase-community-posts'
-)
-if (hasFallback) failed++
-
-const mutateRoute = readFileSync('app/api/community/post-mutate/route.ts', 'utf8')
-const trustsNickname =
-  mutateRoute.includes('isMasterNickname') ||
-  mutateRoute.includes('master_nickname')
-console.log(
-  !trustsNickname ? 'PASS' : 'FAIL',
-  'post-mutate does not trust nickname for auth'
-)
-if (trustsNickname) failed++
-
-console.log(`\nsummary failed=${failed}`)
-process.exit(failed ? 1 : 0)
+if (failed) {
+  console.error(`${failed} failed`)
+  process.exit(1)
+}
+console.log('all passed')

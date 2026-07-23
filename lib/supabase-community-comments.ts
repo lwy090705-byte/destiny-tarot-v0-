@@ -250,7 +250,8 @@ export async function deleteCommentsByPostId(postId: string): Promise<boolean> {
 
 /** Delete one comment via secured API only (no anon DELETE fallback). */
 export async function deleteCommunityComment(
-  commentId: string
+  commentId: string,
+  nickname?: string
 ): Promise<{ ok: boolean; status: number; message: string }> {
   const id = commentId.trim()
   if (!id) {
@@ -258,17 +259,19 @@ export async function deleteCommunityComment(
   }
 
   try {
-    const res = await (await import('@/lib/pi-session-client')).piAuthFetch(
-      '/api/community/comment-mutate',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'delete', commentId: id }),
-      }
-    )
-    let payload: { error?: string } = {}
+    const res = await fetch('/api/community/comment-mutate', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'delete',
+        commentId: id,
+        nickname: nickname?.trim() || undefined,
+      }),
+    })
+    let payload: { error?: string; reason?: string } = {}
     try {
-      payload = (await res.json()) as { error?: string }
+      payload = (await res.json()) as typeof payload
     } catch {
       /* ignore */
     }
@@ -276,13 +279,15 @@ export async function deleteCommunityComment(
       const message =
         payload.error ||
         (res.status === 401
-          ? 'Pi 로그인이 필요합니다.'
+          ? '운영자 권한이 없습니다.'
           : res.status === 403
             ? '삭제 권한이 없습니다.'
             : res.status === 503
               ? '서버 설정(SUPABASE_SERVICE_ROLE_KEY)이 필요합니다.'
               : '댓글 삭제에 실패했습니다.')
-      console.error('[community_comments] delete API failed', res.status)
+      console.error('[community_comments] delete API failed', res.status, {
+        reason: payload.reason,
+      })
       return { ok: false, status: res.status, message }
     }
     console.log('[community_comments] delete success (api)', { comment_id: id })
@@ -307,21 +312,19 @@ export async function hideCommunityComment(
   }
 
   try {
-    const res = await (await import('@/lib/pi-session-client')).piAuthFetch(
-      '/api/community/comment-mutate',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'hide',
-          commentId: id,
-          nickname: by,
-        }),
-      }
-    )
-    let payload: { error?: string } = {}
+    const res = await fetch('/api/community/comment-mutate', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'hide',
+        commentId: id,
+        nickname: by,
+      }),
+    })
+    let payload: { error?: string; reason?: string } = {}
     try {
-      payload = (await res.json()) as { error?: string }
+      payload = (await res.json()) as typeof payload
     } catch {
       /* ignore */
     }
@@ -329,13 +332,15 @@ export async function hideCommunityComment(
       const message =
         payload.error ||
         (res.status === 401
-          ? 'Pi 로그인이 필요합니다.'
+          ? '운영자 권한이 없습니다.'
           : res.status === 403
             ? '숨김 권한이 없습니다.'
             : res.status === 503
               ? '서버 설정(SUPABASE_SERVICE_ROLE_KEY)이 필요합니다.'
               : '댓글 숨김에 실패했습니다.')
-      console.error('[community_comments] hide API failed', res.status)
+      console.error('[community_comments] hide API failed', res.status, {
+        reason: payload.reason,
+      })
       return { ok: false, status: res.status, message }
     }
     console.log('[community_comments] hide success (api)', { comment_id: id })
@@ -343,5 +348,45 @@ export async function hideCommunityComment(
   } catch (err) {
     console.error('[community_comments] hide error', err)
     return { ok: false, status: 0, message: '네트워크 오류로 숨기지 못했습니다.' }
+  }
+}
+
+/** Unhide a comment via secured API only. */
+export async function unhideCommunityComment(
+  commentId: string,
+  nickname?: string
+): Promise<{ ok: boolean; status: number; message: string }> {
+  const id = commentId.trim()
+  if (!id) {
+    return { ok: false, status: 400, message: '잘못된 댓글입니다.' }
+  }
+
+  try {
+    const res = await fetch('/api/community/comment-mutate', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'unhide',
+        commentId: id,
+        nickname: nickname?.trim() || undefined,
+      }),
+    })
+    let payload: { error?: string } = {}
+    try {
+      payload = (await res.json()) as { error?: string }
+    } catch {
+      /* ignore */
+    }
+    if (!res.ok) {
+      return {
+        ok: false,
+        status: res.status,
+        message: payload.error || '댓글 숨김 해제에 실패했습니다.',
+      }
+    }
+    return { ok: true, status: 200, message: '숨김이 해제되었습니다.' }
+  } catch {
+    return { ok: false, status: 0, message: '네트워크 오류로 숨김 해제에 실패했습니다.' }
   }
 }

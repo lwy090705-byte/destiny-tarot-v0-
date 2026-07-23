@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { grantMasterPointsToNickname } from '@/lib/supabase-profile-master'
 
 type MasterPointGrantPanelProps = {
   grantedBy: string
@@ -26,21 +25,39 @@ export function MasterPointGrantPanel({ grantedBy }: MasterPointGrantPanelProps)
     setSubmitting(true)
     setMessage(null)
 
-    const ok = await grantMasterPointsToNickname({
-      targetNickname: target,
-      amount: points,
-      reason: reason.trim(),
-      grantedBy,
-    })
-
-    setSubmitting(false)
-    if (ok) {
+    try {
+      const res = await fetch('/api/operator/grant-points', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          targetNickname: target,
+          amount: points,
+          reason: reason.trim(),
+          grantedBy: grantedBy.trim(),
+        }),
+      })
+      const data = (await res.json()) as { ok?: boolean; error?: string; reason?: string }
+      if (!res.ok || !data.ok) {
+        console.error('[grant-points] failed', res.status, data.reason ?? data.error)
+        setMessage(
+          data.error ||
+            (res.status === 403
+              ? '권한이 없습니다.'
+              : res.status === 401
+                ? '운영자 권한이 없습니다.'
+                : '포인트 지급에 실패했습니다.')
+        )
+        return
+      }
       setMessage(`${target}님에게 ${points}P 지급 완료`)
       setTargetNickname('')
       setAmount('')
       setReason('')
-    } else {
-      setMessage('포인트 지급에 실패했습니다.')
+    } catch {
+      setMessage('네트워크 오류로 지급에 실패했습니다.')
+    } finally {
+      setSubmitting(false)
     }
   }
 

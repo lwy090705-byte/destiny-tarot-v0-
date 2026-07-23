@@ -165,17 +165,19 @@ function parseVisitStatsPayload(raw: unknown): VisitStats | null {
   }
 }
 
-/** Server API: Pi session cookie + operator pi_uid (not client nickname). */
-async function fetchVisitStatsViaServerApi(): Promise<VisitStats | null> {
+/** Server API: 대질주 nickname query OR optional Pi operator. */
+async function fetchVisitStatsViaServerApi(
+  requesterNickname?: string
+): Promise<VisitStats | null> {
   if (typeof window === 'undefined') return null
   try {
-    const res = await (await import('@/lib/pi-session-client')).piAuthFetch(
-      '/api/operator/visit-stats',
-      {
-        method: 'GET',
-        cache: 'no-store',
-      }
-    )
+    const nick = requesterNickname?.trim() ?? ''
+    const qs = nick ? `?nickname=${encodeURIComponent(nick)}` : ''
+    const res = await fetch(`/api/operator/visit-stats${qs}`, {
+      method: 'GET',
+      credentials: 'include',
+      cache: 'no-store',
+    })
     if (!res.ok) {
       if (isDev) {
         console.warn('[visit_stats] server API', res.status)
@@ -309,7 +311,7 @@ export async function fetchVisitStats(options: FetchVisitStatsOptions = {}): Pro
     cacheKey,
     async () => {
       try {
-        const apiStats = await fetchVisitStatsViaServerApi()
+        const apiStats = await fetchVisitStatsViaServerApi(options.requesterNickname)
         if (apiStats) {
           if (isDev) {
             console.log('[visit_stats] server API totals', { timezone: KST_TIMEZONE, ...apiStats })

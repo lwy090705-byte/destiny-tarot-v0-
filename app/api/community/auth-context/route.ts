@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import {
+  assertDaejiljuMaster,
   assertOperatorSession,
   assertServiceRoleConfigured,
   fetchProfileByPiUid,
@@ -11,10 +12,23 @@ import { isUidInMasterList } from '@/lib/community-mutate-auth'
 export const runtime = 'nodejs'
 
 /**
- * GET /api/community/auth-context
- * Returns Pi-verified operator / linked profile for UI (never trust local nickname).
+ * GET /api/community/auth-context?nickname=
+ * Operator UI context: 대질주 DB master and/or optional Pi operator.
  */
 export async function GET(request: NextRequest) {
+  const nickname = request.nextUrl.searchParams.get('nickname')?.trim() ?? ''
+
+  const dae = await assertDaejiljuMaster(nickname)
+  if (dae.ok) {
+    return NextResponse.json({
+      authenticated: true,
+      isOperator: true,
+      authKind: 'daejilju',
+      linkedNickname: dae.nickname,
+      piUid: null,
+    })
+  }
+
   const session = requirePiSession(request)
   if (!session) {
     return NextResponse.json({
@@ -22,31 +36,33 @@ export async function GET(request: NextRequest) {
       isOperator: false,
       linkedNickname: null,
       piUid: null,
+      authKind: null,
+      reason: dae.reason,
     })
   }
 
   const service = assertServiceRoleConfigured()
   if (!service.ok) {
-    // Still report env master list operators without DB
     const envOp = isUidInMasterList(session.uid, masterPiUidsFromEnv())
     return NextResponse.json({
       authenticated: true,
       isOperator: envOp,
       linkedNickname: null,
       piUid: session.uid,
+      authKind: envOp ? 'pi' : null,
       serviceRoleConfigured: false,
       warning: service.error,
     })
   }
 
-  const operator = await assertOperatorSession(request)
+  const piOp = await assertOperatorSession(request)
   const profile = await fetchProfileByPiUid(session.uid)
 
   return NextResponse.json({
     authenticated: true,
-    isOperator: operator.ok === true,
+    isOperator: piOp.ok === true,
+    authKind: piOp.ok ? 'pi' : null,
     linkedNickname: profile?.nickname ?? null,
-    /** Verified Pi Network uid — use this in MASTER_PI_UIDS (not username). */
     piUid: session.uid,
     piUsername: session.username,
     serviceRoleConfigured: true,

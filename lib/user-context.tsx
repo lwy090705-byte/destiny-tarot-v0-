@@ -48,11 +48,6 @@ interface UserContextType {
   isHydrated: boolean
   /** Returns null on success, or validation error code. */
   saveNickname: (nickname: string) => Promise<NicknameValidationError | null>
-  /**
-   * TEMP_PI_PROFILE_MIGRATION — local-only nickname switch after server migrate.
-   * Skips uniqueness checks; does not insert a new profile row.
-   */
-  adoptNicknameLocally: (nickname: string) => void
   applyReferralCode: (
     code: string
   ) => Promise<'success' | 'already_used' | 'invalid' | 'self' | 'duplicate'>
@@ -202,31 +197,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     return null
   }
 
-  /** TEMP_PI_PROFILE_MIGRATION — remove with migrate UI */
-  const adoptNicknameLocally = useCallback(
-    (nickname: string) => {
-      const trimmed = nickname.trim()
-      if (!trimmed) return
-      const current = userRef.current
-      clearUserScopedCaches(current?.nickname)
-      clearUserScopedCaches(trimmed)
-      clearAuthorMetaCache()
-      if (current) {
-        persist({ ...current, nickname: trimmed })
-      } else {
-        persist({
-          nickname: trimmed,
-          referralCode: generateReferralCode(),
-          referredBy: null,
-          referralCount: 0,
-          referralRewardClaimed: false,
-          createdAt: new Date().toISOString(),
-        })
-      }
-    },
-    [persist]
-  )
-
   const applyReferralCode = async (
     code: string
   ): Promise<'success' | 'already_used' | 'invalid' | 'self' | 'duplicate'> => {
@@ -274,7 +244,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         user,
         isHydrated,
         saveNickname,
-        adoptNicknameLocally,
         applyReferralCode,
         incrementReferralCount,
         syncReferralCount,

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useCallback, useEffect } from "react"
-import { ArrowLeft, Heart, MessageCircle, ThumbsUp, Star, Flame, Plus, Search, X, Trash2, EyeOff } from "lucide-react"
+import { ArrowLeft, Heart, MessageCircle, ThumbsUp, Star, Flame, Plus, Search, X, Trash2, EyeOff, Eye } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { useLanguage } from "@/lib/language-context"
@@ -41,6 +41,7 @@ import {
   hideCommunityPost,
   insertCommunityPost,
   normalizeCategoryKey,
+  unhideCommunityPost,
   type CommunityPostRow,
 } from "@/lib/supabase-community-posts"
 
@@ -92,22 +93,22 @@ function mapRowToPost(row: CommunityPostRow): Post {
 
 function canDeletePost(
   post: Post,
-  linkedNickname: string | null,
+  appNickname: string | null | undefined,
   isMaster: boolean
 ): boolean {
   if (isMaster) return true
-  if (!linkedNickname) return false
-  return isAuthorMatch(post.author, linkedNickname)
+  if (!appNickname) return false
+  return isAuthorMatch(post.author, appNickname)
 }
 
 function canDeleteComment(
   comment: CommunityCommentView,
-  linkedNickname: string | null,
+  appNickname: string | null | undefined,
   isMaster: boolean
 ): boolean {
   if (isMaster) return true
-  if (!linkedNickname) return false
-  return isAuthorMatch(comment.author, linkedNickname)
+  if (!appNickname) return false
+  return isAuthorMatch(comment.author, appNickname)
 }
 
 function PostCard({
@@ -188,7 +189,7 @@ function getPostAuthorName(nickname: string | undefined, anonymousLabel: string)
 export default function CommunityPage() {
   const { t } = useLanguage()
   const { user } = useUser()
-  const { isMaster, isLoading: masterLoading, linkedNickname } = useMasterAccess()
+  const { isMaster, isLoading: masterLoading } = useMasterAccess()
   const [mutateNotice, setMutateNotice] = useState<string | null>(null)
   const { points } = usePoints()
   const postAuthor = getPostAuthorName(user?.nickname, t("community.anonymous"))
@@ -472,14 +473,14 @@ export default function CommunityPage() {
 
   const handleDeletePost = async () => {
     if (!selectedPost || masterLoading) return
-    if (!canDeletePost(selectedPost, linkedNickname, isMaster)) return
+    if (!canDeletePost(selectedPost, currentNickname, isMaster)) return
 
     try {
       // Likes/comments cascade is handled server-side in post-mutate (service role).
-      const result = await deleteCommunityPost(selectedPost.id)
+      const result = await deleteCommunityPost(selectedPost.id, currentNickname)
       if (!result.ok) {
         console.error('[community] delete post failed', result)
-        setMutateNotice(result.message)
+        setMutateNotice(`[${result.status}] ${result.message}`)
         return
       }
       console.log('[community] delete post success', { postId: selectedPost.id })
@@ -506,11 +507,11 @@ export default function CommunityPage() {
     try {
       const result = await hideCommunityPost(
         selectedPost.id,
-        linkedNickname || currentNickname
+        currentNickname
       )
       if (!result.ok) {
         console.error('[community] hide post failed', result)
-        setMutateNotice(result.message)
+        setMutateNotice(`[${result.status}] ${result.message}`)
         return
       }
       console.log('[community] hide post success', { postId: selectedPost.id })
@@ -526,16 +527,36 @@ export default function CommunityPage() {
     }
   }
 
+  const handleUnhidePost = async () => {
+    if (!selectedPost || masterLoading || !isMaster) return
+
+    try {
+      const result = await unhideCommunityPost(selectedPost.id, currentNickname)
+      if (!result.ok) {
+        setMutateNotice(`[${result.status}] ${result.message}`)
+        return
+      }
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === selectedPost.id ? { ...p, isHidden: false } : p
+        )
+      )
+      setMutateNotice(null)
+    } catch {
+      setMutateNotice('숨김 해제 중 오류가 발생했습니다.')
+    }
+  }
+
   const handleDeleteComment = async (commentId: string) => {
     if (!selectedPost || masterLoading) return
     const target = comments.find((c) => c.id === commentId)
-    if (!target || !canDeleteComment(target, linkedNickname, isMaster)) return
+    if (!target || !canDeleteComment(target, currentNickname, isMaster)) return
 
     try {
-      const result = await deleteCommunityComment(commentId)
+      const result = await deleteCommunityComment(commentId, currentNickname)
       if (!result.ok) {
         console.error('[community] delete comment failed', result)
-        setMutateNotice(result.message)
+        setMutateNotice(`[${result.status}] ${result.message}`)
         return
       }
       console.log('[community] delete comment success', { commentId })
@@ -563,13 +584,10 @@ export default function CommunityPage() {
     if (!target) return
 
     try {
-      const result = await hideCommunityComment(
-        commentId,
-        linkedNickname || currentNickname
-      )
+      const result = await hideCommunityComment(commentId, currentNickname)
       if (!result.ok) {
         console.error('[community] hide comment failed', result)
-        setMutateNotice(result.message)
+        setMutateNotice(`[${result.status}] ${result.message}`)
         return
       }
       console.log('[community] hide comment success', { commentId })
@@ -900,16 +918,27 @@ export default function CommunityPage() {
                   <span className="text-[10px] text-gray-400">권한 확인 중…</span>
                 )}
                 {!masterLoading && isMaster && (
-                  <button
-                    type="button"
-                    onClick={() => void handleHidePost()}
-                    className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700"
-                  >
-                    <EyeOff className="h-4 w-4" />
-                    {t('community.hidePost')}
-                  </button>
+                  selectedPost.isHidden ? (
+                    <button
+                      type="button"
+                      onClick={() => void handleUnhidePost()}
+                      className="flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-700"
+                    >
+                      <Eye className="h-4 w-4" />
+                      숨김 해제
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => void handleHidePost()}
+                      className="flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700"
+                    >
+                      <EyeOff className="h-4 w-4" />
+                      {t('community.hidePost')}
+                    </button>
+                  )
                 )}
-                {!masterLoading && canDeletePost(selectedPost, linkedNickname, isMaster) && (
+                {!masterLoading && canDeletePost(selectedPost, currentNickname, isMaster) && (
                   <button
                     type="button"
                     onClick={() => void handleDeletePost()}
@@ -1017,7 +1046,7 @@ export default function CommunityPage() {
                           </button>
                         )}
                         {!masterLoading &&
-                          canDeleteComment(comment, linkedNickname, isMaster) && (
+                          canDeleteComment(comment, currentNickname, isMaster) && (
                           <button
                             type="button"
                             onClick={() => void handleDeleteComment(comment.id)}
