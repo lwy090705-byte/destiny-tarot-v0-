@@ -177,6 +177,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       await ensureMasterProfileFields(trimmed)
     }
 
+    // Bind Pi session uid → this nickname when already signed in
+    void import('@/lib/link-pi-client').then(({ linkPiToAppNickname }) =>
+      linkPiToAppNickname(trimmed)
+    )
+
     return null
   }
 

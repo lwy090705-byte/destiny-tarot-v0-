@@ -248,58 +248,96 @@ export async function deleteCommentsByPostId(postId: string): Promise<boolean> {
   }
 }
 
-/** Delete one comment by id. Never throws. */
-export async function deleteCommunityComment(commentId: string): Promise<boolean> {
+/** Delete one comment via secured API only (no anon DELETE fallback). */
+export async function deleteCommunityComment(
+  commentId: string
+): Promise<{ ok: boolean; status: number; message: string }> {
   const id = commentId.trim()
-  if (!id) return false
+  if (!id) {
+    return { ok: false, status: 400, message: '잘못된 댓글입니다.' }
+  }
 
   try {
-    const { error } = await supabase.from('community_comments').delete().eq('id', id)
-
-    if (error) {
-      console.error('[community_comments] delete failed', error)
-      return false
+    const res = await fetch('/api/community/comment-mutate', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete', commentId: id }),
+    })
+    let payload: { error?: string } = {}
+    try {
+      payload = (await res.json()) as { error?: string }
+    } catch {
+      /* ignore */
     }
-
-    console.log('[community_comments] delete success', { comment_id: id })
-    return true
+    if (!res.ok) {
+      const message =
+        payload.error ||
+        (res.status === 401
+          ? 'Pi 로그인이 필요합니다.'
+          : res.status === 403
+            ? '삭제 권한이 없습니다.'
+            : res.status === 503
+              ? '서버 설정(SUPABASE_SERVICE_ROLE_KEY)이 필요합니다.'
+              : '댓글 삭제에 실패했습니다.')
+      console.error('[community_comments] delete API failed', res.status)
+      return { ok: false, status: res.status, message }
+    }
+    console.log('[community_comments] delete success (api)', { comment_id: id })
+    return { ok: true, status: 200, message: '삭제되었습니다.' }
   } catch (err) {
     console.error('[community_comments] delete error', err)
-    return false
+    return { ok: false, status: 0, message: '네트워크 오류로 삭제하지 못했습니다.' }
   }
 }
 
 /**
- * Soft-hide a comment (is_hidden, hidden_by, hidden_at).
- * Columns: see supabase/community_hidden_columns.sql
+ * Soft-hide a comment via secured API only.
  */
 export async function hideCommunityComment(
   commentId: string,
   hiddenBy: string
-): Promise<boolean> {
+): Promise<{ ok: boolean; status: number; message: string }> {
   const id = commentId.trim()
   const by = hiddenBy.trim()
-  if (!id || !by) return false
+  if (!id) {
+    return { ok: false, status: 400, message: '잘못된 댓글입니다.' }
+  }
 
   try {
-    const { error } = await supabase
-      .from('community_comments')
-      .update({
-        is_hidden: true,
-        hidden_by: by,
-        hidden_at: new Date().toISOString(),
-      })
-      .eq('id', id)
-
-    if (error) {
-      console.error('[community_comments] hide failed', error)
-      return false
+    const res = await fetch('/api/community/comment-mutate', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'hide',
+        commentId: id,
+        nickname: by,
+      }),
+    })
+    let payload: { error?: string } = {}
+    try {
+      payload = (await res.json()) as { error?: string }
+    } catch {
+      /* ignore */
     }
-
-    console.log('[community_comments] hide success', { comment_id: id, hidden_by: by })
-    return true
+    if (!res.ok) {
+      const message =
+        payload.error ||
+        (res.status === 401
+          ? 'Pi 로그인이 필요합니다.'
+          : res.status === 403
+            ? '숨김 권한이 없습니다.'
+            : res.status === 503
+              ? '서버 설정(SUPABASE_SERVICE_ROLE_KEY)이 필요합니다.'
+              : '댓글 숨김에 실패했습니다.')
+      console.error('[community_comments] hide API failed', res.status)
+      return { ok: false, status: res.status, message }
+    }
+    console.log('[community_comments] hide success (api)', { comment_id: id })
+    return { ok: true, status: 200, message: '숨김 처리되었습니다.' }
   } catch (err) {
     console.error('[community_comments] hide error', err)
-    return false
+    return { ok: false, status: 0, message: '네트워크 오류로 숨기지 못했습니다.' }
   }
 }

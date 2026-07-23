@@ -3,8 +3,15 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 /**
  * Server-only Supabase client (service role). Bypasses RLS.
  * Never import this into client components or expose the key.
+ * Key must be SUPABASE_SERVICE_ROLE_KEY — never NEXT_PUBLIC_*.
  */
 export function createSupabaseAdmin(): SupabaseClient {
+  if (process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error(
+      'NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY must not be set (secret leaked to browser)'
+    )
+  }
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
 
@@ -20,6 +27,9 @@ export function createSupabaseAdmin(): SupabaseClient {
 }
 
 export function hasSupabaseServiceRole(): boolean {
+  if (process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY) {
+    return false
+  }
   return Boolean(
     process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
   )

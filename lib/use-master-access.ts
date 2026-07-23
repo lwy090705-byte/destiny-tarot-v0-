@@ -1,53 +1,76 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useUser } from '@/lib/user-context'
-import { isMasterNickname } from '@/lib/master-role'
-import {
-  ensureMasterProfileFields,
-  fetchProfileMasterFields,
-} from '@/lib/supabase-profile-master'
-import { profileIndicatesMaster } from '@/lib/community-author-display'
+import { usePiAuth } from '@/lib/pi-auth-context'
 
-export function useMasterAccess(): { isMaster: boolean; isLoading: boolean } {
-  const { user, isHydrated } = useUser()
-  const nick = user?.nickname?.trim() ?? ''
-  const nicknameIsMaster = isMasterNickname(nick)
+export type MasterAccessState = {
+  /** Pi-verified operator (MASTER_PI_UIDS or profiles.pi_uid + is_master/role). */
+  isMaster: boolean
+  isLoading: boolean
+  /** Nickname linked to the Pi uid in profiles (null if not linked). */
+  linkedNickname: string | null
+  authenticated: boolean
+}
 
+/**
+ * Operator UI gate — does NOT trust localStorage nickname alone.
+ * Waits for Pi session + /api/community/auth-context.
+ */
+export function useMasterAccess(): MasterAccessState {
+  const { piUser, status } = usePiAuth()
   const [isMaster, setIsMaster] = useState(false)
+  const [linkedNickname, setLinkedNickname] = useState<string | null>(null)
+  const [authenticated, setAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    if (!isHydrated) return
-
     let cancelled = false
 
-    // Nickname is a secondary signal; prefer profiles.role / is_master when available.
-    setIsMaster(nicknameIsMaster)
-    setIsLoading(false)
-
-    if (nicknameIsMaster) {
-      void ensureMasterProfileFields(nick)
-    }
-
-    if (!nick) {
-      setIsMaster(false)
+    if (status === 'idle' || status === 'loading') {
+      setIsLoading(true)
       return
     }
 
+    if (status !== 'authenticated' || !piUser) {
+      setIsMaster(false)
+      setLinkedNickname(null)
+      setAuthenticated(false)
+      setIsLoading(false)
+      return
+    }
+
+    setIsLoading(true)
     void (async () => {
-      const { ok, profile } = await fetchProfileMasterFields(nick)
-      if (cancelled) return
-      if (!ok || !profile) return
-      if (profileIndicatesMaster(profile) || isMasterNickname(profile.nickname)) {
-        setIsMaster(true)
+      try {
+        const res = await fetch('/api/community/auth-context', {
+          credentials: 'include',
+          cache: 'no-store',
+        })
+        const data = (await res.json()) as {
+          authenticated?: boolean
+          isOperator?: boolean
+          linkedNickname?: string | null
+        }
+        if (cancelled) return
+        setAuthenticated(data.authenticated === true)
+        setIsMaster(data.isOperator === true)
+        setLinkedNickname(
+          data.linkedNickname != null ? String(data.linkedNickname) : null
+        )
+      } catch {
+        if (cancelled) return
+        setIsMaster(false)
+        setLinkedNickname(null)
+        setAuthenticated(false)
+      } finally {
+        if (!cancelled) setIsLoading(false)
       }
     })()
 
     return () => {
       cancelled = true
     }
-  }, [isHydrated, nicknameIsMaster, nick])
+  }, [status, piUser?.uid])
 
-  return { isMaster, isLoading }
+  return { isMaster, isLoading, linkedNickname, authenticated }
 }

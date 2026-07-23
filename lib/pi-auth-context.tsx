@@ -159,23 +159,12 @@ export function PiAuthProvider({ children }: { children: ReactNode }) {
       const verified = await verifyAccessTokenOnServer(auth.accessToken)
       setPiUser(verified)
       setStatus('authenticated')
-      // Best-effort: bind app nickname → Pi uid for Phase 2 ownership checks
-      try {
-        const raw = localStorage.getItem('fortune-app-user')
-        if (raw) {
-          const parsed = JSON.parse(raw) as { nickname?: string; name?: string }
-          const nick = String(parsed.nickname ?? parsed.name ?? '').trim()
-          if (nick) {
-            void fetch('/api/profile/link-pi', {
-              method: 'POST',
-              credentials: 'include',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ nickname: nick }),
-            })
-          }
-        }
-      } catch {
-        /* ignore link failures */
+      const { linkPiToAppNickname, readStoredAppNickname } = await import(
+        '@/lib/link-pi-client'
+      )
+      const nick = readStoredAppNickname()
+      if (nick) {
+        void linkPiToAppNickname(nick)
       }
     } catch (err) {
       const message =
@@ -225,6 +214,13 @@ export function PiAuthProvider({ children }: { children: ReactNode }) {
         if (existing) {
           setPiUser(existing)
           setStatus('authenticated')
+          const { linkPiToAppNickname, readStoredAppNickname } = await import(
+            '@/lib/link-pi-client'
+          )
+          const nick = readStoredAppNickname()
+          if (nick) {
+            void linkPiToAppNickname(nick)
+          }
           return
         }
 

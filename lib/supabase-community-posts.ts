@@ -187,51 +187,80 @@ export async function insertCommunityPost(
   }
 }
 
+export type CommunityMutateClientResult = {
+  ok: boolean
+  status: number
+  message: string
+  code?: string
+}
+
+function messageForMutateStatus(status: number, bodyMessage?: string): string {
+  if (bodyMessage?.trim()) return bodyMessage.trim()
+  if (status === 401) return 'Pi 로그인이 필요합니다.'
+  if (status === 403) return '삭제 권한이 없습니다.'
+  if (status === 503) return '서버 설정(SUPABASE_SERVICE_ROLE_KEY)이 필요합니다.'
+  if (status === 404) return '게시글을 찾을 수 없습니다.'
+  return '요청에 실패했습니다.'
+}
+
 /**
- * Delete a post via server API (Pi session + pi_uid ownership / operator).
- * Direct anon DELETE is blocked after rls_safe_phase1.sql.
+ * Delete a post via secured API only (no anon Supabase DELETE fallback).
  */
 export async function deleteCommunityPost(
   postId: string,
-  nickname?: string
-): Promise<boolean> {
+  _nickname?: string
+): Promise<CommunityMutateClientResult> {
   const id = postId.trim()
-  if (!id) return false
+  if (!id) {
+    return { ok: false, status: 400, message: '잘못된 게시글입니다.' }
+  }
 
   try {
     const res = await fetch('/api/community/post-mutate', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'delete',
-        postId: id,
-        nickname: nickname?.trim() ?? '',
-      }),
+      body: JSON.stringify({ action: 'delete', postId: id }),
     })
-    if (!res.ok) {
-      console.error('[community_posts] delete API failed', res.status)
-      return false
+    let payload: { error?: string; code?: string } = {}
+    try {
+      payload = (await res.json()) as { error?: string; code?: string }
+    } catch {
+      /* ignore */
     }
-    console.log('[community_posts] delete success', { post_id: id })
-    return true
+    if (!res.ok) {
+      console.error('[community_posts] delete API failed', res.status, payload)
+      return {
+        ok: false,
+        status: res.status,
+        message: messageForMutateStatus(res.status, payload.error),
+        code: payload.code,
+      }
+    }
+    console.log('[community_posts] delete success (api)', { post_id: id })
+    return { ok: true, status: 200, message: '삭제되었습니다.' }
   } catch (err) {
     console.error('[community_posts] delete error', err)
-    return false
+    return {
+      ok: false,
+      status: 0,
+      message: '네트워크 오류로 삭제하지 못했습니다.',
+    }
   }
 }
 
 /**
- * Soft-hide a post via server API (Pi session + ownership / operator).
- * Columns: see supabase/community_hidden_columns.sql
+ * Soft-hide a post via secured API only (no anon UPDATE fallback).
  */
 export async function hideCommunityPost(
   postId: string,
   hiddenBy: string
-): Promise<boolean> {
+): Promise<CommunityMutateClientResult> {
   const id = postId.trim()
   const by = hiddenBy.trim()
-  if (!id || !by) return false
+  if (!id) {
+    return { ok: false, status: 400, message: '잘못된 게시글입니다.' }
+  }
 
   try {
     const res = await fetch('/api/community/post-mutate', {
@@ -244,15 +273,30 @@ export async function hideCommunityPost(
         nickname: by,
       }),
     })
-    if (!res.ok) {
-      console.error('[community_posts] hide API failed', res.status)
-      return false
+    let payload: { error?: string; code?: string } = {}
+    try {
+      payload = (await res.json()) as { error?: string; code?: string }
+    } catch {
+      /* ignore */
     }
-    console.log('[community_posts] hide success', { post_id: id, hidden_by: by })
-    return true
+    if (!res.ok) {
+      console.error('[community_posts] hide API failed', res.status, payload)
+      return {
+        ok: false,
+        status: res.status,
+        message: messageForMutateStatus(res.status, payload.error),
+        code: payload.code,
+      }
+    }
+    console.log('[community_posts] hide success (api)', { post_id: id })
+    return { ok: true, status: 200, message: '숨김 처리되었습니다.' }
   } catch (err) {
     console.error('[community_posts] hide error', err)
-    return false
+    return {
+      ok: false,
+      status: 0,
+      message: '네트워크 오류로 숨기지 못했습니다.',
+    }
   }
 }
 
