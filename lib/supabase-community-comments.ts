@@ -258,12 +258,14 @@ export async function deleteCommunityComment(
   }
 
   try {
-    const res = await fetch('/api/community/comment-mutate', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'delete', commentId: id }),
-    })
+    const res = await (await import('@/lib/pi-session-client')).piAuthFetch(
+      '/api/community/comment-mutate',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', commentId: id }),
+      }
+    )
     let payload: { error?: string } = {}
     try {
       payload = (await res.json()) as { error?: string }
@@ -305,16 +307,18 @@ export async function hideCommunityComment(
   }
 
   try {
-    const res = await fetch('/api/community/comment-mutate', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'hide',
-        commentId: id,
-        nickname: by,
-      }),
-    })
+    const res = await (await import('@/lib/pi-session-client')).piAuthFetch(
+      '/api/community/comment-mutate',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'hide',
+          commentId: id,
+          nickname: by,
+        }),
+      }
+    )
     let payload: { error?: string } = {}
     try {
       payload = (await res.json()) as { error?: string }

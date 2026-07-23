@@ -205,6 +205,9 @@ export async function GET(request: NextRequest) {
       pi_uid: null,
       pi_username: null,
       linked_nickname: null,
+      reason: 'missing_pi_session',
+      hint:
+        'Complete Pi sign-in (POST /api/pi/auth). If cookies are blocked in Pi Browser, the app sends Authorization: Bearer <sessionToken>. Opening this URL in the address bar only works when the pi_session cookie is stored.',
     })
   }
 

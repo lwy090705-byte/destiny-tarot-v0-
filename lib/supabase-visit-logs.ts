@@ -169,11 +169,13 @@ function parseVisitStatsPayload(raw: unknown): VisitStats | null {
 async function fetchVisitStatsViaServerApi(): Promise<VisitStats | null> {
   if (typeof window === 'undefined') return null
   try {
-    const res = await fetch('/api/operator/visit-stats', {
-      method: 'GET',
-      credentials: 'include',
-      cache: 'no-store',
-    })
+    const res = await (await import('@/lib/pi-session-client')).piAuthFetch(
+      '/api/operator/visit-stats',
+      {
+        method: 'GET',
+        cache: 'no-store',
+      }
+    )
     if (!res.ok) {
       if (isDev) {
         console.warn('[visit_stats] server API', res.status)

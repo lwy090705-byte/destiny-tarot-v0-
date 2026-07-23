@@ -77,9 +77,9 @@ async function fetchSession(): Promise<PiAuthUser | null> {
       method: 'GET',
       attempt: 1,
     })
-    const res = await devFetch('/api/pi/auth', {
+    const { piAuthFetch } = await import('@/lib/pi-session-client')
+    const res = await piAuthFetch('/api/pi/auth', {
       method: 'GET',
-      credentials: 'include',
       cache: 'no-store',
     })
     if (!res.ok) {
@@ -123,7 +123,14 @@ async function verifyAccessTokenOnServer(accessToken: string): Promise<PiAuthUse
     throw new Error(payload?.error ?? 'Pi authentication failed')
   }
 
-  const data = (await res.json()) as { user: PiAuthUser }
+  const data = (await res.json()) as {
+    user: PiAuthUser
+    sessionToken?: string
+  }
+  const { setPiSessionToken } = await import('@/lib/pi-session-client')
+  if (data.sessionToken) {
+    setPiSessionToken(data.sessionToken)
+  }
   memorySessionCache = { user: data.user, checkedAt: Date.now() }
   return data.user
 }
@@ -159,12 +166,14 @@ export function PiAuthProvider({ children }: { children: ReactNode }) {
       const verified = await verifyAccessTokenOnServer(auth.accessToken)
       setPiUser(verified)
       setStatus('authenticated')
+      // Ensure cookie/header session is usable before link-pi (Pi WebView needs token in storage)
       const { linkPiToAppNickname, readStoredAppNickname } = await import(
         '@/lib/link-pi-client'
       )
       const nick = readStoredAppNickname()
       if (nick) {
-        void linkPiToAppNickname(nick)
+        // Await so Authorization header from sessionToken is already stored
+        await linkPiToAppNickname(nick)
       }
     } catch (err) {
       const message =
@@ -191,6 +200,8 @@ export function PiAuthProvider({ children }: { children: ReactNode }) {
     } finally {
       const { clearUserScopedCaches } = await import('@/lib/supabase-request-cache')
       const { clearAuthorMetaCache } = await import('@/lib/supabase-profile-level-titles')
+      const { clearPiSessionToken } = await import('@/lib/pi-session-client')
+      clearPiSessionToken()
       clearUserScopedCaches()
       clearAuthorMetaCache()
       clearSessionCache()
@@ -219,7 +230,7 @@ export function PiAuthProvider({ children }: { children: ReactNode }) {
           )
           const nick = readStoredAppNickname()
           if (nick) {
-            void linkPiToAppNickname(nick)
+            await linkPiToAppNickname(nick)
           }
           return
         }

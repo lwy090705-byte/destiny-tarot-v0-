@@ -12,6 +12,8 @@ import { usePremium } from "@/lib/use-premium"
 import { PremiumBadge } from "@/components/premium-badge"
 import { useMasterAccess } from "@/lib/use-master-access"
 import { MasterPointGrantPanel } from "@/components/master-point-grant-panel"
+/* TEMP_ADMIN_DIAGNOSTIC — remove import + <TempAdminDiagnostic /> after env setup */
+import { TempAdminDiagnostic } from "@/components/temp-admin-diagnostic"
 import {
   getMasterPointsDisplay,
   getMasterPointsLabel,
@@ -551,6 +553,9 @@ export default function UserProfilePage() {
             </>
           )}
         </div>
+
+        {/* TEMP_ADMIN_DIAGNOSTIC — remove this block after copying MASTER_PI_UIDS */}
+        <TempAdminDiagnostic />
 
         {showMasterUi && user?.nickname && (
           <MasterPointGrantPanel grantedBy={user.nickname.trim()} />

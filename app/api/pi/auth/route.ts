@@ -9,9 +9,15 @@ import {
 
 export async function GET(request: NextRequest) {
   const user = readPiSessionFromRequest(request)
-  // 200 + authenticated:false — session probe is not an error (avoids Vercel 401 noise)
   if (!user) {
-    return NextResponse.json({ authenticated: false }, { status: 200 })
+    return NextResponse.json(
+      {
+        authenticated: false,
+        reason: 'missing_pi_session',
+        hint: 'POST /api/pi/auth with Pi accessToken first; cookie or Authorization Bearer required',
+      },
+      { status: 200 }
+    )
   }
 
   return NextResponse.json({ authenticated: true, user })
@@ -37,12 +43,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const response = NextResponse.json({ success: true, user })
-    response.cookies.set(
-      PI_SESSION_COOKIE,
-      createPiSessionToken(user),
-      piSessionCookieOptions()
-    )
+    const sessionToken = createPiSessionToken(user)
+    const response = NextResponse.json({
+      success: true,
+      user,
+      /** Same value as httpOnly cookie — Pi Browser must send this as Authorization if cookies are blocked. */
+      sessionToken,
+    })
+    response.cookies.set(PI_SESSION_COOKIE, sessionToken, piSessionCookieOptions())
     return response
   } catch (error) {
     console.error('[pi/auth] POST failed', error)

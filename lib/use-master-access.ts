@@ -42,10 +42,12 @@ export function useMasterAccess(): MasterAccessState {
     setIsLoading(true)
     void (async () => {
       try {
-        const res = await fetch('/api/community/auth-context', {
-          credentials: 'include',
-          cache: 'no-store',
-        })
+        const res = await (await import('@/lib/pi-session-client')).piAuthFetch(
+          '/api/community/auth-context',
+          {
+            cache: 'no-store',
+          }
+        )
         const data = (await res.json()) as {
           authenticated?: boolean
           isOperator?: boolean
